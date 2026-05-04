@@ -20,23 +20,44 @@ final class ChartPatternEngine {
     // Rate limiting (15 RPM for free tier = 4 sec interval)
     private var lastRequestTime: Date?
     private let minInterval: TimeInterval = 10.0 // Increased to 10 sec for safety
-    
+
     // CACHING - Aynı sembol için tekrar istek gitmemesi için
     private var cache: [String: (result: ChartPatternAnalysisResult, timestamp: Date)] = [:]
     private let cacheDuration: TimeInterval = 600 // 10 dakika cache
-    
+
+    // 2026-05-04: 429 Circuit Breaker
+    // Sebep: Gemini free tier 15 RPM. AutoPilot/Council 304 sembol × pattern call
+    // anında quota'yı patlatıyor; her sonraki istek 429 dönüyor ama kod yine
+    // tekrar tekrar deniyor — log'lar 429 spam'iyle doluyor + her deneme ~10sn
+    // tutuyor (rate limit wait + Gemini RTT). 3 ardışık 429 → 10dk lockout.
+    // Lockout süresince API çağrısı yapılmaz, .quotaExceeded result'u döner.
+    private var consecutive429Count: Int = 0
+    private var quotaLockedUntil: Date?
+    private let quotaBreakerThreshold = 3
+    private let quotaBreakerDuration: TimeInterval = 600 // 10 dakika
+
     private init() {}
-    
+
     // MARK: - Public API
-    
+
     /// Analyze candles for chart patterns
     func analyzePatterns(symbol: String, candles: [Candle]) async -> ChartPatternAnalysisResult {
         // CACHE CHECK - Önce cache'e bak
         if let cached = cache[symbol], Date().timeIntervalSince(cached.timestamp) < cacheDuration {
-            // print("📦 ChartPattern Cache Hit: \(symbol)")
             return cached.result
         }
-        
+
+        // Quota Circuit Breaker: lockout aktifse network'e gitme.
+        if let lockedUntil = quotaLockedUntil {
+            if Date() < lockedUntil {
+                return ChartPatternAnalysisResult(symbol: symbol, patterns: [], error: "Gemini quota lockout (10dk cooldown)")
+            } else {
+                // Süre doldu — sıfırla, yeni denemeye izin ver
+                quotaLockedUntil = nil
+                consecutive429Count = 0
+            }
+        }
+
         // Rate limit check
         if let lastTime = lastRequestTime {
             let elapsed = Date().timeIntervalSince(lastTime)
@@ -45,24 +66,33 @@ final class ChartPatternEngine {
             }
         }
         lastRequestTime = Date()
-        
+
         guard candles.count >= 30 else {
             return ChartPatternAnalysisResult(symbol: symbol, patterns: [], error: "Yetersiz veri (min 30 mum)")
         }
-        
+
         // Convert candles to analysis-friendly text
         let candleText = formatCandlesForAnalysis(candles.suffix(60))
-        
+
         // Build prompt
         let prompt = buildPatternPrompt(symbol: symbol, candleData: candleText)
-        
+
         do {
             let response = try await callGemini(prompt: prompt)
             let result = parsePatternResponse(symbol: symbol, response: response)
-            // CACHE SAVE - Başarılı sonucu cache'e kaydet
+            // Başarılı → 429 sayacını sıfırla
+            consecutive429Count = 0
             cache[symbol] = (result: result, timestamp: Date())
             return result
         } catch {
+            // 429 ise sayaç artır, eşik aşıldıysa lockout aç
+            if let nsError = error as NSError?, nsError.code == 429 {
+                consecutive429Count += 1
+                if consecutive429Count >= quotaBreakerThreshold {
+                    quotaLockedUntil = Date().addingTimeInterval(quotaBreakerDuration)
+                    print("🛑 ChartPatternEngine: Gemini quota lockout aktif (10dk). \(consecutive429Count) ardışık 429 alındı.")
+                }
+            }
             print("❌ ChartPatternEngine: \(error)")
             return ChartPatternAnalysisResult(symbol: symbol, patterns: [], error: error.localizedDescription)
         }
