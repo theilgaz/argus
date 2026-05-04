@@ -4,31 +4,46 @@ import Foundation
 /// Bridges the gap between Raw Provider Data (FinancialsData) and Domain Model (FinancialSnapshot).
 actor FinancialSnapshotService {
     static let shared = FinancialSnapshotService()
-    
-    // Enforce Yahoo as the source for Fundamentals (Atlas requires it)
-    private var provider: YahooFinanceProvider { YahooFinanceProvider.shared }
-    
+
+    // 2026-05-04: HeimdallOrchestrator üzerinden çağrı yapıyoruz.
+    // Eski hâl: `YahooFinanceProvider.shared` direkt — RequestCoalescer, CircuitBreaker,
+    // SymbolBlocklist, DataCacheService fallback'lerini tamamen by-pass ediyordu.
+    // Sonuç: AutoPilot 304 sembol × 2 Yahoo isteği × her tarama → çoğu timeout →
+    // try? ile sessizce nil → Council snapshot:nil ile konvene → üyeler "Veri yok"
+    // der → confidence ~0/1 → AutoPilotEngine veto eder veya TradeBrain reddeder.
+    // Yeni: orchestrator'dan geçtiğimiz için coalesce + 24h fundamentals cache +
+    // stale fallback aktif. Aynı sembol 24h içinde 1 kere Yahoo'ya gider, sonrası cache.
+
+    /// Snapshot-level cache: mapToSnapshot iş gücünü ve aynı pencerede tekrar
+    /// fetch'i önler. Fundamentals saatlik değişir, snapshot daha sık invalidate olabilir.
+    private var snapshotCache: [String: (snapshot: FinancialSnapshot, fetchedAt: Date)] = [:]
+    private let snapshotTTL: TimeInterval = 1800 // 30 dakika
+
     private init() {}
-    
+
     /// Fetches a complete financial snapshot for a symbol
     func fetchSnapshot(symbol: String) async throws -> FinancialSnapshot {
-        // 1. Fetch Fundamentals (Atlas Data)
-        // This includes extended metrics like margins, growth, and now analyst targets.
-        let financials = try await provider.fetchFundamentals(symbol: symbol)
-        
-        // 2. Fetch Current Price (Quote)
-        // Snapshot needs the latest price for valuation metrics update if needed
-        let quote = try await provider.fetchQuote(symbol: symbol)
-        
-        // 3. Map to Domain Model
-        return mapToSnapshot(data: financials, quote: quote)
+        // 1. Snapshot-level cache hit?
+        if let cached = snapshotCache[symbol],
+           Date().timeIntervalSince(cached.fetchedAt) < snapshotTTL {
+            return cached.snapshot
+        }
+
+        // 2. HeimdallOrchestrator üzerinden — coalesced + cache fallback aktif
+        let financials = try await HeimdallOrchestrator.shared.requestFundamentals(symbol: symbol)
+        let quote = try await HeimdallOrchestrator.shared.requestQuote(symbol: symbol)
+
+        let snapshot = mapToSnapshot(data: financials, quote: quote)
+        snapshotCache[symbol] = (snapshot: snapshot, fetchedAt: Date())
+        return snapshot
     }
-    
+
     /// Fetches raw data AND snapshot in one go (for efficient reuse)
     func fetchComprehensiveData(symbol: String) async throws -> (financials: FinancialsData, quote: Quote, snapshot: FinancialSnapshot) {
-        let financials = try await provider.fetchFundamentals(symbol: symbol)
-        let quote = try await provider.fetchQuote(symbol: symbol)
+        let financials = try await HeimdallOrchestrator.shared.requestFundamentals(symbol: symbol)
+        let quote = try await HeimdallOrchestrator.shared.requestQuote(symbol: symbol)
         let snapshot = mapToSnapshot(data: financials, quote: quote)
+        snapshotCache[symbol] = (snapshot: snapshot, fetchedAt: Date())
         return (financials, quote, snapshot)
     }
     

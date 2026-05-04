@@ -91,11 +91,14 @@ extension TradingViewModel {
             }
             
             // Use Preloaded OR Fetch
+            // 2026-05-04: HeimdallOrchestrator üzerinden — coalesce + 24h cache fallback
+            // aktive olur. Eski direkt Yahoo çağrısı her tarama yenilemesinde fresh fetch
+            // tetikliyordu, AutoPilot 304 sembol scanı sırasında Yahoo'yu boğuyordu.
             let financials: FinancialsData
             if let pre = preloadedData {
                 financials = pre
             } else {
-                financials = try await YahooFinanceProvider.shared.fetchFundamentals(symbol: symbol)
+                financials = try await HeimdallOrchestrator.shared.requestFundamentals(symbol: symbol)
             }
             
             // Explicit Cache
