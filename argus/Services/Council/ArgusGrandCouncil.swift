@@ -840,11 +840,31 @@ actor ArgusGrandCouncil {
             }
         }
 
-        // Nihai güven hesabı - tüm olumlu oyların ortalaması
+        // Nihai güven hesabı — kararın "gücü" (yön strength değil).
+        // 2026-05-04 FIX: Eski formül `confidence = netSupport` kullanıyordu,
+        // -1..+1 aralığındaki bir değeri direkt 0..1 confidence yerine geçirmek
+        // sistematik olarak düşük confidence üretiyordu. Ek olarak NEUTRAL
+        // kararlarda `positiveContributors = filter(action == .hold)` ile süzülünce
+        // .hold voter olmayınca fallback orion.netSupport (~0) kullanılıyor → UI
+        // "%0 güven" görünüyordu. Yeni formül:
+        //   • BUY/SELL: avg of agreeing voters' magnitude (abs(netSupport))
+        //   • NEUTRAL : 1 - max(any directional strength) (kuvvetli yön yoksa
+        //               HOLD'a yüksek güven)
+        //   • Floor   : 0.20 — mutlak sıfır göstermesin (paper trading UX)
         let positiveContributors = contributors.filter { $0.action == finalAction.toProposedAction() }
-        let avgConfidence = positiveContributors.isEmpty ? orion.netSupport :
-            positiveContributors.map { $0.confidence }.reduce(0, +) / Double(positiveContributors.count)
-        let finalConfidence = min(avgConfidence * hermesMultiplier, 1.0)
+        let avgConfidence: Double
+        if !positiveContributors.isEmpty {
+            avgConfidence = positiveContributors.map { abs($0.confidence) }.reduce(0, +) / Double(positiveContributors.count)
+        } else if finalAction == .neutral {
+            // NEUTRAL'a güven: hiçbir yönde kuvvetli sinyal yoksa HOLD'a yüksek güven
+            let maxDirectional = contributors.map { abs($0.confidence) }.max() ?? 0
+            avgConfidence = max(0.40, 1.0 - maxDirectional)
+        } else {
+            // BUY/SELL ama hiç destekleyen yok → orion fallback (magnitude)
+            avgConfidence = abs(orion.netSupport)
+        }
+        // Floor: sıfır göstermesin (paper trading UX, gerçek paraya geçilirse 0.0'a çek)
+        let finalConfidence = max(min(avgConfidence * hermesMultiplier, 1.0), 0.20)
         
         return ArgusGrandDecision(
             id: UUID(),

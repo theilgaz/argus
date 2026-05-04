@@ -520,11 +520,14 @@ struct ArgusDecisionEngine {
             // dönüyor ama AlkindusCalibrationEngine.observe filtresi `action == "BUY" || "SELL"`
             // bekliyor → bu yoldan gelen gözlemler sessizce siliniyordu (yarım kanal kapalı).
             // ArgusGrandCouncil ile tutarlı mapping uygulanır.
+            // SignalAction (HeimdallTypes) zaten İngilizce rawValue dönüyor — "BUY"/"SELL"/"HOLD".
+            // ArgusAction enum'u (Türkçe rawValue) ArgusGrandCouncil'in kendi obs path'inde
+            // kullanılıyor. Burada finalAction tipi SignalAction.
             let alkindusAction: String? = {
                 switch finalAction {
-                case .aggressiveBuy, .accumulate: return "BUY"
-                case .trim, .liquidate:           return "SELL"
-                case .neutral:                    return nil
+                case .buy:  return "BUY"
+                case .sell: return "SELL"
+                case .hold, .skip, .wait: return nil
                 }
             }()
             // priceAtDecision = 0 olursa evaluateOutcome'da division-by-zero → wasCorrect
