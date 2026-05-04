@@ -226,6 +226,12 @@ final class AutoPilotStore: ObservableObject {
         }
         lastImmediateRunAt = now
         Task {
+            // 2026-05-04: İlk scan'i 25sn defer et — TradingViewModel'in 319 sembol
+            // watchlist batch refresh'i MarketDataStore cache'ini doldurana kadar bekle.
+            // Aksi halde AutoPilot ve watchlist refresh aynı anda Yahoo'nun 4 inflight
+            // cap'ine yığılıp 30sn rate-cap timeout'larına neden oluyordu (startup stampede).
+            // Sonraki tick'ler (180sn timer) defer'sız çalışır — cache zaten sıcak.
+            try? await Task.sleep(nanoseconds: 25_000_000_000)
             await runAutoPilot()
         }
     }

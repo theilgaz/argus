@@ -164,11 +164,14 @@ final class AutoPilotService: Sendable {
         for (index, batch) in chunks.enumerated() {
             // ArgusLogger.verbose(.autopilot, "Paket işleniyor: \(index + 1)/\(chunks.count) (\(batch.count) sembol)")
 
-            // Y3-HOTFIX Phase 3: Batch'ler arası bekleme 1s — wait-and-serve
-            // rate limiter'a soluklanma payı. Art arda batch'ler aynı 60s pencerede
-            // tavanı doldurursa sonraki batch'in ilk waiter'ı bekler (doğru).
+            // Y3-HOTFIX Phase 3: Batch'ler arası 1s bekleme idi — wait-and-serve
+            // rate limiter'a soluklanma payı. 2026-05-04: 200ms'ye düşürüldü.
+            // `HeimdallRateLimiter.acquireSlot` zaten wait-and-serve backpressure
+            // uyguluyor (HeimdallNetwork.swift:95), 1s ekstra çift güvence olup
+            // 18 batch × 800ms = ~14.4s/tarama dead time üretiyordu. 200ms hâlâ
+            // burst→drain osilasyonunu yumuşatır ama gereksiz sleep'in çoğunu kaldırır.
             if index > 0 {
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                try? await Task.sleep(nanoseconds: 200_000_000)
             }
             
             // Process Batch concurrently for speed
@@ -193,41 +196,37 @@ final class AutoPilotService: Sendable {
                             return (nil, ScoutLog(symbol: symbol, status: "ATLA", reason: "BIST piyasası kapalı", score: 0), nil)
                         }
                         
-                        // 1. Fetch Data (Prices & Candles)
-                        // try? sessizce yutuyordu — kullanıcı "kimisi boş" dediğinde
-                        // sebebini görmek mümkün değildi. Şimdi do/catch ile error
-                        // tipini log'a + ScoutLog'a açıkça yansıtıyoruz; rate-limit
-                        // ile "geçici hata", invalid symbol ile "kalıcı hata" UI'da
-                        // ayırt edilebilir.
-                        var currentPrice: Double = 0.0
-                        let candles: [Candle]?
-                        do {
-                            candles = try await HeimdallOrchestrator.shared.requestCandles(symbol: symbol, timeframe: "1G", limit: 200)
-                        } catch {
-                            let msg = error.localizedDescription
-                            ArgusLogger.warning(.autopilot, "Candle fetch hatası (\(msg)), \(symbol) atlandı")
-                            return (nil, ScoutLog(symbol: symbol, status: "RED", reason: "Mum verisi alınamadı: \(msg)", score: 0), nil)
+                        // 1. Fetch Data — MarketDataStore cache katmanı üzerinden (paralel)
+                        //
+                        // 2026-05-04 rev2: Direkt HeimdallOrchestrator çağrısı yerine
+                        // MarketDataStore.ensureQuote/ensureCandles kullanılıyor. Kök
+                        // sebep: TradingViewModel watchlist refresh'i (319 sembol)
+                        // MarketDataStore cache'ini doldurur, ama AutoPilot eski sürümde
+                        // direkt orkestratörü çağırıp aynı sembolleri tekrar Yahoo'ya
+                        // gönderiyordu — startup stampede + 30sn rate-cap timeout'ları.
+                        //
+                        // Yeni davranış:
+                        //  • Cache fresh → anında dönüş, network yok
+                        //  • Stale-while-revalidate → eski veri instant + arka planda yenile
+                        //  • In-flight coalescing → UI ve AutoPilot aynı task'ı paylaşır
+                        //  • Timeframe "1G" → "1day": MarketDataStore canonical value;
+                        //    AutoPilotStore.processSignals + Scout + UI hep aynı cache.
+                        //
+                        // K3 fix korunur: quote yoksa SEMBOLÜ ATLA, stale fiyatla trade yok.
+                        async let candlesValue = MarketDataStore.shared.ensureCandles(symbol: symbol, timeframe: "1day")
+                        async let quoteValue = MarketDataStore.shared.ensureQuote(symbol: symbol)
+
+                        let (cDV, qDV) = await (candlesValue, quoteValue)
+
+                        guard let candles = cDV.value, !candles.isEmpty else {
+                            return (nil, ScoutLog(symbol: symbol, status: "RED", reason: "Mum verisi yok (\(cDV.status.rawValue))", score: 0), nil)
                         }
 
-                        guard let lastCandle = candles?.last else {
-                            return (nil, ScoutLog(symbol: symbol, status: "RED", reason: "Mum verisi boş (Heimdall sembolü tanımıyor olabilir)", score: 0), nil)
+                        guard let quote = qDV.value, quote.currentPrice > 0 else {
+                            return (nil, ScoutLog(symbol: symbol, status: "ATLA", reason: "Canlı fiyat yok (\(qDV.status.rawValue))", score: 0), nil)
                         }
-                        
-                        // Fetch Realtime Price
-                        //
-                        // K3 fix: Quote fetch başarısız olursa SEMBOLÜ ATLA.
-                        // Eskiden `currentPrice = lastCandle.close` fallback'i vardı —
-                        // dünkü (hatta hafta sonu 3 gün önceki) kapanış fiyatı ile
-                        // "canlı" trade kararı alınıyor, SL/TP bu sahte fiyata göre
-                        // hesaplanıyor ve pozisyon zamanla kaçınılmaz slippage'la açılıyordu.
-                        // Artık: quote yok → signal yok (explicit hata log'u).
-                        do {
-                            let quote = try await HeimdallOrchestrator.shared.requestQuote(symbol: symbol)
-                            currentPrice = quote.currentPrice
-                        } catch {
-                            ArgusLogger.warning(.autopilot, "Quote fetch hatası (\(error.localizedDescription)), \(symbol) atlandı (stale-price koruması)")
-                            return (nil, ScoutLog(symbol: symbol, status: "ATLA", reason: "Canlı fiyat hatası: \(error.localizedDescription)", score: 0), nil)
-                        }
+
+                        let currentPrice = quote.currentPrice
 
                         // Freshness guard: Quote 15 saniyeden eskiyse güvenli tarafta kal.
                         if currentPrice <= 0 {
@@ -236,7 +235,7 @@ final class AutoPilotService: Sendable {
                         }
                         
                         // 2. Scores
-                        let orion = OrionAnalysisService.shared.calculateOrionScore(symbol: symbol, candles: candles ?? [], spyCandles: nil)
+                        let orion = OrionAnalysisService.shared.calculateOrionScore(symbol: symbol, candles: candles, spyCandles: nil)
                         let atlas = FundamentalScoreStore.shared.getScore(for: symbol)
                         
                         // 3. Evaluate via Argus Engine
@@ -283,9 +282,9 @@ final class AutoPilotService: Sendable {
                         // Candle sayısı < 60 olduğunda `.insufficient()` döner (UI
                         // Prometheus branch'i "VERİ KISITLI" gösterir — çizgi değil).
                         var phoenixAdvice: PhoenixAdvice? = nil
-                        if let c = candles, c.count >= 60 {
+                        if candles.count >= 60 {
                             phoenixAdvice = PhoenixLogic.analyze(
-                                candles: c,
+                                candles: candles,
                                 symbol: symbol,
                                 timeframe: .d1,
                                 config: PhoenixConfig()

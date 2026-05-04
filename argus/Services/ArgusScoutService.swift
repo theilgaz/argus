@@ -45,12 +45,13 @@ final class ArgusScoutService: Sendable {
                     group.addTask {
                         var effectiveQuote = currentQuotes[symbol]
                         
-                        // FETCH ON DEMAND if missing (User Requirement)
+                        // FETCH ON DEMAND if missing (cache layer üzerinden — UI ile coalesced)
+                        // 2026-05-04: Direkt orkestratör çağrısı yerine MarketDataStore.ensureQuote.
+                        // Stale-while-revalidate + in-flight dedup → AutoPilot/UI ile aynı task'ı paylaşır,
+                        // startup stampede'i önler.
                         if effectiveQuote == nil {
-                            // print("🔭 Scout: Fetching missing quote for \(symbol)...")
-                            if let fetched = try? await HeimdallOrchestrator.shared.requestQuote(symbol: symbol, context: .background) {
-                                effectiveQuote = fetched
-                            }
+                            let dv = await MarketDataStore.shared.ensureQuote(symbol: symbol)
+                            effectiveQuote = dv.value
                         }
                         
                         guard let validQuote = effectiveQuote else { return nil }
@@ -80,9 +81,12 @@ final class ArgusScoutService: Sendable {
     
     // Returns (Symbol, Score) if passed, nil if skipped
     private func checkSymbol(_ symbol: String, quote: Quote) async -> (String, Double)? {
-        // 1. Fetch Candles (Daily) via Heimdall
-        guard let candles = try? await HeimdallOrchestrator.shared.requestCandles(symbol: symbol, timeframe: "1day", limit: 200, context: .background) else {
-            print("🔭 Scout: \(symbol) - Candle verisi yok, atlandı")
+        // 1. Fetch Candles (Daily) via MarketDataStore cache (coalesced + SWR)
+        // 2026-05-04: Direkt orkestratör yerine ensureCandles. Aynı sembolün
+        // candle'ı UI/AutoPilot/Scout'ta paylaşılır, tek Yahoo isteği yeter.
+        let candlesDV = await MarketDataStore.shared.ensureCandles(symbol: symbol, timeframe: "1day")
+        guard let candles = candlesDV.value, !candles.isEmpty else {
+            print("🔭 Scout: \(symbol) - Candle verisi yok (\(candlesDV.status.rawValue)), atlandı")
             return nil // Skipped (No Data)
         }
         

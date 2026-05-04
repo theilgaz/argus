@@ -45,8 +45,19 @@ final class HeimdallOrchestrator {
     }
 
     // MARK: - Quote
-    
+
+    /// 2026-05-04: Coalescer ile inflight dedup.
+    /// AutoPilotService bu metodu **direkt** çağırıyor, MarketDataStore'un kendi
+    /// coalescer'ını atlıyor — UI ile AutoPilot aynı sembol için eş zamanlı 2
+    /// ayrı network çağrısı atabiliyordu. Orkestratör katmanında dedup her iki
+    /// yolu da yakalar; ikinci çağıran inflight task'ın sonucunu bekler.
     func requestQuote(symbol: String, context: UsageContext = .interactive) async throws -> Quote {
+        try await RequestCoalescer.shared.coalesce(key: "quote:\(symbol)") { [self] in
+            try await performRequestQuote(symbol: symbol, context: context)
+        }
+    }
+
+    private func performRequestQuote(symbol: String, context: UsageContext) async throws -> Quote {
         let provider = "yahoo"
         let endpoint = "/quote"
         let circuitProvider = circuitKey(provider: provider, endpoint: "quote")
@@ -162,7 +173,14 @@ final class HeimdallOrchestrator {
 
     // MARK: - Fundamentals
 
+    /// 2026-05-04: Coalescer ile inflight dedup (bilanço fetch'i en pahalı endpoint).
     func requestFundamentals(symbol: String, context: UsageContext = .interactive) async throws -> FinancialsData {
+        try await RequestCoalescer.shared.coalesce(key: "fundamentals:\(symbol)") { [self] in
+            try await performRequestFundamentals(symbol: symbol, context: context)
+        }
+    }
+
+    private func performRequestFundamentals(symbol: String, context: UsageContext) async throws -> FinancialsData {
         let provider = "yahoo"
         let endpoint = "/fundamentals"
         let circuitProvider = circuitKey(provider: provider, endpoint: "fundamentals")
@@ -237,7 +255,10 @@ final class HeimdallOrchestrator {
 
     
     // MARK: - Candles
-    
+
+    /// 2026-05-04: Coalescer ile inflight dedup. Anahtar timeframe+limit içerir
+    /// (aynı sembol farklı timeframe → ayrı task). providerTag/instrument şu an
+    /// rotalama için kullanılmıyor (Yahoo Direct Mode), key'e dahil edilmedi.
     func requestCandles(
         symbol: String,
         timeframe: String,
@@ -245,6 +266,20 @@ final class HeimdallOrchestrator {
         context: UsageContext = .interactive,
         provider providerTag: ProviderTag? = nil,
         instrument: CanonicalInstrument? = nil
+    ) async throws -> [Candle] {
+        let key = "candles:\(symbol):\(timeframe):\(limit)"
+        return try await RequestCoalescer.shared.coalesce(key: key) { [self] in
+            try await performRequestCandles(symbol: symbol, timeframe: timeframe, limit: limit, context: context, providerTag: providerTag, instrument: instrument)
+        }
+    }
+
+    private func performRequestCandles(
+        symbol: String,
+        timeframe: String,
+        limit: Int,
+        context: UsageContext,
+        providerTag: ProviderTag?,
+        instrument: CanonicalInstrument?
     ) async throws -> [Candle] {
         let provider = "yahoo"
         let endpoint = "/candles"
