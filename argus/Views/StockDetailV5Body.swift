@@ -206,17 +206,10 @@ struct StockDetailV5Body: View {
 
     private var councilCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                ZStack {
-                    Circle()
-                        .fill(councilTintColor.opacity(0.15))
-                        .frame(width: 28, height: 28)
-                    MotorLogo(.council, size: 18)
-                }
-                Text("KONSEY KARARI")
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
-                    .tracking(1.4)
-                    .foregroundColor(councilTintColor)
+            HStack {
+                Text("Konsey kararı")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Spacer()
             }
 

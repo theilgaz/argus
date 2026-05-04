@@ -5,9 +5,6 @@ extension NavigationRouter {
     func destinationView(for route: NavigationRoute, viewModel: TradingViewModel) -> some View {
         switch route {
         // MARK: - Main Tabs
-        case .home:
-            AlkindusDashboardView()
-
         case .kokpit:
             ArgusCockpitView()
 
@@ -16,6 +13,10 @@ extension NavigationRouter {
 
         case .settings:
             SettingsView(settingsViewModel: SettingsViewModel())
+
+        // MARK: - Alkindus Merkez
+        case .alkindusDashboard:
+            AlkindusDashboardView()
 
         // MARK: - Market Views
         case .stockDetail(let symbol):
@@ -62,16 +63,13 @@ extension NavigationRouter {
             PhoenixDetailRouterView(symbol: id)
 
         case .chiron:
-            // 2026-04-22: V5 redesign — ChironInsightsView (V5 body) tercih edildi.
-            // Eski ChironDetailView (NavigationView + SF brain ikonu) geride kaldı.
-            NavigationStack {
-                ChironInsightsView()
-            }
+            // 2026-05-03 H-59: nested NavigationStack kaldırıldı —
+            // ContentView'daki dış NavigationStack(path: $router.navigationStack)
+            // ile çakışıp geri butonunu bozuyordu. Push doğrudan ChironInsightsView.
+            ChironInsightsView()
 
         case .chironDetail(let id):
-            NavigationStack {
-                ChironInsightsView(symbol: id)
-            }
+            ChironInsightsView(symbol: id)
 
         case .chironPerformance:
             ChironPerformanceView()

@@ -35,14 +35,14 @@ struct EconomicCalendarSheet: View {
 
     private var introSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("MAKRO TAKVIM")
-                .font(.caption)
-                .fontWeight(.semibold)
+            Text("Makro takvim")
+                .font(.system(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
-            Text("Onemli ekonomik olaylar piyasalari dogrudan etkiler. Bu olaylarin oncesinde ve sonrasinda volatilite artar.")
-                .font(.subheadline)
-                .foregroundColor(.white)
+            Text("Önemli ekonomik olaylar piyasaları doğrudan etkiler. Bu olayların öncesinde ve sonrasında volatilite artar.")
+                .font(.system(size: 13))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                .lineSpacing(2)
         }
     }
 
@@ -50,22 +50,22 @@ struct EconomicCalendarSheet: View {
 
     private var upcomingEvents: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionHeader("YAKLASAN OLAYLAR")
+            sectionHeader("Yaklaşan olaylar")
 
             if isLoading {
                 HStack(spacing: 10) {
                     ProgressView()
-                    Text("Takvim yukleniyor...")
-                        .font(.caption)
+                    Text("Takvim yükleniyor")
+                        .font(.system(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
             } else if let errorMessage {
                 Text(errorMessage)
-                    .font(.caption)
+                    .font(.system(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.crimson)
             } else if events.isEmpty {
-                Text("Secilen aralikta kayitli olay yok.")
-                    .font(.caption)
+                Text("Seçilen aralıkta kayıtlı olay yok.")
+                    .font(.system(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             } else {
                 VStack(spacing: 8) {
@@ -183,20 +183,21 @@ struct EconomicCalendarSheet: View {
 
     private var tcmbSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionHeader("TCMB KARARLARI")
+            sectionHeader("TCMB kararları")
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("TCMB Para Politikasi Kurulu (PPK) her ay toplanir ve politika faizini belirler.")
-                    .font(.caption)
-                    .foregroundColor(.white)
+                Text("TCMB Para Politikası Kurulu (PPK) her ay toplanır ve politika faizini belirler.")
+                    .font(.system(size: 13))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .lineSpacing(2)
 
                 HStack(spacing: 20) {
-                    impactScenario("Faiz Artisi", "BIST icin genellikle negatif", InstitutionalTheme.Colors.crimson)
-                    impactScenario("Faiz Indirimi", "BIST icin genellikle pozitif", InstitutionalTheme.Colors.aurora)
+                    impactScenario("Faiz artışı", "BIST için genellikle negatif", InstitutionalTheme.Colors.crimson)
+                    impactScenario("Faiz indirimi", "BIST için genellikle pozitif", InstitutionalTheme.Colors.aurora)
                 }
 
-                Text("Ancak beklentiler onemli: Beklenen faiz artisi zaten fiyatlanmis olabilir.")
-                    .font(.caption2)
+                Text("Ancak beklentiler önemli: beklenen faiz artışı zaten fiyatlanmış olabilir.")
+                    .font(.system(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .padding(.top, 4)
             }
@@ -255,10 +256,8 @@ struct EconomicCalendarSheet: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(.caption)
-            .fontWeight(.semibold)
+            .font(.system(size: 12, weight: .medium))
             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-            .tracking(0.5)
     }
 
     // MARK: - Data Load

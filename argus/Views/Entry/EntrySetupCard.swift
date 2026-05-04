@@ -119,13 +119,9 @@ struct EntrySetupCard: View {
     private var waitContent: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("BEKLE")
-                    .font(.system(size: 12, weight: .heavy, design: .monospaced))
+                Text("Bekle")
+                    .font(.system(size: 13, weight: .medium))
                     .foregroundColor(accent)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(accent.opacity(0.15))
-                    .cornerRadius(4)
                 Spacer()
             }
 
@@ -180,17 +176,13 @@ private struct GradeBadge: View {
     let color: Color
     var body: some View {
         HStack(spacing: 6) {
-            Text("GRADE")
-                .font(.system(size: 9, weight: .heavy))
+            Text("Not")
+                .font(.system(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                .tracking(1)
             Text(grade.label)
-                .font(.system(size: 17, weight: .heavy, design: .monospaced))
+                .font(.system(size: 15, weight: .medium))
                 .foregroundColor(color)
-                .padding(.horizontal, 9)
-                .padding(.vertical, 2)
-                .background(color.opacity(0.15))
-                .cornerRadius(4)
+                .monospacedDigit()
         }
     }
 }

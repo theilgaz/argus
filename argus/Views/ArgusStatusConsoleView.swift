@@ -129,9 +129,8 @@ struct ArgusStatusConsoleView: View {
             if !tradeBlockReasons.isEmpty {
                 Divider().background(InstitutionalTheme.Colors.borderSubtle)
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("NEDEN TRADE ETMİYOR")
-                        .font(InstitutionalTheme.Typography.micro)
-                        .tracking(1.5)
+                    Text("Neden trade etmiyor")
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .padding(.top, 6)
                     ForEach(tradeBlockReasons, id: \.self) { reason in
@@ -389,10 +388,9 @@ struct ArgusStatusConsoleView: View {
                     .foregroundColor(pulseColor)
                     .frame(width: 20)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("NABIZ")
-                        .font(InstitutionalTheme.Typography.micro)
-                        .tracking(1)
-                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                    Text("Nabız")
+                        .font(.system(size: 11))
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     Text(pulseSummary)
                         .font(InstitutionalTheme.Typography.caption)
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)

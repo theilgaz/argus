@@ -5,20 +5,27 @@ import SwiftUI
 /// ArgusBar / ArgusSectionCaption dili uygulandı.
 struct MarketReportView: View {
     let report: MarketAnalysisReport
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var router: NavigationRouter
     @State private var showDrawer = false
     @StateObject private var deepLinkManager = DeepLinkManager.shared
+
+    private var isPushed: Bool { !router.navigationStack.isEmpty }
 
     var body: some View {
         VStack(spacing: 0) {
             ArgusNavHeader(
-                title: "PİYASA RAPORU",
-                subtitle: "TREND · TEPKİ · BREAKOUT",
-                leadingDeco: .bars3([.holo, .text, .text]),
-                actions: [
-                    .menu({ showDrawer = true }),
-                    .custom(sfSymbol: "xmark", action: { presentationMode.wrappedValue.dismiss() })
-                ]
+                title: "Piyasa raporu",
+                subtitle: "Trend, tepki, breakout",
+                leadingDeco: isPushed
+                    ? .back(onTap: { dismiss() })
+                    : .bars3([.holo, .text, .text]),
+                actions: isPushed
+                    ? []
+                    : [
+                        .menu({ withAnimation(ArgusDrawerView.toggleAnimation) { showDrawer = true } }),
+                        .custom(sfSymbol: "xmark", action: { dismiss() })
+                      ]
             )
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
@@ -26,7 +33,7 @@ struct MarketReportView: View {
 
                     if !report.trendOpportunities.isEmpty {
                         ReportSignalSection(
-                            title: "TREND FIRSATLARI",
+                            title: "Trend fırsatları",
                             caption: "MACD / SMA — güçlü trendde, trend takipçisi indikatörler en iyi sonucu verir.",
                             signals: report.trendOpportunities,
                             tone: .aurora
@@ -35,7 +42,7 @@ struct MarketReportView: View {
 
                     if !report.reversalOpportunities.isEmpty {
                         ReportSignalSection(
-                            title: "TEPKİ FIRSATLARI",
+                            title: "Tepki fırsatları",
                             caption: "RSI / Bollinger — aşırı alım/satım bölgesinde, dönüş sinyalleri takip edilmeli.",
                             signals: report.reversalOpportunities,
                             tone: .titan
@@ -44,7 +51,7 @@ struct MarketReportView: View {
 
                     if !report.breakoutOpportunities.isEmpty {
                         ReportSignalSection(
-                            title: "SERT HAREKET EDENLER",
+                            title: "Sert hareket edenler",
                             caption: "Fiyat ve hacimde ani değişim — volatilite stratejileri uygun.",
                             signals: report.breakoutOpportunities,
                             tone: .holo
@@ -69,19 +76,23 @@ struct MarketReportView: View {
     // MARK: - Timestamp ribbon
     private var timestampRibbon: some View {
         HStack(spacing: 10) {
-            ArgusDot(color: InstitutionalTheme.Colors.aurora, size: 6)
-            Text("SON GÜNCELLEME")
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .tracking(1.2)
+            Text("Son güncelleme")
+                .font(.system(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Spacer()
             Text(report.timestamp, style: .time)
-                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .font(.system(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                .monospacedDigit()
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .overlay(ArgusHair(), alignment: .bottom)
+        .overlay(
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5),
+            alignment: .bottom
+        )
     }
 
     // MARK: - Drawer
@@ -92,8 +103,8 @@ struct MarketReportView: View {
             ArgusDrawerView.DrawerSection(
                 title: "Ekranlar",
                 items: [
-                    ArgusDrawerView.DrawerItem(title: "Alkindus Merkez", subtitle: "Yapay zeka ana sayfa", icon: "AlkindusIcon") {
-                        deepLinkManager.navigate(to: .home)
+                    ArgusDrawerView.DrawerItem(title: "Alkindus Merkez", subtitle: "Yapay zeka merkezi", icon: "AlkindusIcon") {
+                        NavigationRouter.shared.navigate(to: .alkindusDashboard)
                         showDrawer = false
                     },
                     ArgusDrawerView.DrawerItem(title: "Piyasalar", subtitle: "Kokpit ekranı", icon: "chart.line.uptrend.xyaxis") {
@@ -117,25 +128,14 @@ struct MarketReportView: View {
                 title: "Rapor",
                 items: [
                     ArgusDrawerView.DrawerItem(title: "Kapat", subtitle: "Raporu kapat", icon: "xmark.circle") {
-                        presentationMode.wrappedValue.dismiss()
                         showDrawer = false
+                        dismiss()
                     }
                 ]
             )
         )
 
-        sections.append(
-            ArgusDrawerView.DrawerSection(
-                title: "Araçlar",
-                items: [
-                    ArgusDrawerView.DrawerItem(title: "Ekonomi Takvimi", subtitle: "Gerçek takvim", icon: "calendar") { openSheet(.calendar) },
-                    ArgusDrawerView.DrawerItem(title: "Finans Sözlüğü", subtitle: "Terimler", icon: "character.book.closed") { openSheet(.dictionary) },
-                    ArgusDrawerView.DrawerItem(title: "Ünlü Finans Sözleri", subtitle: "Finans alıntıları", icon: "quote.opening") { openSheet(.financeWisdom) },
-                    ArgusDrawerView.DrawerItem(title: "Sistem Durumu", subtitle: "Servis sağlığı", icon: "waveform.path.ecg") { openSheet(.systemHealth) },
-                    ArgusDrawerView.DrawerItem(title: "Geri Bildirim", subtitle: "Sorun bildir", icon: "envelope") { openSheet(.feedback) }
-                ]
-            )
-        )
+        sections.append(ArgusDrawerView.commonToolsSection(openSheet: openSheet))
 
         return sections
     }

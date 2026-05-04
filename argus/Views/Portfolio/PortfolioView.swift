@@ -41,8 +41,8 @@ struct PortfolioView: View {
     // MARK: - Body
 
     var body: some View {
-        NavigationStack {
-            ZStack {
+        // 2026-05-03 H-59: nested NavigationStack kaldırıldı.
+        ZStack {
                 InstitutionalTheme.Colors.background.ignoresSafeArea()
 
                 if showDrawer {
@@ -170,7 +170,6 @@ struct PortfolioView: View {
                     Text("Pozisyon satılsın mı?")
                 }
             }
-        }
     }
 
     // MARK: - Trade List
@@ -369,8 +368,8 @@ struct PortfolioView: View {
                     ArgusDrawerView.DrawerItem(title: "Piyasalar", subtitle: "Market ekranı", icon: "chart.line.uptrend.xyaxis") {
                         deepLinkManager.navigate(to: .kokpit); showDrawer = false
                     },
-                    ArgusDrawerView.DrawerItem(title: "Alkindus", subtitle: "Yapay zeka merkez", icon: "AlkindusIcon") {
-                        NotificationCenter.default.post(name: NSNotification.Name("OpenAlkindusDashboard"), object: nil)
+                    ArgusDrawerView.DrawerItem(title: "Alkindus Merkez", subtitle: "Yapay zeka merkezi", icon: "AlkindusIcon") {
+                        NavigationRouter.shared.navigate(to: .alkindusDashboard)
                         showDrawer = false
                     },
                     ArgusDrawerView.DrawerItem(title: "Ayarlar", subtitle: "Tercihler", icon: "gearshape") {
@@ -416,31 +415,8 @@ struct PortfolioView: View {
         }
 
         sections.append(ArgusDrawerView.DrawerSection(title: "Portföy", items: portfolioItems))
-        sections.append(commonToolsSection(openSheet: openSheet))
+        sections.append(ArgusDrawerView.commonToolsSection(openSheet: openSheet))
         return sections
-    }
-
-    private func commonToolsSection(openSheet: @escaping (ArgusDrawerView.DrawerSheet) -> Void) -> ArgusDrawerView.DrawerSection {
-        ArgusDrawerView.DrawerSection(
-            title: "Araçlar",
-            items: [
-                ArgusDrawerView.DrawerItem(title: "Ekonomi Takvimi", subtitle: "Gercek takvim", icon: "calendar") {
-                    openSheet(.calendar)
-                },
-                ArgusDrawerView.DrawerItem(title: "Finans Sozlugu", subtitle: "Terimler", icon: "character.book.closed") {
-                    openSheet(.dictionary)
-                },
-                ArgusDrawerView.DrawerItem(title: "Unlu Finans Sozleri", subtitle: "Finans alintilari", icon: "quote.opening") {
-                    openSheet(.financeWisdom)
-                },
-                ArgusDrawerView.DrawerItem(title: "Sistem Durumu", subtitle: "Servis sagligi", icon: "waveform.path.ecg") {
-                    openSheet(.systemHealth)
-                },
-                ArgusDrawerView.DrawerItem(title: "Geri Bildirim", subtitle: "Sorun bildir", icon: "envelope") {
-                    openSheet(.feedback)
-                }
-            ]
-        )
     }
 
     private func mapAndShowInfo(_ engine: AutoPilotEngine) {

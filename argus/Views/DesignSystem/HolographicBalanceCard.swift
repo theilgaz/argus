@@ -132,22 +132,21 @@ struct HolographicBalanceCard: View {
                 
                 // Balance Big
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("TOPLAM VARLIK")
-                        .font(.caption2)
+                    Text("Toplam varlık")
+                        .font(.system(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                        .tracking(1)
-                    
+
                     Text("\(currencySymbol)\(String(format: "%.0f", equity))")
-                        .font(.system(size: 36, weight: .black, design: .rounded))
+                        .font(.system(size: 32, weight: .medium))
                         .foregroundColor(.white)
-                        .shadow(color: themeColor.opacity(0.5), radius: 10)
+                        .monospacedDigit()
                 }
-                
+
                 // Stat Row
                 HStack(spacing: 24) {
-                    statItem(label: "NAKİT", value: balance, color: themeColor)
-                    statItem(label: "K/Z (R)", value: realized, color: realized >= 0 ? InstitutionalTheme.Colors.aurora : InstitutionalTheme.Colors.crimson)
-                    statItem(label: "ANLIK", value: unrealized, color: unrealized >= 0 ? InstitutionalTheme.Colors.aurora : InstitutionalTheme.Colors.crimson)
+                    statItem(label: "Nakit", value: balance, color: themeColor)
+                    statItem(label: "K/Z", value: realized, color: realized >= 0 ? InstitutionalTheme.Colors.aurora : InstitutionalTheme.Colors.crimson)
+                    statItem(label: "Anlık", value: unrealized, color: unrealized >= 0 ? InstitutionalTheme.Colors.aurora : InstitutionalTheme.Colors.crimson)
                 }
             }
             .padding(24)

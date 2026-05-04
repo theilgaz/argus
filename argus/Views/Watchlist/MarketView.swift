@@ -138,7 +138,9 @@ struct MarketView: View {
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Spacer()
                 HStack(spacing: 0) {
-                    headerIconButton(icon: "line.3.horizontal", label: "Menü") { showDrawer = true }
+                    headerIconButton(icon: "line.3.horizontal", label: "Menü") {
+                        withAnimation(ArgusDrawerView.toggleAnimation) { showDrawer = true }
+                    }
                     headerIconButton(icon: "globe", label: "Keşfet") { showDiscover = true }
                     headerIconButton(icon: "plus", label: "Hisse ekle") { showSearch = true }
                     headerIconButton(icon: "bell", label: "Bildirimler") { showNotifications = true }
@@ -273,8 +275,8 @@ struct MarketView: View {
                         deepLinkManager.navigate(to: .kokpit)
                         showDrawer = false
                     },
-                    ArgusDrawerView.DrawerItem(title: "Alkindus", subtitle: "Yapay zeka merkez", icon: "AlkindusIcon") {
-                        NotificationCenter.default.post(name: NSNotification.Name("OpenAlkindusDashboard"), object: nil)
+                    ArgusDrawerView.DrawerItem(title: "Alkindus Merkez", subtitle: "Yapay zeka merkezi", icon: "AlkindusIcon") {
+                        NavigationRouter.shared.navigate(to: .alkindusDashboard)
                         showDrawer = false
                     },
                     ArgusDrawerView.DrawerItem(title: "Portfoy", subtitle: "Pozisyonlar", icon: "briefcase.fill") {
@@ -324,31 +326,8 @@ struct MarketView: View {
             )
         )
 
-        sections.append(commonToolsSection(openSheet: openSheet))
+        sections.append(ArgusDrawerView.commonToolsSection(openSheet: openSheet))
         return sections
-    }
-
-    private func commonToolsSection(openSheet: @escaping (ArgusDrawerView.DrawerSheet) -> Void) -> ArgusDrawerView.DrawerSection {
-        ArgusDrawerView.DrawerSection(
-            title: "Araçlar",
-            items: [
-                ArgusDrawerView.DrawerItem(title: "Ekonomi Takvimi", subtitle: "Gercek takvim", icon: "calendar") {
-                    openSheet(.calendar)
-                },
-                ArgusDrawerView.DrawerItem(title: "Finans Sozlugu", subtitle: "Terimler", icon: "character.book.closed") {
-                    openSheet(.dictionary)
-                },
-                ArgusDrawerView.DrawerItem(title: "Unlu Finans Sozleri", subtitle: "Finans alintilari", icon: "quote.opening") {
-                    openSheet(.financeWisdom)
-                },
-                ArgusDrawerView.DrawerItem(title: "Sistem Durumu", subtitle: "Servis sagligi", icon: "waveform.path.ecg") {
-                    openSheet(.systemHealth)
-                },
-                ArgusDrawerView.DrawerItem(title: "Geri Bildirim", subtitle: "Sorun bildir", icon: "envelope") {
-                    openSheet(.feedback)
-                }
-            ]
-        )
     }
 }
 
@@ -441,20 +420,25 @@ struct BistCockpitView: View {
     let deleteAction: (String) -> Void
 
     var body: some View {
-        VStack(spacing: 12) {
-            // Sirkiye Cockpit Header (SirkiyeDashboardView zaten "SİRKİYE KORTEKS" başlığını kendi kartında sunuyor,
-            // burada yalnızca grup başlığı koruyoruz)
-            ArgusSectionHeader("Sirkiye kokpiti", subtitle: "Makro rejim + BIST canlı nabız") {
-                Image(systemName: "eye.fill")
-                    .font(.system(size: 13))
-                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-            }
-
+        VStack(spacing: 16) {
+            // 2026-05-03 H-60: ArgusSectionHeader "Sirkiye kokpiti" + alt
+            // başlık silindi — SirkiyeDashboardView Global'daki AetherDashboardHUD
+            // ile aynı dilde kendini "Bugün" başlığıyla zaten ifade ediyor,
+            // dış header çift başlık yapıyordu.
             SirkiyeDashboardView(viewModel: viewModel)
 
-            // Watchlist Section
-            ArgusSectionHeader("BIST takip", subtitle: "Türk lirası")
-                .padding(.top, 8)
+            // Watchlist başlığı — Global'daki "İzleme listesi" ile aynı dil
+            HStack(spacing: 8) {
+                Text("BIST takip")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                Spacer()
+                Text("Türk lirası")
+                    .font(.system(size: 12))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 4)
 
             if watchlist.isEmpty {
                 ArgusEmptyState(

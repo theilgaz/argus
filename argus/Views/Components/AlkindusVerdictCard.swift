@@ -59,14 +59,13 @@ struct AlkindusVerdictCard: View {
                     .frame(width: 3)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("ALKİNDUS SONUÇ ANALİZİ")
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
-                        .foregroundColor(accentColor.opacity(0.8))
-                        .tracking(1.5)
+                    Text("Sonuç analizi")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(accentColor)
 
                     Text("T+\(verdict.horizon) · \(verdict.evaluationDate.formatted(date: .abbreviated, time: .omitted))")
-                        .font(.system(size: 9, design: .monospaced))
-                        .foregroundColor(.gray)
+                        .font(.system(size: 11))
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 8)

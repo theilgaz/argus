@@ -58,31 +58,32 @@ struct ArgusModuleBar: View {
     }
 }
 
+// 2026-04-30 H-57 — sade. ArgusEyeView gözü + 16pt bold rounded başlık +
+// 36pt tinted skor circle + shadow → sade kart: sentence başlık + alt
+// muted etiket + sağda renkli text skor (circle yok). Hairline border,
+// shadow yok.
+
 struct DisabledModuleCard: View {
     let module: ArgusModule
     let reason: String
-    
+
     var body: some View {
-        HStack(alignment: .center, spacing: 0) {
-            // Left: Info
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
-                    ArgusEyeView(mode: .offline, size: 24)
-                    
-                    Text(ArgusScoreSystem.moduleTitle(module))
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                        .foregroundColor(.gray)
-                }
-                
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(ArgusScoreSystem.moduleTitle(module))
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Text(reason)
-                    .font(.caption)
-                    .foregroundColor(.gray.opacity(0.5))
+                    .font(.system(size: 11))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             Spacer()
         }
-        .padding(12)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(InstitutionalTheme.Colors.surface1.opacity(0.5))
-        .cornerRadius(16)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 }
 
@@ -91,52 +92,48 @@ struct ModuleCard: View {
     let score: Double?
     let action: () -> Void
     var isDisabled: Bool = false
-    
+
     var body: some View {
         Button(action: action) {
-            HStack(alignment: .center, spacing: 0) {
-                // Left: Info
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 6) {
-                        ArgusEyeView(mode: module.toArgusVisualMode, size: 24)
-                        
-                        Text(ArgusScoreSystem.moduleTitle(module))
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                    }
-                    
+            HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(ArgusScoreSystem.moduleTitle(module))
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                        .lineLimit(1)
                     Text(ArgusScoreSystem.moduleSubtitle(module))
-                        .font(.caption)
-                        .foregroundColor(.gray)
+                        .font(.system(size: 11))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .lineLimit(1)
                 }
-                
-                Spacer()
-                
-                // Right: Score
+
+                Spacer(minLength: 6)
+
+                // Sade skor — circle ve gradient yok, renkli text + opsiyonel
+                // küçük dot
                 if let s = score {
-                    ZStack {
-                        Circle()
-                            .stroke(ArgusScoreSystem.color(for: s).opacity(0.3), lineWidth: 2)
-                            .background(Circle().fill(ArgusScoreSystem.color(for: s).opacity(0.1)))
-                            .frame(width: 36, height: 36)
-                        
+                    HStack(spacing: 4) {
                         Text("\(Int(s))")
-                            .font(.system(size: 14, weight: .bold, design: .monospaced))
+                            .font(.system(size: 16, weight: .medium, design: .monospaced))
                             .foregroundColor(ArgusScoreSystem.color(for: s))
+                            .monospacedDigit()
                     }
                 } else {
-                    Circle()
-                        .stroke(Color.gray.opacity(0.3), lineWidth: 2)
-                        .frame(width: 36, height: 36)
+                    Text("—")
+                        .font(.system(size: 16, design: .monospaced))
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
             }
-            .padding(12)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 11)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .background(InstitutionalTheme.Colors.surface1)
-            .cornerRadius(16)
-            .shadow(color: Color.black.opacity(0.2), radius: 4, y: 2)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
+        .buttonStyle(.plain)
     }
 }

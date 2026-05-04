@@ -45,39 +45,39 @@ struct PlanEditorSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section(header: Text("PLAN ÖZETİ")) {
+                Section(header: Text("Plan özeti")) {
                     HStack {
                         Text("Maliyet")
                         Spacer()
                         Text(String(format: "%.2f", trade.entryPrice))
                     }
                     HStack {
-                        Text("Anlık Fiyat")
+                        Text("Anlık fiyat")
                         Spacer()
                         Text(String(format: "%.2f", currentPrice))
                             .foregroundColor(currentPrice >= trade.entryPrice ? .green : .red)
                     }
                     HStack {
-                        Text("Niyet (Vortex)")
+                        Text("Niyet")
                         Spacer()
                         Label(plan.intent.rawValue, systemImage: plan.intent.icon)
                             .foregroundColor(Color(plan.intent.colorName))
                     }
                 }
-                
-                Section(header: Text("HEDEF (TAKE PROFIT)")) {
+
+                Section(header: Text("Hedef (take profit)")) {
                     VStack(alignment: .leading) {
-                        Text("Hedef Fiyat: \(String(format: "%.2f", targetPrice))")
+                        Text("Hedef fiyat: \(String(format: "%.2f", targetPrice))")
                         Slider(value: $targetPrice, in: (trade.entryPrice)...(trade.entryPrice * 2.0))
                     }
-                    
+
                     VStack(alignment: .leading) {
-                        Text("Satılacak Miktar: %\(Int(sellPercent))")
+                        Text("Satılacak miktar: %\(Int(sellPercent))")
                         Slider(value: $sellPercent, in: 10...100, step: 10)
                     }
                 }
-                
-                Section(header: Text("ZARAR KES (STOP LOSS)")) {
+
+                Section(header: Text("Zarar kes (stop loss)")) {
                     VStack(alignment: .leading) {
                         Text("Stop Fiyatı: \(String(format: "%.2f", stopPrice))")
                         Slider(value: $stopPrice, in: (trade.entryPrice * 0.5)...(trade.entryPrice))

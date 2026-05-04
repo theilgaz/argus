@@ -372,18 +372,15 @@ struct LearningEventCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Image(systemName: "brain.head.profile")
-                    .foregroundColor(InstitutionalTheme.Colors.holo)
-                
-                Text("ÖĞRENME")
-                    .font(.system(size: 14, weight: .bold, design: .monospaced))
-                    .foregroundColor(.white)
-                
+                Text("Öğrenme")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+
                 Spacer()
-                
+
                 Text(event.timestamp, style: .date)
-                    .font(.system(size: 10))
-                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                    .font(.system(size: 11))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             
             Text(event.reason)

@@ -188,38 +188,31 @@ struct TermDetailSheet: View {
 
                     // Formul
                     if let formula = term.formula {
-                        sectionContent("FORMUL", content: formula, isCode: true)
+                        sectionContent("Formül", content: formula, isCode: true)
                     }
 
-                    // Argus Kullanimi
+                    // Argus'ta kullanımı
                     if let argusUsage = term.argusUsage {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("ARGUS'TA KULLANIMI")
-                                .font(.caption)
-                                .fontWeight(.semibold)
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Argus'ta kullanımı")
+                                .font(.system(size: 12, weight: .medium))
                                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
-                            HStack(alignment: .top, spacing: 10) {
-                                Image(systemName: "cpu")
-                                    .foregroundColor(InstitutionalTheme.Colors.holo)
-                                    .font(.subheadline)
-
-                                Text(argusUsage)
-                                    .font(.subheadline)
-                                    .foregroundColor(.white)
-                            }
-                            .padding(12)
-                            .background(InstitutionalTheme.Colors.holo.opacity(0.1))
-                            .cornerRadius(InstitutionalTheme.Radius.sm)
+                            Text(argusUsage)
+                                .font(.system(size: 13))
+                                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                                .padding(12)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(InstitutionalTheme.Colors.surface2)
+                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                         }
                     }
 
-                    // Ilgili Terimler
+                    // Ilgili terimler
                     if !term.relatedTerms.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("ILGILI TERIMLER")
-                                .font(.caption)
-                                .fontWeight(.semibold)
+                            Text("İlgili terimler")
+                                .font(.system(size: 12, weight: .medium))
                                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
                             FlowLayout(spacing: 8) {

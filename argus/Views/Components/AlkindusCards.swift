@@ -22,13 +22,9 @@ struct AlkindusSymbolCard: View {
         VStack(alignment: .leading, spacing: 12) {
             // Header
             HStack {
-                Image(systemName: "brain.head.profile")
-                    .font(.system(size: 14))
-                    .foregroundColor(gold)
-                Text("ALKINDUS ÖĞRENMELERİ")
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
-                    .foregroundColor(.gray)
-                    .tracking(1)
+                Text("Modül öğrenmeleri")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Spacer()
             }
             
@@ -129,12 +125,9 @@ struct AlkindusTimeCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Image(systemName: "clock")
-                    .foregroundColor(cyan)
-                Text("ZAMAN BAZLI İÇGÖRÜLER")
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
-                    .foregroundColor(.gray)
-                    .tracking(1)
+                Text("Zaman bazlı içgörüler")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             }
             
             if let advice = timeAdvice {

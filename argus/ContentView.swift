@@ -105,10 +105,6 @@ struct ContentView: View {
             }
             deepLinkManager.navigate(to: .home)
         }
-        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenAlkindusDashboard"))) { _ in
-            deepLinkManager.navigate(to: .home)
-            router.popToRoot()
-        }
         .onAppear {
             applyLaunchTabOverrideIfNeeded()
         }

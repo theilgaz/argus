@@ -6,75 +6,85 @@ import SwiftUI
 
 struct BistPortfolioView: View {
     @EnvironmentObject var viewModel: TradingViewModel
+    @EnvironmentObject private var router: NavigationRouter
+    @Environment(\.dismiss) private var dismiss
     @State private var showSearch = false
     @State private var showDrawer = false
     @StateObject private var deepLinkManager = DeepLinkManager.shared
-    
+
+    private var isPushed: Bool { !router.navigationStack.isEmpty }
+
     // BIST trades from PortfolioStore
     var bistTrades: [Trade] {
         PortfolioStore.shared.bistOpenTrades
     }
-    
+
     var bistBalance: Double {
         PortfolioStore.shared.bistBalance
     }
-    
+
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
+        // 2026-05-03 H-59: nested NavigationStack kaldırıldı.
+        VStack(spacing: 0) {
                 ArgusNavHeader(
-                    title: "BIST PORTFÖY",
-                    subtitle: "NAKİT · HİSSE · OTOPİLOT",
-                    leadingDeco: .bars3([.holo, .text, .text]),
-                    actions: [
-                        .menu({ showDrawer = true }),
-                        .plus({ showSearch = true })
-                    ]
+                    title: "BIST portföyü",
+                    subtitle: "Nakit, hisse, otopilot",
+                    leadingDeco: isPushed
+                        ? .back(onTap: { dismiss() })
+                        : .bars3([.holo, .text, .text]),
+                    actions: isPushed
+                        ? [.plus({ showSearch = true })]
+                        : [
+                            .menu({ withAnimation(ArgusDrawerView.toggleAnimation) { showDrawer = true } }),
+                            .plus({ showSearch = true })
+                          ]
                 )
                 ScrollView {
-                VStack(spacing: 24) {
-                    // MARK: - Balance Card (V5)
+                VStack(spacing: 16) {
                     VStack(alignment: .leading, spacing: 14) {
-                        HStack(spacing: 10) {
-                            MotorLogo(.aether, size: 14)
-                            ArgusSectionCaption("BIST DEĞERİ")
+                        HStack {
+                            Text("BIST değeri")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                             Spacer()
-                            ArgusDot(color: InstitutionalTheme.Colors.aurora, size: 5)
                             Text("TL")
-                                .font(.system(size: 9, weight: .bold, design: .monospaced))
-                                .tracking(1)
+                                .font(.system(size: 11))
                                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         }
 
                         Text("₺\(String(format: "%.2f", bistBalance + portfolioValue))")
-                            .font(.system(size: 32, weight: .black, design: .monospaced))
+                            .font(.system(size: 30, weight: .medium))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                            .monospacedDigit()
                             .lineLimit(1)
                             .minimumScaleFactor(0.7)
 
-                        ArgusHair()
+                        Rectangle()
+                            .fill(InstitutionalTheme.Colors.borderSubtle)
+                            .frame(height: 0.5)
 
                         HStack(spacing: 8) {
-                            v5StatTile(title: "NAKİT",
-                                       value: "₺\(String(format: "%.2f", bistBalance))",
-                                       tone: InstitutionalTheme.Colors.textPrimary)
-                            v5StatTile(title: "HİSSE DEĞERİ",
-                                       value: "₺\(String(format: "%.2f", portfolioValue))",
-                                       tone: InstitutionalTheme.Colors.Motors.aether)
+                            sadeStatTile(title: "Nakit",
+                                         value: "₺\(String(format: "%.2f", bistBalance))",
+                                         tone: InstitutionalTheme.Colors.textPrimary)
+                            sadeStatTile(title: "Hisse değeri",
+                                         value: "₺\(String(format: "%.2f", portfolioValue))",
+                                         tone: InstitutionalTheme.Colors.textPrimary)
                         }
 
-                        ArgusHair()
+                        Rectangle()
+                            .fill(InstitutionalTheme.Colors.borderSubtle)
+                            .frame(height: 0.5)
 
                         HStack(spacing: 12) {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("ARGUS BIST YÖNETİCİSİ")
-                                    .font(.system(size: 9, weight: .bold, design: .monospaced))
-                                    .tracking(1)
+                                Text("Otopilot")
+                                    .font(.system(size: 11))
                                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                                 Text(viewModel.isAutoPilotEnabled
-                                     ? "Aktif · Piyasa taranıyor"
-                                     : "Pasif · Manuel mod")
-                                    .font(.system(size: 11, weight: .semibold))
+                                     ? "Aktif · piyasa taranıyor"
+                                     : "Pasif · manuel mod")
+                                    .font(.system(size: 13))
                                     .foregroundColor(viewModel.isAutoPilotEnabled
                                                      ? InstitutionalTheme.Colors.aurora
                                                      : InstitutionalTheme.Colors.textSecondary)
@@ -90,49 +100,37 @@ struct BistPortfolioView: View {
                     .background(InstitutionalTheme.Colors.surface1)
                     .overlay(
                         RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                            .stroke(InstitutionalTheme.Colors.Motors.aether.opacity(0.35), lineWidth: 1)
+                            .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
                     )
                     .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous))
                     .padding(.horizontal)
                     
                     // MARK: - Portfolio List (V5)
                     if bistTrades.isEmpty {
-                        VStack(spacing: 18) {
-                            ArgusOrb(size: 80,
-                                     ringColor: InstitutionalTheme.Colors.Motors.aether,
-                                     glowColor: nil) {
-                                Image(systemName: "case.fill")
-                                    .font(.system(size: 30))
-                                    .foregroundColor(InstitutionalTheme.Colors.Motors.aether)
-                            }
+                        VStack(spacing: 14) {
+                            Image(systemName: "case")
+                                .font(.system(size: 28))
+                                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                             VStack(spacing: 4) {
-                                Text("PORTFÖYÜN BOŞ")
-                                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                                    .tracking(1.2)
+                                Text("Portföyün boş")
+                                    .font(.system(size: 14, weight: .medium))
                                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                 Text("BIST hisseleri ekleyerek başla.")
-                                    .font(InstitutionalTheme.Typography.caption)
+                                    .font(.system(size: 12))
                                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                             }
                             Button(action: { showSearch = true }) {
                                 HStack(spacing: 6) {
-                                    Image(systemName: "plus.circle.fill")
-                                        .font(.system(size: 12, weight: .bold))
-                                    Text("HİSSE EKLE")
-                                        .font(.system(size: 10, weight: .bold, design: .monospaced))
-                                        .tracking(0.8)
+                                    Image(systemName: "plus")
+                                        .font(.system(size: 12))
+                                    Text("Hisse ekle")
+                                        .font(.system(size: 13, weight: .medium))
                                 }
-                                .foregroundColor(InstitutionalTheme.Colors.Motors.aether)
-                                .padding(.horizontal, 18)
-                                .padding(.vertical, 12)
-                                .background(
-                                    RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm, style: .continuous)
-                                        .fill(InstitutionalTheme.Colors.Motors.aether.opacity(0.14))
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm, style: .continuous)
-                                        .stroke(InstitutionalTheme.Colors.Motors.aether.opacity(0.35), lineWidth: 1)
-                                )
+                                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 9)
+                                .background(InstitutionalTheme.Colors.surface2)
+                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                             }
                             .buttonStyle(.plain)
                         }
@@ -161,12 +159,11 @@ struct BistPortfolioView: View {
                 .padding(.top)
                 }
             }
-            .background(InstitutionalTheme.Colors.background.ignoresSafeArea())
-            .navigationBarHidden(true)
-            .sheet(isPresented: $showSearch) {
-                BistMarketView()
-                    .environmentObject(viewModel)
-            }
+        .background(InstitutionalTheme.Colors.background.ignoresSafeArea())
+        .navigationBarHidden(true)
+        .sheet(isPresented: $showSearch) {
+            BistMarketView()
+                .environmentObject(viewModel)
         }
         .overlay {
             if showDrawer {
@@ -186,27 +183,24 @@ struct BistPortfolioView: View {
         }
     }
 
-    /// V5 stat tile — NAKİT / HİSSE DEĞERİ karşılaştırması
-    private func v5StatTile(title: String, value: String, tone: Color) -> some View {
-        VStack(spacing: 4) {
+    /// Sade stat tile — sentence başlık + medium değer.
+    private func sadeStatTile(title: String, value: String, tone: Color) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
             Text(title)
-                .font(.system(size: 9, weight: .bold, design: .monospaced))
-                .tracking(1)
+                .font(.system(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Text(value)
-                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                .font(.system(size: 14, weight: .medium))
                 .foregroundColor(tone)
+                .monospacedDigit()
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 8)
+        .padding(.horizontal, 10)
         .background(InstitutionalTheme.Colors.surface2)
-        .overlay(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.border, lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     private func drawerSections(openSheet: @escaping (ArgusDrawerView.DrawerSheet) -> Void) -> [ArgusDrawerView.DrawerSection] {
@@ -216,8 +210,8 @@ struct BistPortfolioView: View {
             ArgusDrawerView.DrawerSection(
                 title: "Ekranlar",
                 items: [
-                    ArgusDrawerView.DrawerItem(title: "Alkindus Merkez", subtitle: "Yapay zeka ana sayfa", icon: "AlkindusIcon") {
-                        deepLinkManager.navigate(to: .home)
+                    ArgusDrawerView.DrawerItem(title: "Alkindus Merkez", subtitle: "Yapay zeka merkezi", icon: "AlkindusIcon") {
+                        NavigationRouter.shared.navigate(to: .alkindusDashboard)
                         showDrawer = false
                     },
                     ArgusDrawerView.DrawerItem(title: "Piyasalar", subtitle: "Kokpit ekranı", icon: "chart.line.uptrend.xyaxis") {
@@ -248,29 +242,8 @@ struct BistPortfolioView: View {
             )
         )
         
-        sections.append(
-            ArgusDrawerView.DrawerSection(
-                title: "Araçlar",
-                items: [
-                    ArgusDrawerView.DrawerItem(title: "Ekonomi Takvimi", subtitle: "Gercek takvim", icon: "calendar") {
-                        openSheet(.calendar)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Finans Sozlugu", subtitle: "Terimler", icon: "character.book.closed") {
-                        openSheet(.dictionary)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Unlu Finans Sozleri", subtitle: "Finans alintilari", icon: "quote.opening") {
-                        openSheet(.financeWisdom)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Sistem Durumu", subtitle: "Servis sagligi", icon: "waveform.path.ecg") {
-                        openSheet(.systemHealth)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Geri Bildirim", subtitle: "Sorun bildir", icon: "envelope") {
-                        openSheet(.feedback)
-                    }
-                ]
-            )
-        )
-        
+        sections.append(ArgusDrawerView.commonToolsSection(openSheet: openSheet))
+
         return sections
     }
 }

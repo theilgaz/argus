@@ -1,241 +1,269 @@
 import SwiftUI
 
-/// Chiron Öğrenme Dashboard
+/// Rejim öğrenme dashboard'u (eski adıyla Chiron Insights).
 /// Bileşen performanslarını ve öğrenilmiş ağırlıkları gösterir.
+///
+/// 2026-04-30 H-58 — sade refactor.
+/// Eski yapı: Theme (legacy DS) + raw .cyan/.purple/.white/.gray + emoji
+/// brain icon + "Chiron Akıllı Öğrenme" başlık + caps "Win:" + cornerRadius
+/// 12 yığını. Yeni: InstitutionalTheme + sentence başlık ("Rejim öğrenme") +
+/// sade hairline kartlar + sentence "Yapı/Trend/Momentum..." weight isimleri.
+/// Public API korundu — `init(symbol: String? = nil)`.
+
 struct ChironInsightsView: View {
     let symbol: String?
-    
+
     @State private var globalStats: [ComponentPerformanceService.ComponentStats] = []
     @State private var symbolStats: [ComponentPerformanceService.ComponentStats] = []
     @State private var learnedWeights: OrionWeightSnapshot?
     @State private var learningStatus: (hasLearning: Bool, confidence: Double, note: String)?
-    
+
     init(symbol: String? = nil) {
         self.symbol = symbol
     }
-    
+
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
-                // Header
+            VStack(spacing: 16) {
                 headerSection
-                
-                // Learning Status
+
                 if let status = learningStatus {
                     learningStatusCard(status)
                 }
-                
-                // Learned Weights
+
                 if let weights = learnedWeights {
                     learnedWeightsCard(weights)
                 }
-                
-                // Component Performance
+
                 if !symbolStats.isEmpty || !globalStats.isEmpty {
                     componentPerformanceSection
                 }
-                
-                Spacer()
+
+                Color.clear.frame(height: 24)
             }
-            .padding()
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
         }
-        .background(Theme.background)
-        .navigationTitle(" Chiron Öğrenme")
+        .background(InstitutionalTheme.Colors.background)
+        .navigationTitle("Rejim öğrenme")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { loadData() }
     }
-    
+
     // MARK: - Header
-    
+
     private var headerSection: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "brain.head.profile")
-                .font(.system(size: 48))
-                .foregroundColor(.cyan)
-            
-            Text("Chiron Akıllı Öğrenme")
-                .font(.title2.bold())
-                .foregroundColor(.white)
-            
-            Text(symbol != nil ? "Sembol: \(symbol!)" : "Global Analiz")
-                .font(.subheadline)
-                .foregroundColor(.gray)
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Rejim öğrenme")
+                .font(.system(size: 22, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+            Text(symbol != nil ? "Sembol: \(symbol!)" : "Tüm portföy")
+                .font(.system(size: 13))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
-        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.bottom, 4)
     }
-    
-    // MARK: - Learning Status Card
-    
+
+    // MARK: - Öğrenme Durumu Card
+
     private func learningStatusCard(_ status: (hasLearning: Bool, confidence: Double, note: String)) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Image(systemName: status.hasLearning ? "checkmark.circle.fill" : "clock.fill")
-                    .foregroundColor(status.hasLearning ? .green : .orange)
-                
-                Text("Öğrenme Durumu")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                
+                Text("Öğrenme durumu")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+
                 Spacer()
-                
+
                 if status.hasLearning {
-                    Text("\(Int(status.confidence * 100))%")
-                        .font(.caption.bold())
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(confidenceColor(status.confidence))
-                        .cornerRadius(8)
+                    Text("%\(Int(status.confidence * 100))")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(confidenceColor(status.confidence))
+                        .monospacedDigit()
+                } else {
+                    Text("Bekliyor")
+                        .font(.system(size: 12))
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
             }
-            
+
             Text(status.note)
-                .font(.subheadline)
-                .foregroundColor(.gray)
-            
-            // Confidence bar
+                .font(.system(size: 12))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+
             if status.hasLearning {
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         Rectangle()
-                            .fill(Color.gray.opacity(0.3))
-                            .frame(height: 6)
-                            .cornerRadius(3)
-                        
+                            .fill(InstitutionalTheme.Colors.surface2)
+                            .frame(height: 4)
+                            .cornerRadius(2)
+
                         Rectangle()
                             .fill(confidenceColor(status.confidence))
-                            .frame(width: geo.size.width * status.confidence, height: 6)
-                            .cornerRadius(3)
+                            .frame(width: geo.size.width * status.confidence, height: 4)
+                            .cornerRadius(2)
                     }
                 }
-                .frame(height: 6)
+                .frame(height: 4)
             }
         }
-        .padding()
-        .background(Theme.cardBackground)
-        .cornerRadius(12)
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(InstitutionalTheme.Colors.surface1)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
-    
-    // MARK: - Learned Weights Card
-    
+
+    // MARK: - Öğrenilmiş Ağırlıklar Card
+
     private func learnedWeightsCard(_ weights: OrionWeightSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: "slider.horizontal.3")
-                    .foregroundColor(.purple)
-                
-                Text("Öğrenilmiş Ağırlıklar")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                
-                Spacer()
+            Text("Öğrenilmiş ağırlıklar")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+
+            VStack(spacing: 10) {
+                weightBar(name: "Yapı",      value: weights.structure)
+                weightBar(name: "Trend",     value: weights.trend)
+                weightBar(name: "Momentum",  value: weights.momentum)
+                weightBar(name: "Formasyon", value: weights.pattern)
+                weightBar(name: "Volatilite", value: weights.volatility)
             }
-            
-            // Weight bars
-            weightBar(name: "Structure", value: weights.structure, color: .blue)
-            weightBar(name: "Trend", value: weights.trend, color: .green)
-            weightBar(name: "Momentum", value: weights.momentum, color: .orange)
-            weightBar(name: "Pattern", value: weights.pattern, color: .purple)
-            weightBar(name: "Volatility", value: weights.volatility, color: .red)
         }
-        .padding()
-        .background(Theme.cardBackground)
-        .cornerRadius(12)
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(InstitutionalTheme.Colors.surface1)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
-    
-    private func weightBar(name: String, value: Double, color: Color) -> some View {
-        HStack {
+
+    private func weightBar(name: String, value: Double) -> some View {
+        HStack(spacing: 10) {
             Text(name)
-                .font(.caption)
-                .foregroundColor(.gray)
-                .frame(width: 80, alignment: .leading)
-            
+                .font(.system(size: 12))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                .frame(width: 88, alignment: .leading)
+
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(height: 8)
-                        .cornerRadius(4)
-                    
+                        .fill(InstitutionalTheme.Colors.surface2)
+                        .frame(height: 4)
+                        .cornerRadius(2)
+
                     Rectangle()
-                        .fill(color)
-                        .frame(width: geo.size.width * min(1.0, value * 2.5), height: 8) // Scale for visibility
-                        .cornerRadius(4)
+                        .fill(InstitutionalTheme.Colors.textPrimary)
+                        .frame(width: geo.size.width * min(1.0, value * 2.5), height: 4)
+                        .cornerRadius(2)
                 }
             }
-            .frame(height: 8)
-            
-            Text("\(Int(value * 100))%")
-                .font(.caption.bold())
-                .foregroundColor(.white)
-                .frame(width: 40, alignment: .trailing)
+            .frame(height: 4)
+
+            Text("%\(Int(value * 100))")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                .monospacedDigit()
+                .frame(width: 44, alignment: .trailing)
         }
     }
-    
-    // MARK: - Component Performance Section
-    
+
+    // MARK: - Bileşen Performansı
+
     private var componentPerformanceSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(spacing: 0) {
             HStack {
-                Image(systemName: "chart.bar.fill")
-                    .foregroundColor(.cyan)
-                
-                Text("Bileşen Performansı")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                
+                Text("Bileşen performansı")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Spacer()
             }
-            
+            .padding(.horizontal, 14)
+            .padding(.top, 14)
+            .padding(.bottom, 8)
+
             let stats = symbol != nil && !symbolStats.isEmpty ? symbolStats : globalStats
-            
-            ForEach(stats.sorted(by: { $0.reliability > $1.reliability }), id: \.component) { stat in
-                componentRow(stat)
+            let sorted = stats.sorted(by: { $0.reliability > $1.reliability })
+
+            VStack(spacing: 0) {
+                ForEach(Array(sorted.enumerated()), id: \.element.component) { idx, stat in
+                    if idx > 0 {
+                        Rectangle()
+                            .fill(InstitutionalTheme.Colors.borderSubtle)
+                            .frame(height: 0.5)
+                            .padding(.leading, 14)
+                    }
+                    componentRow(stat)
+                }
             }
         }
-        .padding()
-        .background(Theme.cardBackground)
-        .cornerRadius(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(InstitutionalTheme.Colors.surface1)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
-    
+
     private func componentRow(_ stat: ComponentPerformanceService.ComponentStats) -> some View {
-        HStack {
+        HStack(spacing: 10) {
             Circle()
                 .fill(reliabilityColor(stat.reliability))
-                .frame(width: 8, height: 8)
-            
-            Text(stat.component.capitalized)
-                .font(.subheadline)
-                .foregroundColor(.white)
-                .frame(width: 80, alignment: .leading)
-            
+                .frame(width: 6, height: 6)
+
+            Text(componentLabel(stat.component))
+                .font(.system(size: 13))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+
             Spacer()
-            
+
             VStack(alignment: .trailing, spacing: 2) {
-                Text("Win: \(Int(stat.winRate))%")
-                    .font(.caption)
-                    .foregroundColor(stat.winRate > 50 ? .green : .red)
-                
+                Text("Kazanma %\(Int(stat.winRate))")
+                    .font(.system(size: 12))
+                    .foregroundColor(stat.winRate > 50
+                                     ? InstitutionalTheme.Colors.aurora
+                                     : InstitutionalTheme.Colors.crimson)
+                    .monospacedDigit()
                 Text("\(stat.signalCount) sinyal")
-                    .font(.caption2)
-                    .foregroundColor(.gray)
+                    .font(.system(size: 11))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                    .monospacedDigit()
             }
-            
-            // Reliability badge
+
             Text(reliabilityLabel(stat.reliability))
-                .font(.caption2.bold())
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(reliabilityColor(stat.reliability).opacity(0.2))
+                .font(.system(size: 11, weight: .medium))
                 .foregroundColor(reliabilityColor(stat.reliability))
-                .cornerRadius(4)
+                .frame(width: 64, alignment: .trailing)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 11)
+    }
+
+    /// Mitoloji bileşen kodlarını sentence Türkçe'ye çevir.
+    private func componentLabel(_ component: String) -> String {
+        switch component.lowercased() {
+        case "structure": return "Yapı"
+        case "trend": return "Trend"
+        case "momentum": return "Momentum"
+        case "pattern": return "Formasyon"
+        case "volatility": return "Volatilite"
+        default: return component.capitalized
         }
     }
-    
+
     // MARK: - Helpers
-    
+
     private func loadData() {
         globalStats = ComponentPerformanceService.shared.analyzeGlobalPerformance()
-        
+
         if let sym = symbol {
             symbolStats = ComponentPerformanceService.shared.analyzePerformance(for: sym)
             learnedWeights = ChironRegimeEngine.shared.getLearnedOrionWeights(symbol: sym)
@@ -246,19 +274,19 @@ struct ChironInsightsView: View {
             learningStatus = (totalSignals >= 10, Double(min(totalSignals, 20)) / 20.0, "\(totalSignals) trade analiz edildi")
         }
     }
-    
+
     private func confidenceColor(_ value: Double) -> Color {
-        if value >= 0.7 { return .green }
-        if value >= 0.5 { return .orange }
-        return .red
+        if value >= 0.7 { return InstitutionalTheme.Colors.aurora }
+        if value >= 0.5 { return InstitutionalTheme.Colors.titan }
+        return InstitutionalTheme.Colors.crimson
     }
-    
+
     private func reliabilityColor(_ value: Double) -> Color {
-        if value >= 0.6 { return .green }
-        if value >= 0.45 { return .orange }
-        return .red
+        if value >= 0.6 { return InstitutionalTheme.Colors.aurora }
+        if value >= 0.45 { return InstitutionalTheme.Colors.titan }
+        return InstitutionalTheme.Colors.crimson
     }
-    
+
     private func reliabilityLabel(_ value: Double) -> String {
         if value >= 0.6 { return "Güvenilir" }
         if value >= 0.45 { return "Nötr" }

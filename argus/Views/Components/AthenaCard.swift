@@ -1,47 +1,58 @@
 import SwiftUI
 
-// MARK: - Athena Card
-/// Chimera sinyallerini gösteren öğretici kart.
-/// Terminal estetiğine uygun, profesyonel tasarım.
+// MARK: - Sinyal Analizi Kartı (eski adıyla Athena Card)
+//
+// 2026-04-30 H-58 — sade refactor.
+// Eski yapı: caps "ATHENA" başlık + owl ikon + caps mono "Sinyal Analizi"
+// subtitle + caps mono "ACIKLAMA" / "ONERI" captions + raw .secondary/.primary
+// + Color(.systemGray6).opacity(0.5) legacy. Yeni: "Sinyal analizi"
+// sentence başlık (Athena mitoloji ismi gizli) + InstitutionalTheme tokenları
+// + sentence captions + sade hairline kart.
 
 struct AthenaCard: View {
     let signals: [ChimeraSignal]
-    
+
     var body: some View {
         if signals.isEmpty {
             EmptyView()
         } else {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 10) {
                 // Header
                 HStack {
-                    Image(systemName: "owl")
-                        .font(.system(size: 16, weight: .semibold))
-                    Text("ATHENA")
-                        .font(.system(size: 14, weight: .bold, design: .monospaced))
+                    Text("Sinyal analizi")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     Spacer()
-                    Text("Sinyal Analizi")
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
-                        .foregroundColor(.secondary)
+                    Text("\(signals.count) sinyal")
+                        .font(.system(size: 11))
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                        .monospacedDigit()
                 }
-                .foregroundColor(.primary)
-                
-                Divider()
-                    .background(Color.gray.opacity(0.3))
-                
+
+                Rectangle()
+                    .fill(InstitutionalTheme.Colors.borderSubtle)
+                    .frame(height: 0.5)
+
                 // Signal List
-                ForEach(signals) { signal in
-                    AthenaSignalRow(signal: signal)
+                VStack(spacing: 0) {
+                    ForEach(Array(signals.enumerated()), id: \.element.id) { idx, signal in
+                        if idx > 0 {
+                            Rectangle()
+                                .fill(InstitutionalTheme.Colors.borderSubtle)
+                                .frame(height: 0.5)
+                                .padding(.leading, 14)
+                        }
+                        AthenaSignalRow(signal: signal)
+                    }
                 }
             }
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemGray6).opacity(0.5))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .strokeBorder(Color.gray.opacity(0.2), lineWidth: 1)
-                    )
+            .padding(14)
+            .background(InstitutionalTheme.Colors.surface1)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
             )
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
     }
 }
@@ -51,72 +62,74 @@ struct AthenaCard: View {
 struct AthenaSignalRow: View {
     let signal: ChimeraSignal
     @State private var isExpanded = false
-    
+
     private var signalColor: Color {
-        Color(hex: signal.type.severityColor) ?? .gray
+        Color(hex: signal.type.severityColor) ?? InstitutionalTheme.Colors.textTertiary
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // Main Row (Tappable)
             Button(action: { withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() } }) {
                 HStack(spacing: 12) {
-                    // Color Indicator
-                    RoundedRectangle(cornerRadius: 2)
+                    // Color Indicator (sade — ince çubuk)
+                    Rectangle()
                         .fill(signalColor)
-                        .frame(width: 4, height: 32)
-                    
-                    // Signal Info
+                        .frame(width: 3, height: 28)
+                        .cornerRadius(1.5)
+
+                    // Signal Info — sentence
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(signal.type.turkishName.uppercased())
-                            .font(.system(size: 13, weight: .bold, design: .monospaced))
-                            .foregroundColor(.primary)
-                        
+                        Text(signal.type.turkishName)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+
                         Text(signal.title)
-                            .font(.system(size: 11, weight: .regular, design: .monospaced))
-                            .foregroundColor(.secondary)
+                            .font(.system(size: 11))
+                            .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                            .lineLimit(1)
                     }
-                    
+
                     Spacer()
-                    
-                    // Expand Indicator
+
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 11))
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
+                .padding(.vertical, 8)
+                .contentShape(Rectangle())
             }
-            .buttonStyle(PlainButtonStyle())
-            
+            .buttonStyle(.plain)
+
             // Expanded Content
             if isExpanded {
                 VStack(alignment: .leading, spacing: 10) {
-                    // Description
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("ACIKLAMA")
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
-                            .foregroundColor(.secondary)
+                        Text("Açıklama")
+                            .font(.system(size: 11))
+                            .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         Text(signal.type.turkishDescription)
-                            .font(.system(size: 12, weight: .regular))
-                            .foregroundColor(.primary)
+                            .font(.system(size: 12))
+                            .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                             .fixedSize(horizontal: false, vertical: true)
+                            .lineSpacing(2)
                     }
-                    
-                    // Advice
+
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("ONERI")
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
-                            .foregroundColor(.secondary)
+                        Text("Öneri")
+                            .font(.system(size: 11))
+                            .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         Text(signal.type.turkishAdvice)
-                            .font(.system(size: 12, weight: .regular))
-                            .foregroundColor(.primary)
+                            .font(.system(size: 12))
+                            .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                             .fixedSize(horizontal: false, vertical: true)
+                            .lineSpacing(2)
                     }
                 }
-                .padding(.leading, 16)
-                .padding(.top, 4)
+                .padding(.leading, 15)
+                .padding(.bottom, 10)
             }
         }
-        .padding(.vertical, 4)
     }
 }
 

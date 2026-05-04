@@ -18,13 +18,17 @@ struct BistTrendIndicator: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
-                    ArgusSectionCaption("BIST TREND")
-                    ArgusChip(trendState.rawValue.uppercased(), tone: trendTone)
+                    Text("BIST trend")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                    Text(trendState.rawValue)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(trendTone.foreground)
                 }
                 HStack(spacing: 10) {
-                    miniStat("MOMENTUM", value: String(format: "%%%.1f", momentum * 100))
+                    miniStat("Momentum", value: String(format: "%%%.1f", momentum * 100))
                     miniStat("ADX", value: String(format: "%.1f", trend))
-                    miniStat("VOLATİLİTE", value: volatility)
+                    miniStat("Volatilite", value: volatility)
                 }
             }
             Spacer()
@@ -34,7 +38,7 @@ struct BistTrendIndicator: View {
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
-                .stroke(trendColor.opacity(0.35), lineWidth: 1)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
     }
@@ -145,13 +149,11 @@ struct OrionDetailView: View {
                             .frame(height: 340)
                             .padding(.bottom, 8)
                         
-                        // MARK: 3. VERBAL SUMMARY (V5 kartı)
+                        // MARK: 3. VERBAL SUMMARY (sade kart)
                         VStack(alignment: .leading, spacing: 10) {
-                            HStack {
-                                ArgusSectionCaption("PİYASA DURUMU")
-                                Spacer()
-                                ArgusChip("ORION", tone: .motor(.orion), icon: .orion)
-                            }
+                            Text("Piyasa durumu")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                             Text(generateVerbalSummary(orion: orion))
                                 .font(.subheadline)
                                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
@@ -374,52 +376,34 @@ struct OrionDetailView: View {
         }
     }
     
-    // MARK: - HEADER
+    // MARK: - HEADER (sade)
     private var headerView: some View {
-        // V5.B-1 — Orion detay header. Motor orb + büyük skor + verdict pill.
-        HStack(spacing: 14) {
-            ArgusOrb(size: 56,
-                     ringColor: InstitutionalTheme.Colors.Motors.orion,
-                     glowColor: InstitutionalTheme.Colors.Motors.orion) {
-                MotorLogo(.orion, size: 30)
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
+        // 2026-04-30 H-58 — sade. Orb + MotorLogo + caps "ORION · TEKNİK ANALİZ"
+        // + 32pt black mono skor + ArgusPill verdict gitti.
+        HStack(alignment: .firstTextBaseline) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(symbol)
-                    .font(.system(size: 22, weight: .heavy, design: .monospaced))
+                    .font(.system(size: 18, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                HStack(spacing: 6) {
-                    Text("ORION")
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .tracking(1.2)
-                        .foregroundColor(InstitutionalTheme.Colors.Motors.orion)
-                    Text("·")
-                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                    Text("TEKNİK ANALİZ")
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
-                        .tracking(1)
-                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                }
+                Text("Teknik analiz")
+                    .font(.system(size: 12))
+                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             }
 
             Spacer()
 
-            VStack(alignment: .trailing, spacing: 4) {
+            VStack(alignment: .trailing, spacing: 2) {
                 Text("\(Int(orion.score))")
-                    .font(.system(size: 32, weight: .black, design: .monospaced))
+                    .font(.system(size: 28, weight: .medium))
                     .foregroundColor(scoreColor(orion.score))
-                ArgusPill(getVerdictSummary(score: orion.score).uppercased(),
-                          tone: scoreTone(orion.score))
+                    .monospacedDigit()
+                Text(getVerdictSummary(score: orion.score))
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(scoreColor(orion.score))
             }
         }
         .padding(14)
         .background(InstitutionalTheme.Colors.background)
-    }
-
-    private func scoreTone(_ score: Double) -> ArgusChipTone {
-        if score >= 65 { return .aurora }
-        if score >= 45 { return .titan }
-        return .crimson
     }
     
     // MARK: - HELPERS

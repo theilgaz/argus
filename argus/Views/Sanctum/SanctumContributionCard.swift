@@ -30,16 +30,16 @@ struct SanctumContributionCard: View {
         if !rows.isEmpty {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
-                    Text("KONSEY KATKI DAGILIMI")
-                        .font(InstitutionalTheme.Typography.micro)
-                        .tracking(1.2)
+                    Text("Konsey katkı dağılımı")
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                    
+
                     Spacer()
-                    
-                    Text(String(format: "NET %+.1f", netImpact))
-                        .font(InstitutionalTheme.Typography.dataSmall)
+
+                    Text(String(format: "Net %+.1f", netImpact))
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundColor(netColor)
+                        .monospacedDigit()
                 }
                 
                 HStack(spacing: 8) {

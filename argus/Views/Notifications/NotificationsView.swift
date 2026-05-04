@@ -11,14 +11,25 @@ struct NotificationsView: View {
     @ObservedObject var viewModel: TradingViewModel
     var deepLinkID: String? = nil
     @StateObject private var deepLinkManager = DeepLinkManager.shared
+    @EnvironmentObject private var router: NavigationRouter
+    @Environment(\.dismiss) private var dismiss
     @State private var showDrawer = false
+
+    private var isPushed: Bool { !router.navigationStack.isEmpty }
 
     private var unreadCount: Int {
         store.notifications.filter { !$0.isRead }.count
     }
 
     private var headerActions: [ArgusNavHeader.Action] {
-        var list: [ArgusNavHeader.Action] = [.menu({ showDrawer = true })]
+        var list: [ArgusNavHeader.Action] = []
+        if !isPushed {
+            list.append(.menu({
+                withAnimation(ArgusDrawerView.toggleAnimation) {
+                    showDrawer = true
+                }
+            }))
+        }
         if !store.notifications.isEmpty {
             list.append(.custom(sfSymbol: "checkmark.circle",
                                 action: { store.markAllRead() }))
@@ -29,50 +40,47 @@ struct NotificationsView: View {
     private var headerStatus: ArgusNavHeader.Status {
         if store.notifications.isEmpty {
             return .custom(dotColor: InstitutionalTheme.Colors.textTertiary,
-                           label: "GÖZCÜ HAZIR",
-                           trailing: "SİNYAL BEKLENİYOR")
+                           label: "Hazır",
+                           trailing: "Sinyal bekleniyor")
         }
         if unreadCount == 0 {
             return .custom(dotColor: InstitutionalTheme.Colors.aurora,
-                           label: "TÜM RAPORLAR OKUNDU",
-                           trailing: "\(store.notifications.count) KAYIT")
+                           label: "Hepsi okundu",
+                           trailing: "\(store.notifications.count) kayıt")
         }
         return .custom(dotColor: InstitutionalTheme.Colors.crimson,
-                       label: "\(unreadCount) OKUNMAMIŞ",
-                       trailing: "\(store.notifications.count) KAYIT")
+                       label: "\(unreadCount) okunmamış",
+                       trailing: "\(store.notifications.count) kayıt")
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                InstitutionalTheme.Colors.background.ignoresSafeArea()
+        // 2026-05-03 H-59: nested NavigationStack kaldırıldı.
+        ZStack {
+            InstitutionalTheme.Colors.background.ignoresSafeArea()
 
-                VStack(spacing: 0) {
+            VStack(spacing: 0) {
                     ArgusNavHeader(
-                        title: "GELEN KUTUSU",
-                        subtitle: "SİNYAL · UYARI · RAPOR",
-                        leadingDeco: .bars3([.holo, .text, .text]),
+                        title: "Gelen kutusu",
+                        subtitle: "Sinyal, uyarı, rapor",
+                        leadingDeco: isPushed
+                            ? .back(onTap: { dismiss() })
+                            : .bars3([.holo, .text, .text]),
                         actions: headerActions,
                         status: headerStatus
                     )
 
                     if store.notifications.isEmpty {
                         Spacer()
-                        VStack(spacing: 18) {
-                            ArgusOrb(size: 80,
-                                     ringColor: InstitutionalTheme.Colors.border,
-                                     glowColor: nil) {
-                                Image(systemName: "bell.slash")
-                                    .font(.system(size: 30))
-                                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                            }
+                        VStack(spacing: 12) {
+                            Image(systemName: "bell.slash")
+                                .font(.system(size: 28))
+                                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                             VStack(spacing: 4) {
-                                Text("HENÜZ BİLDİRİM YOK")
-                                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                                    .tracking(1.2)
+                                Text("Henüz bildirim yok")
+                                    .font(.system(size: 14, weight: .medium))
                                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                                Text("Argus gözcüsü arka planda fırsat arıyor.")
-                                    .font(InstitutionalTheme.Typography.caption)
+                                Text("Arka planda fırsat aranıyor.")
+                                    .font(.system(size: 12))
                                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                                     .multilineTextAlignment(.center)
                             }
@@ -93,21 +101,20 @@ struct NotificationsView: View {
                         }
                     }
                 }
-            }
-            .onAppear {
-                if let idString = deepLinkID, let id = UUID(uuidString: idString) {
-                    if let note = store.notifications.first(where: { $0.id == id }) {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            selectedNotification = note
-                            store.markAsRead(note)
-                        }
+        }
+        .onAppear {
+            if let idString = deepLinkID, let id = UUID(uuidString: idString) {
+                if let note = store.notifications.first(where: { $0.id == id }) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        selectedNotification = note
+                        store.markAsRead(note)
                     }
                 }
             }
-            .navigationBarHidden(true)
-            .sheet(item: $selectedNotification) { note in
-                ArgusReportDetailView(notification: note, viewModel: viewModel)
-            }
+        }
+        .navigationBarHidden(true)
+        .sheet(item: $selectedNotification) { note in
+            ArgusReportDetailView(notification: note, viewModel: viewModel)
         }
         .overlay {
             if showDrawer {
@@ -126,8 +133,8 @@ struct NotificationsView: View {
             ArgusDrawerView.DrawerSection(
                 title: "Ekranlar",
                 items: [
-                    ArgusDrawerView.DrawerItem(title: "Alkindus Merkez", subtitle: "Yapay zeka ana sayfa", icon: "AlkindusIcon") {
-                        deepLinkManager.navigate(to: .home)
+                    ArgusDrawerView.DrawerItem(title: "Alkindus Merkez", subtitle: "Yapay zeka merkezi", icon: "AlkindusIcon") {
+                        NavigationRouter.shared.navigate(to: .alkindusDashboard)
                         showDrawer = false
                     },
                     ArgusDrawerView.DrawerItem(title: "Piyasalar", subtitle: "Kokpit ekranı", icon: "chart.line.uptrend.xyaxis") {
@@ -158,29 +165,8 @@ struct NotificationsView: View {
             )
         )
         
-        sections.append(
-            ArgusDrawerView.DrawerSection(
-                title: "Araçlar",
-                items: [
-                    ArgusDrawerView.DrawerItem(title: "Ekonomi Takvimi", subtitle: "Gercek takvim", icon: "calendar") {
-                        openSheet(.calendar)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Finans Sozlugu", subtitle: "Terimler", icon: "character.book.closed") {
-                        openSheet(.dictionary)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Unlu Finans Sozleri", subtitle: "Finans alintilari", icon: "quote.opening") {
-                        openSheet(.financeWisdom)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Sistem Durumu", subtitle: "Servis sagligi", icon: "waveform.path.ecg") {
-                        openSheet(.systemHealth)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Geri Bildirim", subtitle: "Sorun bildir", icon: "envelope") {
-                        openSheet(.feedback)
-                    }
-                ]
-            )
-        )
-        
+        sections.append(ArgusDrawerView.commonToolsSection(openSheet: openSheet))
+
         return sections
     }
 }

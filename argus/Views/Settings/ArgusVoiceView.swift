@@ -42,12 +42,11 @@ struct ArgusVoiceView: View {
                         }
 
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Argus Voice")
-                                .font(.system(size: 18, weight: .black))
+                            Text("Sesli asistan")
+                                .font(.system(size: 17, weight: .medium))
                                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                            Text("SESLİ ASİSTAN · ONLINE")
-                                .font(InstitutionalTheme.Typography.dataMicro)
-                                .tracking(1.2)
+                            Text("Çevrimiçi")
+                                .font(.system(size: 11))
                                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         }
 

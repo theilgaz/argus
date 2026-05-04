@@ -3,11 +3,15 @@ import Combine
 
 enum NavigationRoute: Hashable, Identifiable {
     var id: Self { self }
-    // MARK: - Main Tabs
-    case home
+    // MARK: - Main Tabs (TabItem ile aynı isimler — DeepLinkManager üstünden)
     case kokpit
     case portfolio
     case settings
+
+    // MARK: - Alkindus Merkez (yapay zeka dashboard'u)
+    // Önceden NavigationRoute.home kullanılıyordu ama TabItem.home (MarketView)
+    // ile çakışıyordu. Ayrı isimle geçildi: net olarak Alkindus Merkez.
+    case alkindusDashboard
 
     // MARK: - Market Views
     case stockDetail(symbol: String)

@@ -23,8 +23,8 @@ struct ArgusDrawerView: View {
 
     enum DrawerSheet: Identifiable {
         case systemGuide
-        case engineGuide
-        case regimeGuide
+        case engineGuide   // ArgusAcademyHubSheet'te ders sheet'i olarak kullanılıyor
+        case regimeGuide   // ArgusAcademyHubSheet'te ders sheet'i olarak kullanılıyor
         case dictionary
         case calendar
         case systemHealth
@@ -49,6 +49,12 @@ struct ArgusDrawerView: View {
         }
     }
 
+    /// Drawer açıp kapatma için ortak animation tokeni — parent view'lar
+    /// `withAnimation(ArgusDrawerView.toggleAnimation) { showDrawer.toggle() }`
+    /// ile çağırmalı.
+    /// 2026-05-03 H-59: drawer aniden çıkıp kayboluyordu, animasyon eklendi.
+    static let toggleAnimation: Animation = .spring(response: 0.32, dampingFraction: 0.86)
+
     private var sections: [DrawerSection] {
         let baseSections = buildSections { sheet in
             activeSheet = sheet
@@ -69,10 +75,23 @@ struct ArgusDrawerView: View {
     }
 
     var body: some View {
+        // 2026-05-03 H-59: navigasyon bug fix.
+        //   • HStack'in sağ tarafında `Spacer()` yerine `Color.clear` +
+        //     contentShape + onTapGesture — Spacer tap event'i tutarsız
+        //     yutmuyordu, "drawer dışına bas kapansın" bazen çalışmıyordu.
+        //   • Backdrop opacity .ignoresSafeArea + tap birlikte güvenli olsun
+        //     diye contentShape eklendi.
+        //   • Sheet kapatınca drawer'ı kapatmak yerine açık bırakıyoruz —
+        //     kullanıcı sheet'ten çıkınca menüye geri dönmek isteyebilir.
         ZStack {
             InstitutionalTheme.Colors.background.opacity(0.78)
                 .ignoresSafeArea()
-                .onTapGesture { isPresented = false }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    withAnimation(ArgusDrawerView.toggleAnimation) {
+                        isPresented = false
+                    }
+                }
 
             HStack(spacing: 0) {
                 ScrollView(.vertical, showsIndicators: false) {
@@ -96,15 +115,20 @@ struct ArgusDrawerView: View {
                 .frame(width: 320)
                 .background(InstitutionalTheme.Colors.background)
 
-                Spacer()
+                // Sağ alan — explicit tap area (Spacer tap event'i yutmuyordu)
+                Color.clear
+                    .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                    withAnimation(ArgusDrawerView.toggleAnimation) {
+                        isPresented = false
+                    }
+                }
             }
         }
         .transition(.move(edge: .leading))
         .sheet(item: $activeSheet) { sheet in
             sheetContent(for: sheet)
-                .onDisappear {
-                    isPresented = false
-                }
         }
     }
 
@@ -152,7 +176,11 @@ struct ArgusDrawerView: View {
 
             Spacer()
 
-            Button { isPresented = false } label: {
+            Button {
+                withAnimation(ArgusDrawerView.toggleAnimation) {
+                    isPresented = false
+                }
+            } label: {
                 Image(systemName: "xmark")
                     .font(.system(size: 15, weight: .regular))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
@@ -352,6 +380,32 @@ struct ArgusDrawerView: View {
     private func isLearningItem(_ title: String) -> Bool {
         let normalizedTitle = normalized(title)
         return normalizedTitle.contains("egitim") || normalizedTitle.contains("rehber") || normalizedTitle.contains("akademi")
+    }
+
+    /// Tüm parent view'ların kullandığı ortak "Araçlar" bölümü.
+    /// Önceden 5 farklı parent view'da aynı kod kopyalanıyordu —
+    /// tek source-of-truth burada.
+    static func commonToolsSection(openSheet: @escaping (DrawerSheet) -> Void) -> DrawerSection {
+        DrawerSection(
+            title: "Araçlar",
+            items: [
+                DrawerItem(title: "Ekonomi Takvimi", subtitle: "Gerçek takvim", icon: "calendar") {
+                    openSheet(.calendar)
+                },
+                DrawerItem(title: "Finans Sözlüğü", subtitle: "Terimler", icon: "character.book.closed") {
+                    openSheet(.dictionary)
+                },
+                DrawerItem(title: "Ünlü Finans Sözleri", subtitle: "Finans alıntıları", icon: "quote.opening") {
+                    openSheet(.financeWisdom)
+                },
+                DrawerItem(title: "Sistem Durumu", subtitle: "Servis sağlığı", icon: "waveform.path.ecg") {
+                    openSheet(.systemHealth)
+                },
+                DrawerItem(title: "Geri Bildirim", subtitle: "Sorun bildir", icon: "envelope") {
+                    openSheet(.feedback)
+                }
+            ]
+        )
     }
 }
 

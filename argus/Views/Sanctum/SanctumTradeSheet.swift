@@ -33,7 +33,7 @@ struct SanctumTradeSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section(header: Text("ISLEM DETAYLARI")) {
+                Section(header: Text("İşlem detayları")) {
                     HStack {
                         Text("Sembol")
                         Spacer()
@@ -41,15 +41,15 @@ struct SanctumTradeSheet: View {
                     }
 
                     HStack {
-                        Text("Islem")
+                        Text("İşlem")
                         Spacer()
-                        Text(action == .buy ? "ALIS" : "SATIS")
+                        Text(action == .buy ? "Alış" : "Satış")
                             .foregroundColor(action == .buy ? SanctumTheme.auroraGreen : SanctumTheme.crimsonRed)
-                            .bold()
+                            .fontWeight(.medium)
                     }
 
                     HStack {
-                        Text("Mevcut Fiyat")
+                        Text("Mevcut fiyat")
                         Spacer()
                         if let quote = viewModel.quotes[symbol] {
                             Text(String(format: "%.2f", quote.currentPrice))

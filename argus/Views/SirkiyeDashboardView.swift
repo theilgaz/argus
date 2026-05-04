@@ -1,14 +1,22 @@
 import SwiftUI
 
-// MARK: - SirkiyeDashboardView (in-place refactor — ArgusDesignKit v1)
-//
-// Tek dokunuş: kortex skoru + mod etiketi + canlı BIST 100 endeksi.
-// Tıklanınca SirkiyeAetherView açılır (mevcut davranış korunur).
-// Veri kaynakları:
-//   • viewModel.bistAtmosphere           (anlık karar)
-//   • SirkiyeAetherEngine.shared.analyze (fallback makro snapshot)
-//   • BorsaPyProvider.shared.getXU100()  (endeks canlı)
-// Demo veri yok. Empty/loading durumu status etiketi ile ifade edilir.
+/// Sirkiye nabız özet kartı (ana sayfa Sirkiye tab).
+///
+/// 2026-05-03 H-60: Global tab'daki AetherDashboardHUD ile aynı yapıya
+/// çekildi — kullanıcı sekme değiştirince zihinsel haritası bozulmuyor.
+///
+/// Eski yapı (3 sütun: 56pt gradient ring + Duruş bloğu + BIST 100 + delta,
+/// üstünde ayrı "Sirkiye nabzı" header + statusPill) tutarsızdı. Global
+/// tarafta sade "Bugün + sıfat + skor" 2 sütun varken Sirkiye'de her şey
+/// vardı.
+///
+/// Yeni yapı:
+///   • Üst kart (Global'la aynı dilde): "Bugün" başlık + "mod · duruş"
+///     sıfat zinciri + sağda "Nabız" + büyük skor (skora göre tonlu)
+///   • Alt strip: BIST 100 sade satır (caption + değer + delta)
+///
+/// Tap → SirkiyeAetherView detay sheet (mevcut davranış aynen).
+/// Public API korundu: `init(viewModel: TradingViewModel)`.
 
 struct SirkiyeDashboardView: View {
     @ObservedObject var viewModel: TradingViewModel
@@ -19,7 +27,7 @@ struct SirkiyeDashboardView: View {
     @State private var fallbackMacroScore: Double = 50
     @State private var fallbackMacroReady = false
 
-    // MARK: - Derived Data
+    // MARK: - Derived data
 
     private var atmosphere: (score: Double, mode: MarketMode, reason: String) {
         if let decision = viewModel.bistAtmosphere {
@@ -31,16 +39,6 @@ struct SirkiyeDashboardView: View {
         }
     }
 
-    private var statusIndicator: (color: Color, text: String) {
-        if viewModel.bistAtmosphere != nil {
-            return (InstitutionalTheme.Colors.aurora, "Canlı")
-        } else if fallbackMacroReady {
-            return (InstitutionalTheme.Colors.holo, "Makro")
-        } else {
-            return (InstitutionalTheme.Colors.titan, "Yükleniyor")
-        }
-    }
-
     private var xu100DisplayValue: String {
         xu100Value > 0 ? String(format: "%.0f", xu100Value) : "—"
     }
@@ -48,20 +46,10 @@ struct SirkiyeDashboardView: View {
     // MARK: - Body
 
     var body: some View {
-        Button(action: { showDetails = true }) {
-            ArgusCard(style: .elevated, padding: 16) {
-                VStack(alignment: .leading, spacing: 14) {
-                    headerRow
-                    mainRow
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
+        VStack(spacing: 12) {
+            heroCard
+            xu100Strip
         }
-        .buttonStyle(.plain)
-        .padding(.horizontal, 16)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(accessibilitySummary)
-        .accessibilityHint(Text("Sirkiye Aether detayını aç"))
         .onAppear {
             Task {
                 if viewModel.bistAtmosphere == nil {
@@ -79,107 +67,96 @@ struct SirkiyeDashboardView: View {
         }
     }
 
-    // MARK: - Header Row
+    // MARK: - Hero kartı (Global AetherDashboardHUD ile aynı dil)
 
-    // 2026-04-30 H-49 — sade. ArgusSectionCaption "SİRKİYE KORTEKS" caps
-    // mono + 16pt .black mode + tinted capsule status pill kalktı.
-    // Yerine sade label + 17pt medium başlık + sade dot+text status.
-    private var headerRow: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Sirkiye nabzı")
-                    .font(.system(size: 12))
-                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                    .accessibilityAddTraits(.isHeader)
+    private var heroCard: some View {
+        Button(action: { showDetails = true }) {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Bugün")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                        .lineLimit(1)
+                    Text(adjectivePhrase)
+                        .font(.system(size: 13))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                        .lineLimit(1)
+                }
 
-                Text(modeDisplayText)
-                    .font(.system(size: 17, weight: .medium))
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
+                Spacer(minLength: 8)
+
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text("Nabız")
+                        .font(.system(size: 11))
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                    Text("\(Int(atmosphere.score))")
+                        .font(.system(size: 30, weight: .medium))
+                        .foregroundColor(scoreColor)
+                        .monospacedDigit()
+                }
             }
-            Spacer(minLength: 8)
-            statusPill
+            .padding(.horizontal, 16)
+            .padding(.vertical, 18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(InstitutionalTheme.Colors.surface1)
+            .overlay(
+                RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
+                    .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous))
         }
+        .buttonStyle(.plain)
+        .padding(.horizontal, 16)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilitySummary)
+        .accessibilityHint(Text("Sirkiye makro detayını aç"))
     }
 
-    private var statusPill: some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(statusIndicator.color)
-                .frame(width: 6, height: 6)
-            Text(statusIndicator.text)
-                .font(.system(size: 12))
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-        }
-    }
+    // MARK: - BIST 100 strip (sade tek satır)
 
-    // MARK: - Main Row
-
-    private var mainRow: some View {
-        HStack(alignment: .center, spacing: 16) {
-            scoreRing
-            stanceBlock
-            Spacer(minLength: 8)
-            xu100Block
-        }
-    }
-
-    private var scoreRing: some View {
-        ZStack {
-            Circle()
-                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 4)
-                .frame(width: 56, height: 56)
-
-            Circle()
-                .trim(from: 0, to: CGFloat(max(0, min(1, atmosphere.score / 100.0))))
-                .stroke(
-                    AngularGradient(gradient: Gradient(colors: modeColors), center: .center),
-                    style: StrokeStyle(lineWidth: 4, lineCap: .round)
-                )
-                .frame(width: 56, height: 56)
-                .rotationEffect(.degrees(-90))
-
-            Text("\(Int(atmosphere.score))")
-                .font(.system(.title3, design: .rounded))
-                .fontWeight(.heavy)
-                .monospacedDigit()
-                .foregroundColor(scoreColor)
-        }
-        .frame(width: 56, height: 56)
-    }
-
-    // 2026-04-30 H-49 sade — caps mono micro etiketler ve heavy mono
-    // değerler sentence case + medium fontlara çekildi.
-    private var stanceBlock: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("Duruş")
-                .font(.system(size: 11))
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-
-            Text(stanceText)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(stanceColor)
-                .lineLimit(1)
-        }
-    }
-
-    private var xu100Block: some View {
-        VStack(alignment: .trailing, spacing: 2) {
+    private var xu100Strip: some View {
+        HStack(spacing: 8) {
             Text("BIST 100")
                 .font(.system(size: 11))
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-
-            Text(xu100DisplayValue)
-                .font(.system(size: 17, weight: .medium))
-                .monospacedDigit()
-                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                .lineLimit(1)
-
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+            Spacer()
             if xu100Value > 0 {
-                ArgusDeltaPill(delta: xu100Change, isPercent: true, compact: true)
+                Text(xu100DisplayValue)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .monospacedDigit()
+                Text(String(format: "%+.2f%%", xu100Change))
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(xu100Change >= 0
+                                     ? InstitutionalTheme.Colors.aurora
+                                     : InstitutionalTheme.Colors.crimson)
+                    .monospacedDigit()
+            } else {
+                Text("yükleniyor")
+                    .font(.system(size: 12))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
         }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 11)
+        .background(InstitutionalTheme.Colors.surface1)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .padding(.horizontal, 16)
+    }
+
+    // MARK: - Sıfat zinciri (mod · duruş tek satır)
+
+    /// Global'da "İyimser, hareketli" gibi 2 sıfat var. Sirkiye'de mod
+    /// (Aşırı korku/Açgözlü vs) + duruş (Defansif/Risk açık vs) birleşir.
+    private var adjectivePhrase: String {
+        let mode = modeDisplayText.lowercased()
+        let stance = stanceText.lowercased()
+        if stance == "bekleniyor" { return mode }
+        return "\(mode) · \(stance)"
     }
 
     // MARK: - Data Loading
@@ -204,25 +181,13 @@ struct SirkiyeDashboardView: View {
         }
     }
 
-    // MARK: - Derived Styling
-
-    private var modeColors: [Color] {
-        switch atmosphere.mode {
-        case .panic:        return [InstitutionalTheme.Colors.crimson, InstitutionalTheme.Colors.titan]
-        case .extremeFear:  return [InstitutionalTheme.Colors.crimson, InstitutionalTheme.Colors.textSecondary]
-        case .fear:         return [InstitutionalTheme.Colors.titan, InstitutionalTheme.Colors.textSecondary]
-        case .neutral:      return [InstitutionalTheme.Colors.holo, InstitutionalTheme.Colors.textSecondary]
-        case .greed:        return [InstitutionalTheme.Colors.aurora, InstitutionalTheme.Colors.holo]
-        case .extremeGreed: return [InstitutionalTheme.Colors.aurora, InstitutionalTheme.Colors.titan]
-        case .complacency:  return [InstitutionalTheme.Colors.textSecondary, InstitutionalTheme.Colors.textTertiary]
-        }
-    }
+    // MARK: - Derived styling
 
     private var scoreColor: Color {
         if atmosphere.score >= 70 { return InstitutionalTheme.Colors.aurora }
-        else if atmosphere.score >= 50 { return InstitutionalTheme.Colors.holo }
-        else if atmosphere.score >= 30 { return InstitutionalTheme.Colors.titan }
-        else { return InstitutionalTheme.Colors.crimson }
+        if atmosphere.score >= 50 { return InstitutionalTheme.Colors.holo }
+        if atmosphere.score >= 30 { return InstitutionalTheme.Colors.titan }
+        return InstitutionalTheme.Colors.crimson
     }
 
     /// 2026-04-30 H-49 — sade. Caps "PANİK MOD / AŞIRI KORKU" → sentence
@@ -261,18 +226,6 @@ struct SirkiyeDashboardView: View {
         }
     }
 
-    private var stanceColor: Color {
-        guard let decision = viewModel.bistAtmosphere else {
-            return InstitutionalTheme.Colors.textSecondary
-        }
-        switch decision.stance {
-        case .riskOff:   return InstitutionalTheme.Colors.crimson
-        case .defensive: return InstitutionalTheme.Colors.titan
-        case .cautious:  return InstitutionalTheme.Colors.holo
-        case .riskOn:    return InstitutionalTheme.Colors.aurora
-        }
-    }
-
     // MARK: - Accessibility
 
     private var accessibilitySummary: Text {
@@ -280,7 +233,7 @@ struct SirkiyeDashboardView: View {
             ? String(format: "%+.2f yüzde", xu100Change)
             : "endeks yükleniyor"
         return Text(
-            "Sirkiye Korteks, \(modeDisplayText), skor \(Int(atmosphere.score)), duruş \(stanceText). " +
+            "Bugün \(modeDisplayText.lowercased()), \(stanceText.lowercased()), nabız \(Int(atmosphere.score)). " +
             "BIST 100 \(xu100DisplayValue), \(changeStr)."
         )
     }

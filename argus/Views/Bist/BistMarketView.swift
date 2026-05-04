@@ -55,25 +55,25 @@ struct BistMarketView: View {
     }
     
     var body: some View {
-        NavigationStack {
-            ZStack {
-                InstitutionalTheme.Colors.background.ignoresSafeArea()
-                VStack(spacing: 0) {
+        // 2026-05-03 H-59: nested NavigationStack kaldırıldı.
+        // Sheet olarak açan caller (örn. BistPortfolioView) kendi NavigationStack
+        // wrapper'ını sağlamalı. Push olarak açılırsa dış stack kullanır.
+        ZStack {
+            InstitutionalTheme.Colors.background.ignoresSafeArea()
+            VStack(spacing: 0) {
                     ArgusNavHeader(
-                        title: "BIST PİYASA",
-                        subtitle: "İZLE · ARA · EKLE",
-                        leadingDeco: .bars3([.holo, .text, .text]),
+                        title: "BIST piyasa",
+                        subtitle: "İzle, ara, ekle",
+                        leadingDeco: .back(onTap: { dismiss() }),
                         actions: [
-                            .menu({ showDrawer = true }),
                             .custom(sfSymbol: "xmark", action: { dismiss() })
                         ]
                     )
                     searchBar
                     stockList
                 }
-            }
-            .navigationBarHidden(true)
         }
+        .navigationBarHidden(true)
         .overlay {
             if showDrawer {
                 ArgusDrawerView(isPresented: $showDrawer) { openSheet in
@@ -262,8 +262,8 @@ struct BistMarketView: View {
             ArgusDrawerView.DrawerSection(
                 title: "Ekranlar",
                 items: [
-                    ArgusDrawerView.DrawerItem(title: "Alkindus Merkez", subtitle: "Yapay zeka ana sayfa", icon: "AlkindusIcon") {
-                        deepLinkManager.navigate(to: .home)
+                    ArgusDrawerView.DrawerItem(title: "Alkindus Merkez", subtitle: "Yapay zeka merkezi", icon: "AlkindusIcon") {
+                        NavigationRouter.shared.navigate(to: .alkindusDashboard)
                         showDrawer = false
                     },
                     ArgusDrawerView.DrawerItem(title: "Piyasalar", subtitle: "Kokpit ekranı", icon: "chart.line.uptrend.xyaxis") {
@@ -290,10 +290,6 @@ struct BistMarketView: View {
                         searchText = ""
                         showDrawer = false
                     },
-                    ArgusDrawerView.DrawerItem(title: "Takip Listem", subtitle: "Izleme listesi", icon: "eye") {
-                        searchText = ""
-                        showDrawer = false
-                    },
                     ArgusDrawerView.DrawerItem(title: "Kapat", subtitle: "Pencereyi kapat", icon: "xmark") {
                         dismiss()
                         showDrawer = false
@@ -302,29 +298,8 @@ struct BistMarketView: View {
             )
         )
         
-        sections.append(
-            ArgusDrawerView.DrawerSection(
-                title: "Araçlar",
-                items: [
-                    ArgusDrawerView.DrawerItem(title: "Ekonomi Takvimi", subtitle: "Gercek takvim", icon: "calendar") {
-                        openSheet(.calendar)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Finans Sozlugu", subtitle: "Terimler", icon: "character.book.closed") {
-                        openSheet(.dictionary)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Unlu Finans Sozleri", subtitle: "Finans alintilari", icon: "quote.opening") {
-                        openSheet(.financeWisdom)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Sistem Durumu", subtitle: "Servis sagligi", icon: "waveform.path.ecg") {
-                        openSheet(.systemHealth)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Geri Bildirim", subtitle: "Sorun bildir", icon: "envelope") {
-                        openSheet(.feedback)
-                    }
-                ]
-            )
-        )
-        
+        sections.append(ArgusDrawerView.commonToolsSection(openSheet: openSheet))
+
         return sections
     }
 }

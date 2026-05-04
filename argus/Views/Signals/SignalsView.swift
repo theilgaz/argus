@@ -10,14 +10,15 @@ struct SignalsView: View {
     @State private var showJournal = false
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                InstitutionalTheme.Colors.background.ignoresSafeArea()
+        // 2026-05-03 H-59: nested NavigationStack kaldırıldı — ContentView
+        // root NavigationStack ile çakışıyordu.
+        ZStack {
+            InstitutionalTheme.Colors.background.ignoresSafeArea()
 
-                VStack(spacing: 0) {
+            VStack(spacing: 0) {
                     ArgusNavHeader(
-                        title: "SİNYALLER",
-                        subtitle: "AL · SAT · İZLE",
+                        title: "Sinyaller",
+                        subtitle: "Al, sat, izle",
                         leadingDeco: .bars3([.holo, .text, .text]),
                         actions: [
                             .custom(sfSymbol: "list.bullet.clipboard",
@@ -63,37 +64,34 @@ struct SignalsView: View {
                     }
                 }
 
-            }
-            .navigationBarHidden(true)
-            // SignalJournal rotası — V5 header'daki clipboard aksiyonuyla açılır.
-            // Modern API: NavigationLink(destination:isActive:) iOS 16'da deprecated;
-            // navigationDestination(isPresented:) ile aynı programmatic kontrol,
-            // hidden EmptyView gerekmiyor.
-            .navigationDestination(isPresented: $showJournal) {
-                SignalJournalView()
-            }
-            .onAppear {
-                if viewModel.aiSignals.isEmpty { scan() }
-            }
+        }
+        .navigationBarHidden(true)
+        // SignalJournal — sheet olarak açılıyor (nested NavigationStack
+        // kaldırıldığından navigationDestination dış stack'e ekleniyor).
+        .navigationDestination(isPresented: $showJournal) {
+            SignalJournalView()
+        }
+        .onAppear {
+            if viewModel.aiSignals.isEmpty { scan() }
         }
     }
 
     private var headerStatus: ArgusNavHeader.Status {
         if isScanning {
-            return .custom(dotColor: InstitutionalTheme.Colors.holo,
-                           label: "TARANIYOR",
-                           trailing: "SİNYAL AKIŞI")
+            return .custom(dotColor: InstitutionalTheme.Colors.textTertiary,
+                           label: "Taranıyor",
+                           trailing: "Sinyal akışı")
         }
         let total = viewModel.aiSignals.count
         let strongBuy = viewModel.aiSignals.filter { $0.action == .buy && $0.confidenceScore >= 85 }.count
         if total == 0 {
             return .custom(dotColor: InstitutionalTheme.Colors.textTertiary,
-                           label: "SİNYAL YOK",
-                           trailing: "TARAMAYI ÇALIŞTIR")
+                           label: "Sinyal yok",
+                           trailing: "Taramayı çalıştır")
         }
         return .custom(dotColor: InstitutionalTheme.Colors.aurora,
-                       label: "\(total) SİNYAL",
-                       trailing: strongBuy > 0 ? "\(strongBuy) GÜÇLÜ AL" : "TAKİPTE")
+                       label: "\(total) sinyal",
+                       trailing: strongBuy > 0 ? "\(strongBuy) güçlü al" : "Takipte")
     }
 
     private func scan() {
@@ -111,20 +109,16 @@ private struct MacroStatusBanner: View {
     let macro: MacroEnvironmentRating
 
     var body: some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(tone.foreground.opacity(0.18))
-                    .frame(width: 32, height: 32)
-                Image(systemName: bannerIcon)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(tone.foreground)
-            }
+        HStack(spacing: 10) {
+            Image(systemName: bannerIcon)
+                .font(.system(size: 14))
+                .foregroundColor(tone.foreground)
+                .frame(width: 22)
+
             VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
-                    ArgusChip(regimeLabel.uppercased(), tone: tone)
-                    MotorLogo(.aether, size: 10)
-                }
+                Text(regimeLabel)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(tone.foreground)
                 Text(macro.summary)
                     .font(.system(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
@@ -137,7 +131,7 @@ private struct MacroStatusBanner: View {
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
-                .stroke(tone.foreground.opacity(0.3), lineWidth: 1)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
     }
@@ -218,12 +212,14 @@ struct AISignalCard: View {
             VStack(alignment: .leading, spacing: 5) {
                 HStack(spacing: 8) {
                     Text(signal.symbol)
-                        .font(.system(size: 14, weight: .black, design: .monospaced))
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                    ArgusPill(localizedAction, tone: actionTone)
+                    Text(localizedAction)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(actionTone.foreground)
                     Spacer()
                     Text(timeAgo(signal.timestamp))
-                        .font(.system(size: 10, weight: .medium, design: .monospaced))
+                        .font(.system(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
 
@@ -294,24 +290,23 @@ struct SignalsEmptyStateView: View {
     let isScanning: Bool
 
     var body: some View {
-        VStack(spacing: 20) {
-            ArgusOrb(size: 88,
-                     ringColor: InstitutionalTheme.Colors.holo,
-                     glowColor: isScanning ? InstitutionalTheme.Colors.holo : nil) {
-                Image(systemName: isScanning ? "waveform.path.ecg" : "magnifyingglass")
-                    .font(.system(size: 36, weight: .semibold))
-                    .foregroundColor(InstitutionalTheme.Colors.holo)
+        VStack(spacing: 16) {
+            if isScanning {
+                ProgressView()
+            } else {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 28))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
 
             VStack(spacing: 4) {
-                Text(isScanning ? "TARANIYOR…" : "SİNYAL BULUNAMADI")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                    .tracking(1.2)
+                Text(isScanning ? "Taranıyor" : "Sinyal bulunamadı")
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text(isScanning
                      ? "İzleme listendeki hisseler analiz ediliyor."
-                     : "Şu an güçlü bir sinyal yok. Tekrar taramayı dene.")
-                    .font(InstitutionalTheme.Typography.caption)
+                     : "Şu an güçlü bir sinyal yok. Tekrar taramayı deneyebilirsin.")
+                    .font(.system(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
@@ -321,22 +316,15 @@ struct SignalsEmptyStateView: View {
                 Button(action: action) {
                     HStack(spacing: 6) {
                         Image(systemName: "magnifyingglass")
-                            .font(.system(size: 11, weight: .bold))
-                        Text("TARA")
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
-                            .tracking(0.8)
+                            .font(.system(size: 12))
+                        Text("Tara")
+                            .font(.system(size: 13, weight: .medium))
                     }
-                    .foregroundColor(InstitutionalTheme.Colors.holo)
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm, style: .continuous)
-                            .fill(InstitutionalTheme.Colors.holo.opacity(0.14))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm, style: .continuous)
-                            .stroke(InstitutionalTheme.Colors.holo.opacity(0.35), lineWidth: 1)
-                    )
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 9)
+                    .background(InstitutionalTheme.Colors.surface2)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }
                 .buttonStyle(.plain)
             }

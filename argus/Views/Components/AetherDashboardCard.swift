@@ -10,31 +10,30 @@ import SwiftUI
 // tek renk motor tint. Compact ve full mode ikisi de aynı dile oturdu.
 //
 // Data sözleşmesi dokunulmadı: `MacroEnvironmentRating` aynen geliyor.
+// 2026-04-30 H-57 — sade. AETHER MAKRO caps + tinted aether border +
+// 92pt ring gauge + 26pt black mono skor + ÖNCÜ/EŞZAMANLI/GECİKMELİ
+// caps mono + tinted miniPill kalktı. Yerine: "Makro" sentence başlık,
+// sade hairline border, sol-aligned büyük skor + sağda durum, kategori
+// satırları sentence case + bar.
+
 struct AetherDashboardCard: View {
     let rating: MacroEnvironmentRating
     var isCompact: Bool = false
     var onTap: (() -> Void)? = nil
 
     var body: some View {
-        VStack(alignment: .leading, spacing: isCompact ? 10 : 14) {
+        VStack(alignment: .leading, spacing: isCompact ? 8 : 14) {
             header
-
             if isCompact {
                 compactRow
             } else {
-                fullHero
+                fullBody
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(isCompact ? 12 : 14)
         .background(InstitutionalTheme.Colors.surface1)
-        .overlay(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.Motors.aether.opacity(0.3), lineWidth: 1)
-        )
-        .clipShape(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-        )
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .contentShape(Rectangle())
         .onTapGesture { onTap?() }
     }
@@ -42,84 +41,68 @@ struct AetherDashboardCard: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack(spacing: 8) {
-            MotorLogo(.aether, size: 14)
-            ArgusSectionCaption("AETHER MAKRO")
+        HStack {
+            Text("Makro")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Spacer()
-            ArgusChip(regimeLabel.uppercased(), tone: regimeTone)
+            Text(regimeLabel)
+                .font(.system(size: 12))
+                .foregroundColor(regimeColor)
         }
     }
 
     // MARK: - Full mode
 
-    private var fullHero: some View {
-        HStack(alignment: .top, spacing: 18) {
-            ringGauge
-            categoryStack
-        }
-    }
-
-    private var ringGauge: some View {
-        let tone = scoreTone(rating.numericScore)
-        return ZStack {
-            Circle()
-                .stroke(InstitutionalTheme.Colors.surface3, lineWidth: 7)
-            Circle()
-                .trim(from: 0, to: CGFloat(max(0, min(100, rating.numericScore)) / 100))
-                .stroke(tone.foreground,
-                        style: StrokeStyle(lineWidth: 7, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .animation(.easeOut(duration: 0.5), value: rating.numericScore)
-
-            VStack(spacing: 2) {
+    private var fullBody: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text("\(Int(rating.numericScore))")
-                    .font(.system(size: 26, weight: .black, design: .monospaced))
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .font(.system(size: 32, weight: .medium))
+                    .foregroundColor(scoreColor(rating.numericScore))
+                    .monospacedDigit()
+                Text("/ 100")
+                    .font(.system(size: 13))
+                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                Spacer()
                 Text(rating.letterGrade.uppercased())
-                    .font(.system(size: 9, weight: .bold, design: .monospaced))
-                    .tracking(0.6)
-                    .foregroundColor(tone.foreground)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(scoreColor(rating.numericScore))
+            }
+
+            VStack(spacing: 8) {
+                categoryRow(label: "Öncü",
+                            score: rating.leadingScore ?? 50,
+                            weight: "×1.5")
+                categoryRow(label: "Eşzamanlı",
+                            score: rating.coincidentScore ?? 50,
+                            weight: "×1.0")
+                categoryRow(label: "Gecikmeli",
+                            score: rating.laggingScore ?? 50,
+                            weight: "×0.8")
             }
         }
-        .frame(width: 92, height: 92)
-    }
-
-    private var categoryStack: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            categoryRow(label: "ÖNCÜ",
-                        score: rating.leadingScore ?? 50,
-                        weight: "×1.5")
-            categoryRow(label: "EŞZAMANLI",
-                        score: rating.coincidentScore ?? 50,
-                        weight: "×1.0")
-            categoryRow(label: "GECİKMELİ",
-                        score: rating.laggingScore ?? 50,
-                        weight: "×0.8")
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func categoryRow(label: String, score: Double, weight: String) -> some View {
-        let tone = scoreTone(score)
-        return HStack(spacing: 10) {
+        HStack(spacing: 10) {
             Text(label)
-                .font(.system(size: 9, weight: .bold, design: .monospaced))
-                .tracking(0.7)
-                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                .font(.system(size: 12))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .frame(width: 76, alignment: .leading)
 
             ArgusBar(value: max(0, min(1, score / 100)),
-                     color: tone.foreground,
+                     color: scoreColor(score),
                      height: 4)
 
             Text("\(Int(score))")
-                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .font(.system(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                .monospacedDigit()
                 .frame(width: 26, alignment: .trailing)
 
             Text(weight)
-                .font(.system(size: 9, weight: .medium, design: .monospaced))
-                .tracking(0.4)
+                .font(.system(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 .frame(width: 30, alignment: .trailing)
         }
@@ -129,77 +112,61 @@ struct AetherDashboardCard: View {
 
     private var compactRow: some View {
         HStack(spacing: 12) {
-            compactRing
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text("\(Int(rating.numericScore))")
+                    .font(.system(size: 22, weight: .medium))
+                    .foregroundColor(scoreColor(rating.numericScore))
+                    .monospacedDigit()
+                Text("/100")
+                    .font(.system(size: 11))
+                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+            }
             Spacer(minLength: 8)
-            HStack(spacing: 6) {
-                miniPill(label: "Ö", score: rating.leadingScore ?? 50)
-                miniPill(label: "E", score: rating.coincidentScore ?? 50)
-                miniPill(label: "G", score: rating.laggingScore ?? 50)
+            HStack(spacing: 8) {
+                miniScore(label: "Ö", score: rating.leadingScore ?? 50)
+                miniScore(label: "E", score: rating.coincidentScore ?? 50)
+                miniScore(label: "G", score: rating.laggingScore ?? 50)
             }
             Image(systemName: "chevron.right")
-                .font(.system(size: 10, weight: .bold))
+                .font(.system(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
     }
 
-    private var compactRing: some View {
-        let tone = scoreTone(rating.numericScore)
-        return ZStack {
-            Circle()
-                .stroke(InstitutionalTheme.Colors.surface3, lineWidth: 3)
-            Circle()
-                .trim(from: 0, to: CGFloat(max(0, min(100, rating.numericScore)) / 100))
-                .stroke(tone.foreground,
-                        style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-
-            Text("\(Int(rating.numericScore))")
-                .font(.system(size: 11, weight: .black, design: .monospaced))
-                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-        }
-        .frame(width: 38, height: 38)
-    }
-
-    private func miniPill(label: String, score: Double) -> some View {
-        let tone = scoreTone(score)
-        return HStack(spacing: 4) {
+    private func miniScore(label: String, score: Double) -> some View {
+        HStack(spacing: 3) {
             Text(label)
-                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                .font(.system(size: 11, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Text("\(Int(score))")
-                .font(.system(size: 10, weight: .black, design: .monospaced))
-                .foregroundColor(tone.foreground)
+                .font(.system(size: 11))
+                .foregroundColor(scoreColor(score))
+                .monospacedDigit()
         }
-        .padding(.horizontal, 7)
-        .padding(.vertical, 3)
-        .background(Capsule(style: .continuous).fill(tone.background))
     }
 
-    // MARK: - Tone mapping
+    // MARK: - Tone mapping (sade — text rengi, capsule yok)
 
     private var regimeLabel: String {
         switch rating.regime {
-        case .riskOn:  return "RISK ON"
-        case .neutral: return "NÖTR"
-        case .riskOff: return "RISK OFF"
+        case .riskOn:  return "Risk açık"
+        case .neutral: return "Nötr"
+        case .riskOff: return "Risk kapalı"
         }
     }
 
-    private var regimeTone: ArgusChipTone {
+    private var regimeColor: Color {
         switch rating.regime {
-        case .riskOn:  return .aurora
-        case .neutral: return .titan
-        case .riskOff: return .crimson
+        case .riskOn:  return InstitutionalTheme.Colors.aurora
+        case .neutral: return InstitutionalTheme.Colors.textSecondary
+        case .riskOff: return InstitutionalTheme.Colors.crimson
         }
     }
 
-    /// Skor → 4 V5 tone.  Aether motoru makro duyarlı olduğundan
-    /// 50 civarı titan (ne pozitif ne negatif), 70+ aurora.
-    private func scoreTone(_ score: Double) -> ArgusChipTone {
-        if score >= 70 { return .aurora }
-        if score >= 55 { return .motor(.aether) }
-        if score >= 45 { return .titan }
-        return .crimson
+    private func scoreColor(_ score: Double) -> Color {
+        if score >= 70 { return InstitutionalTheme.Colors.aurora }
+        if score >= 45 { return InstitutionalTheme.Colors.textPrimary }
+        return InstitutionalTheme.Colors.crimson
     }
 }
 

@@ -175,10 +175,9 @@ struct StrategyDashboardView: View {
     
     private var timeframeConsensusSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("ZAMAN DILİMİ KONSENSUS")
-                .font(InstitutionalTheme.Typography.micro)
-                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                .tracking(1)
+            Text("Zaman dilimi konsensüsü")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             
             if multiFrameReports.isEmpty {
                 Text("Veri yükleniyor...")
@@ -306,17 +305,12 @@ struct StrategyDashboardView: View {
     
     private var alkindusInsightsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: "brain.head.profile")
-                    .foregroundColor(InstitutionalTheme.Colors.warning)
-                Text("ALKINDUS TAVSİYELERİ")
-                    .font(InstitutionalTheme.Typography.micro)
-                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                    .tracking(1)
-            }
-            
-            Text("Bu strateji bucketı için Alkindus önerileri yükleniyor...")
-                .font(InstitutionalTheme.Typography.caption)
+            Text("Strateji önerileri")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+
+            Text("Bu strateji için öneriler yükleniyor.")
+                .font(.system(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
         .padding()

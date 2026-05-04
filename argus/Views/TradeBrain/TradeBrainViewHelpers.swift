@@ -811,12 +811,9 @@ struct ScenarioCard: View {
                     .foregroundColor(scenarioColor)
                 Spacer()
                 if scenario.isActive {
-                    Text("AKTİF")
-                        .font(InstitutionalTheme.Typography.micro)
-                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Capsule().fill(scenarioColor.opacity(0.30)))
+                    Text("Aktif")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(scenarioColor)
                 }
             }
 
@@ -833,9 +830,9 @@ struct ScenarioCard: View {
                                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                 .strikethrough(executedSteps.contains(step.id))
                             if step.id == nextStepID {
-                                Text("SONRAKİ")
-                                    .font(InstitutionalTheme.Typography.micro)
-                                    .foregroundColor(InstitutionalTheme.Colors.primary)
+                                Text("Sıradaki")
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundColor(InstitutionalTheme.Colors.holo)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
                                     .background(

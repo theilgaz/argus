@@ -2,6 +2,8 @@ import SwiftUI
 
 struct TradeBrainView: View {
     @EnvironmentObject var viewModel: TradingViewModel
+    @EnvironmentObject private var router: NavigationRouter
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var planStore = PositionPlanStore.shared
     @StateObject private var executor = TradeBrainExecutor.shared
     @StateObject private var executionState = ExecutionStateViewModel.shared
@@ -15,6 +17,11 @@ struct TradeBrainView: View {
     @State private var marketMode: MarketFilter = .all
     @State private var showDrawer = false
     @StateObject private var deepLinkManager = DeepLinkManager.shared
+
+    /// 2026-05-03 H-59: TradeBrain hem drawer item'dan tab gibi hem de
+    /// NavigationRoute.tradeBrain ile push edilebilir. Push edildiğinde
+    /// geri butonu gerek (Alkindus gibi sıkışmasın).
+    private var isPushed: Bool { !router.navigationStack.isEmpty }
 
     enum MarketFilter: String, CaseIterable {
         case all = "Tümü"
@@ -78,11 +85,11 @@ struct TradeBrainView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                InstitutionalTheme.Colors.background.ignoresSafeArea()
+        // 2026-05-03 H-59: nested NavigationStack kaldırıldı.
+        ZStack {
+            InstitutionalTheme.Colors.background.ignoresSafeArea()
 
-                VStack(spacing: 0) {
+            VStack(spacing: 0) {
                     topNav
 
                     Rectangle()
@@ -117,24 +124,23 @@ struct TradeBrainView: View {
                     }
                 }
 
-                if showDrawer {
-                    ArgusDrawerView(isPresented: $showDrawer) { openSheet in
-                        drawerSections(openSheet: openSheet)
-                    }
-                    .zIndex(120)
+            if showDrawer {
+                ArgusDrawerView(isPresented: $showDrawer) { openSheet in
+                    drawerSections(openSheet: openSheet)
                 }
+                .zIndex(120)
             }
-            .navigationBarHidden(true)
-            .sheet(isPresented: $showPlanDetail) {
-                if let plan = selectedPlan {
-                    PositionPlanDetailView(
-                        plan: plan,
-                        currentPrice: selectedPlanCurrentPrice,
-                        decision: selectedPlanDecision,
-                        candles: selectedPlanCandles,
-                        eventRisk: selectedPlanEventRisk
-                    )
-                }
+        }
+        .navigationBarHidden(true)
+        .sheet(isPresented: $showPlanDetail) {
+            if let plan = selectedPlan {
+                PositionPlanDetailView(
+                    plan: plan,
+                    currentPrice: selectedPlanCurrentPrice,
+                    decision: selectedPlanDecision,
+                    candles: selectedPlanCandles,
+                    eventRisk: selectedPlanEventRisk
+                )
             }
         }
     }
@@ -143,6 +149,17 @@ struct TradeBrainView: View {
 
     private var topNav: some View {
         HStack(spacing: 8) {
+            if isPushed {
+                Button(action: { dismiss() }) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                        .frame(width: 32, height: 32)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Geri")
+            }
             VStack(alignment: .leading, spacing: 1) {
                 Text("Trade Brain")
                     .font(.system(size: 17, weight: .medium))
@@ -152,14 +169,20 @@ struct TradeBrainView: View {
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             }
             Spacer()
-            Button(action: { showDrawer = true }) {
-                Image(systemName: "line.3.horizontal")
-                    .font(.system(size: 16, weight: .regular))
-                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                    .frame(width: 32, height: 32)
-                    .contentShape(Rectangle())
+            if !isPushed {
+                Button(action: {
+                    withAnimation(ArgusDrawerView.toggleAnimation) {
+                        showDrawer = true
+                    }
+                }) {
+                    Image(systemName: "line.3.horizontal")
+                        .font(.system(size: 16, weight: .regular))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                        .frame(width: 32, height: 32)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
@@ -835,8 +858,8 @@ struct TradeBrainView: View {
                         deepLinkManager.navigate(to: .kokpit)
                         showDrawer = false
                     },
-                    ArgusDrawerView.DrawerItem(title: "Alkindus", subtitle: "Yapay zeka merkezi", icon: "brain.head.profile") {
-                        NotificationCenter.default.post(name: NSNotification.Name("OpenAlkindusDashboard"), object: nil)
+                    ArgusDrawerView.DrawerItem(title: "Alkindus Merkez", subtitle: "Yapay zeka merkezi", icon: "AlkindusIcon") {
+                        NavigationRouter.shared.navigate(to: .alkindusDashboard)
                         showDrawer = false
                     },
                     ArgusDrawerView.DrawerItem(title: "Portföy", subtitle: "Pozisyonlar", icon: "briefcase.fill") {
@@ -871,28 +894,7 @@ struct TradeBrainView: View {
             )
         )
 
-        sections.append(
-            ArgusDrawerView.DrawerSection(
-                title: "Araçlar",
-                items: [
-                    ArgusDrawerView.DrawerItem(title: "Ekonomi Takvimi", subtitle: "Gerçek takvim", icon: "calendar") {
-                        openSheet(.calendar)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Finans Sözlüğü", subtitle: "Terimler", icon: "character.book.closed") {
-                        openSheet(.dictionary)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Finans Sözleri", subtitle: "Kısa alıntılar", icon: "quote.opening") {
-                        openSheet(.financeWisdom)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Sistem Durumu", subtitle: "Servis sağlığı", icon: "waveform.path.ecg") {
-                        openSheet(.systemHealth)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Geri Bildirim", subtitle: "Sorun bildir", icon: "envelope") {
-                        openSheet(.feedback)
-                    }
-                ]
-            )
-        )
+        sections.append(ArgusDrawerView.commonToolsSection(openSheet: openSheet))
 
         return sections
     }

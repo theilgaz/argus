@@ -1,15 +1,15 @@
 import SwiftUI
 
-// MARK: - Argus Analyst Report (V5)
+// MARK: - Konsey raporu (eski adıyla Argus Analyst Report)
 //
-// **2026-04-23 V5.C estetik refactor.**
-// Council modülünün nihai kararı. Eski: `.sparkles + primary` başlık,
-// XMark close (HoloPanel zaten kendi close'unu veriyor), basit
-// monospaced metin akışı.
-// Yeni: motor(.council) tint kart chrome'u, mono caps section caption,
-// ArgusChip durum rozeti, ArgusHair ayırıcılar, typewriter rapor gövdesi
-// korundu. Standalone push (NavigationRouter, SymbolDebateView) ve
-// embed (HoloPanel.contentForModule(.council)) ikisinde de temiz duruyor.
+// 2026-04-30 H-58 — sade refactor.
+// Eski yapı V5: MotorLogo(.council) + caps "ARGUS ANALİST · SYMBOL" caption
+// + caps mono loading "SYMBOL ANALİZ EDİLİYOR…" + monospaced report gövdesi
+// + caps mono "POWERED BY ARGUS AI ENGINE" footer (corporate boilerplate)
+// + motor tint border.
+// Yeni: "Konsey raporu" sentence başlık + sembol + sade text durum + system
+// font report gövdesi (typewriter aynen) + footer kaldırıldı + hairline border.
+
 struct ArgusAnalystReportView: View {
     let symbol: String
     @ObservedObject var viewModel: TradingViewModel
@@ -28,16 +28,13 @@ struct ArgusAnalystReportView: View {
             } else {
                 reportBody
             }
-
-            ArgusHair()
-            footerLine
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.Motors.council.opacity(0.3), lineWidth: 1)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
@@ -46,29 +43,35 @@ struct ArgusAnalystReportView: View {
         .onDisappear { typewriterTimer?.invalidate() }
     }
 
-    // MARK: - Sections
+    // MARK: - Header
 
     private var header: some View {
-        HStack(spacing: 8) {
-            MotorLogo(.council, size: 14)
-            ArgusSectionCaption("ARGUS ANALİST · \(symbol.uppercased())")
-            Spacer()
-            if isLoading {
-                ArgusChip("HAZIRLANIYOR", tone: .motor(.council))
-            } else {
-                ArgusChip("RAPOR HAZIR", tone: .aurora)
+        HStack(alignment: .firstTextBaseline) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Konsey raporu")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                Text(symbol.uppercased())
+                    .font(.system(size: 12))
+                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             }
+            Spacer()
+            Text(isLoading ? "Hazırlanıyor" : "Hazır")
+                .font(.system(size: 11))
+                .foregroundColor(isLoading
+                                 ? InstitutionalTheme.Colors.textTertiary
+                                 : InstitutionalTheme.Colors.aurora)
         }
     }
+
+    // MARK: - States
 
     private var loadingBlock: some View {
         VStack(spacing: 10) {
             ProgressView()
-                .tint(InstitutionalTheme.Colors.Motors.council)
-            Text("\(symbol.uppercased()) ANALİZ EDİLİYOR…")
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .tracking(1)
-                .foregroundColor(InstitutionalTheme.Colors.Motors.council)
+            Text("\(symbol.uppercased()) analiz ediliyor")
+                .font(.system(size: 12))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
         .frame(maxWidth: .infinity, minHeight: 160)
     }
@@ -76,7 +79,7 @@ struct ArgusAnalystReportView: View {
     private var reportBody: some View {
         ScrollView {
             Text(displayedText)
-                .font(.system(size: 13, weight: .regular, design: .monospaced))
+                .font(.system(size: 14))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .lineSpacing(3)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -89,17 +92,6 @@ struct ArgusAnalystReportView: View {
                 )
         }
         .frame(minHeight: 280, maxHeight: 500)
-    }
-
-    private var footerLine: some View {
-        HStack(spacing: 6) {
-            ArgusDot(color: InstitutionalTheme.Colors.Motors.council, size: 5)
-            Text("POWERED BY ARGUS AI ENGINE")
-                .font(.system(size: 9, weight: .bold, design: .monospaced))
-                .tracking(0.8)
-                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-            Spacer()
-        }
     }
 
     // MARK: - AI Report Loading

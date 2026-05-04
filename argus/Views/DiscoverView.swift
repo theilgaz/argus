@@ -9,24 +9,31 @@ import SwiftUI
 struct DiscoverView: View {
     @ObservedObject var viewModel: TradingViewModel
     @StateObject private var deepLinkManager = DeepLinkManager.shared
+    @EnvironmentObject private var router: NavigationRouter
+    @Environment(\.dismiss) private var dismiss
     @State private var showDrawer = false
+
+    private var isPushed: Bool { !router.navigationStack.isEmpty }
 
     // Grid adaptation for horizontal scroll if needed, but HStacks work better for single row carousels.
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                InstitutionalTheme.Colors.background.ignoresSafeArea()
+        // 2026-05-03 H-59: nested NavigationStack kaldırıldı — ContentView
+        // root'taki NavigationStack ile çakışıp back butonunu bozuyordu.
+        ZStack {
+            InstitutionalTheme.Colors.background.ignoresSafeArea()
 
-                VStack(spacing: 0) {
+            VStack(spacing: 0) {
                     ArgusNavHeader(
                         title: "Keşfet",
                         subtitle: "Momentum, dibe vuranlar ve hacim",
-                        actions: [
-                            .menu({ showDrawer = true }),
-                            .custom(sfSymbol: "arrow.clockwise",
-                                    action: { viewModel.loadDiscoverData() })
-                        ]
+                        leadingDeco: isPushed ? .back(onTap: { dismiss() }) : .none,
+                        actions: isPushed
+                            ? [.custom(sfSymbol: "arrow.clockwise",
+                                       action: { viewModel.loadDiscoverData() })]
+                            : [.menu({ withAnimation(ArgusDrawerView.toggleAnimation) { showDrawer = true } }),
+                               .custom(sfSymbol: "arrow.clockwise",
+                                       action: { viewModel.loadDiscoverData() })]
                     )
 
                     ScrollView {
@@ -112,13 +119,12 @@ struct DiscoverView: View {
                     .padding(.top, 20)
                 }
             }
-            .navigationBarHidden(true)
-            .onAppear {
-                viewModel.loadDiscoverData()
-            }
-            .refreshable {
-                viewModel.loadDiscoverData()
-            }
+        .navigationBarHidden(true)
+        .onAppear {
+            viewModel.loadDiscoverData()
+        }
+        .refreshable {
+            viewModel.loadDiscoverData()
         }
         .overlay {
             if showDrawer {
@@ -145,8 +151,8 @@ struct DiscoverView: View {
                         deepLinkManager.navigate(to: .kokpit)
                         showDrawer = false
                     },
-                    ArgusDrawerView.DrawerItem(title: "Alkindus", subtitle: "Yapay zeka merkez", icon: "AlkindusIcon") {
-                        NotificationCenter.default.post(name: NSNotification.Name("OpenAlkindusDashboard"), object: nil)
+                    ArgusDrawerView.DrawerItem(title: "Alkindus Merkez", subtitle: "Yapay zeka merkezi", icon: "AlkindusIcon") {
+                        NavigationRouter.shared.navigate(to: .alkindusDashboard)
                         showDrawer = false
                     },
                     ArgusDrawerView.DrawerItem(title: "Portfoy", subtitle: "Pozisyonlar", icon: "briefcase.fill") {
@@ -173,29 +179,8 @@ struct DiscoverView: View {
             )
         )
         
-        sections.append(
-            ArgusDrawerView.DrawerSection(
-                title: "Araçlar",
-                items: [
-                    ArgusDrawerView.DrawerItem(title: "Ekonomi Takvimi", subtitle: "Gercek takvim", icon: "calendar") {
-                        openSheet(.calendar)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Finans Sozlugu", subtitle: "Terimler", icon: "character.book.closed") {
-                        openSheet(.dictionary)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Unlu Finans Sozleri", subtitle: "Finans alintilari", icon: "quote.opening") {
-                        openSheet(.financeWisdom)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Sistem Durumu", subtitle: "Servis sagligi", icon: "waveform.path.ecg") {
-                        openSheet(.systemHealth)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Geri Bildirim", subtitle: "Sorun bildir", icon: "envelope") {
-                        openSheet(.feedback)
-                    }
-                ]
-            )
-        )
-        
+        sections.append(ArgusDrawerView.commonToolsSection(openSheet: openSheet))
+
         return sections
     }
 }

@@ -264,15 +264,12 @@ struct BistHoloPanelView: View {
             VStack(spacing: 16) {
                 // Section Header
                 HStack(spacing: 10) {
-                    Image(systemName: "newspaper.fill")
-                        .font(.system(size: 14))
-                        .foregroundColor(SanctumTheme.hermesColor)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("KULİS MERKEZİ")
-                            .font(InstitutionalTheme.Typography.micro)
-                            .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                        Text("Haber, Analist & Duygu Analizi")
-                            .font(.system(size: 12, weight: .medium))
+                        Text("Kulis")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                        Text("Haber, analist ve duygu analizi")
+                            .font(.system(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     }
                     Spacer()

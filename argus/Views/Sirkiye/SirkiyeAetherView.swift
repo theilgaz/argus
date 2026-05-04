@@ -65,34 +65,27 @@ struct SirkiyeAetherView: View {
         VStack(spacing: Theme.Spacing.medium) {
             // Başlık
             HStack {
-                Image(systemName: "globe.europe.africa.fill")
-                    .font(.title2)
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [Theme.bistAccent, Theme.primary],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                
-                Text("TÜRKİYE MAKRO SKORU")
-                    .font(.caption)
-                    .fontWeight(.bold)
-                    .tracking(2)
+                Image(systemName: "globe.europe.africa")
+                    .font(.system(size: 16))
                     .foregroundColor(Theme.textSecondary)
+
+                Text("Türkiye makro skoru")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(Theme.textPrimary)
                 if linkedDecision != nil {
-                    Text("• SİRKIYE KORTEKS SENKRON")
-                        .font(.caption2)
-                        .foregroundColor(Theme.primary)
+                    Text("· senkron")
+                        .font(.system(size: 11))
+                        .foregroundColor(Theme.textTertiary)
                 }
-                
+
                 Spacer()
-                
+
                 // Yenileme Zamanı
                 if !isLoading {
                     Text(macroScore.timestamp, style: .time)
-                        .font(.caption2)
-                        .foregroundColor(Theme.textSecondary)
+                        .font(.system(size: 11))
+                        .foregroundColor(Theme.textTertiary)
+                        .monospacedDigit()
                 }
             }
             
@@ -192,10 +185,8 @@ struct SirkiyeAetherView: View {
     
     private var trendSparklinesSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
-            Text("TREND GÖSTERGELERİ (30 GÜN)")
-                .font(.caption)
-                .fontWeight(.bold)
-                .tracking(2)
+            Text("Trend göstergeleri (30 gün)")
+                .font(.system(size: 12, weight: .medium))
                 .foregroundColor(Theme.textSecondary)
             
             HStack(spacing: 12) {
@@ -232,10 +223,8 @@ struct SirkiyeAetherView: View {
     
     private var sectorRotationSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
-            Text("SEKTÖR ROTASYONU")
-                .font(.caption)
-                .fontWeight(.bold)
-                .tracking(2)
+            Text("Sektör rotasyonu")
+                .font(.system(size: 12, weight: .medium))
                 .foregroundColor(Theme.textSecondary)
             
             if let sectorRotation {
@@ -266,10 +255,8 @@ struct SirkiyeAetherView: View {
     
     private var componentsSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
-            Text("SKOR BİLEŞENLERİ")
-                .font(.caption)
-                .fontWeight(.bold)
-                .tracking(2)
+            Text("Skor bileşenleri")
+                .font(.system(size: 12, weight: .medium))
                 .foregroundColor(Theme.textSecondary)
             
             ForEach(impactDrivers) { driver in
@@ -288,16 +275,9 @@ struct SirkiyeAetherView: View {
     
     private var insightsBanner: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.small) {
-            HStack {
-                Image(systemName: "text.bubble.fill")
-                    .foregroundColor(Theme.primary)
-                
-                Text("MAKRO NOTLAR")
-                    .font(.caption)
-                    .fontWeight(.bold)
-                    .tracking(2)
-                    .foregroundColor(Theme.textSecondary)
-            }
+            Text("Makro notlar")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(Theme.textSecondary)
             
             if sanitizedInsights.isEmpty {
                 Text("Analiz notu üretilemedi. Makro veri güncellendiğinde özet notlar burada görünecek.")
@@ -336,14 +316,12 @@ struct SirkiyeAetherView: View {
         let drivers = topImpactDrivers(limit: 5)
         return VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
             HStack {
-                Text("NEDEN BÖYLE?")
-                    .font(.caption)
-                    .fontWeight(.bold)
-                    .tracking(2)
+                Text("Skoru ne belirledi")
+                    .font(.system(size: 12, weight: .medium))
                     .foregroundColor(Theme.textSecondary)
                 Spacer()
-                Text("İlk \(min(3, drivers.count)) etki")
-                    .font(.caption2)
+                Text("ilk \(min(3, drivers.count)) etki")
+                    .font(.system(size: 11))
                     .foregroundColor(Theme.textSecondary)
             }
 
@@ -383,9 +361,9 @@ struct SirkiyeAetherView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("ETKİ DAĞILIMI")
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
-                            .foregroundColor(Theme.textSecondary)
+                        Text("Etki dağılımı")
+                            .font(.system(size: 11))
+                            .foregroundColor(Theme.textTertiary)
                         ForEach(Array(drivers.prefix(3))) { driver in
                             HStack(spacing: 6) {
                                 Circle()
@@ -822,13 +800,11 @@ struct SirkiyeDataGrid: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
-            Text("MAKRO VERİ MATRİSİ")
-                .font(.caption)
-                .fontWeight(.bold)
-                .tracking(2)
+            Text("Makro veri matrisi")
+                .font(.system(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .padding(.bottom, 4)
-            
+
             LazyVGrid(columns: [
                 GridItem(.flexible(), alignment: .leading),
                 GridItem(.flexible(), alignment: .trailing),
@@ -836,9 +812,9 @@ struct SirkiyeDataGrid: View {
             ], spacing: 12) {
                 // Header
                 Group {
-                    Text("GÖSTERGE").font(.caption2).foregroundColor(.gray)
-                    Text("DEĞER").font(.caption2).foregroundColor(.gray)
-                    Text("DURUM").font(.caption2).foregroundColor(.gray)
+                    Text("Gösterge").font(.system(size: 11)).foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                    Text("Değer").font(.system(size: 11)).foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                    Text("Durum").font(.system(size: 11)).foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
                 
                 Divider()

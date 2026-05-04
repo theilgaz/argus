@@ -1,8 +1,16 @@
 import SwiftUI
 
-/// REJİM MERKEZİ
+/// Rejim merkezi.
 /// Piyasa rejimi, makro göstergeler, teknik konsensüs ve sektör analizi.
 /// Tüm veriler BorsaPy backend'inden canlı çekilir.
+///
+/// 2026-04-30 H-58 — sade refactor.
+/// Eski yapı: MotorLogo(.aether) + caps "REJİM MERKEZİ" caption + caps mono
+/// "PİYASA · MAKRO · SEKTÖR" subtitle + caps "ORACLE LENS" başlık + motor
+/// tinted ArgusChip badge.
+/// Yeni: "Rejim" sentence başlık + "Piyasa, makro, sektör" sentence subtitle
+/// + sade text rozet (skoru ve etiketi tek satır), "Makro mercek" sentence
+/// (Oracle Lens mitoloji ismi gizlendi).
 
 struct RejimView: View {
     let symbol: String
@@ -14,15 +22,16 @@ struct RejimView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // MARK: - V5 Section Header (Aether motor)
-            HStack(spacing: 10) {
-                MotorLogo(.aether, size: 14)
+
+            // Header — sade
+            HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
-                    ArgusSectionCaption("REJİM MERKEZİ")
-                    Text("PİYASA · MAKRO · SEKTÖR")
-                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                        .tracking(0.6)
+                    Text("Rejim")
+                        .font(.system(size: 17, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    Text("Piyasa, makro, sektör")
+                        .font(.system(size: 12))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
                 Spacer()
                 regimeBadge
@@ -31,14 +40,16 @@ struct RejimView: View {
             .padding(.top, 14)
             .padding(.bottom, 10)
 
-            ArgusHair().padding(.horizontal, 16)
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
+                .padding(.horizontal, 16)
 
             if isLoading {
-                VStack(spacing: 12) {
+                VStack(spacing: 10) {
                     ProgressView()
-                        .tint(SanctumTheme.hologramBlue)
-                    Text("Rejim verileri yükleniyor...")
-                        .font(.system(size: 11))
+                    Text("Rejim verileri yükleniyor")
+                        .font(.system(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
                 .padding(40)
@@ -54,13 +65,13 @@ struct RejimView: View {
                     // 2. Makro Göstergeler (BorsaPy canlı)
                     MakroGostergelerCard()
 
-                    // 3. Oracle Lens (Makro Sinyal ve Etki)
-                    oracleLensSection
+                    // 3. Makro mercek (eski adıyla Oracle Lens)
+                    macroLensSection
 
                     // 4. Teknik Konsensüs (28 gösterge)
                     TeknikKonsensusCard(symbol: symbol)
 
-                    // 5. Sektör Analizi (mevcut bileşen)
+                    // 5. Sektör Analizi
                     BistSektorCard()
 
                     // Disclaimer
@@ -71,50 +82,59 @@ struct RejimView: View {
         .task { await loadRejimData() }
     }
 
-    // MARK: - Regime Badge (live data feed)
+    // MARK: - Regime rozet (sade — capsule yok, text + renkli skor)
+
     private var regimeBadge: some View {
-        let tone: ArgusChipTone = {
-            if isLoading { return .neutral }
-            switch rejimStance {
-            case "riskOn":    return .aurora
-            case "riskOff":   return .crimson
-            case "defensive": return .titan
-            default:          return .motor(.aether)
-            }
-        }()
-        return Group {
+        Group {
             if isLoading {
-                ArgusChip("YÜKLENİYOR", tone: .neutral)
+                Text("Yükleniyor")
+                    .font(.system(size: 12))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             } else {
-                ArgusChip("\(rejimLabel.uppercased()) · \(Int(rejimScore))", tone: tone)
+                HStack(spacing: 6) {
+                    Text(rejimLabel)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(stanceColor)
+                    Text("\(Int(rejimScore))")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                        .monospacedDigit()
+                }
             }
         }
     }
 
+    private var stanceColor: Color {
+        switch rejimStance {
+        case "riskOn":    return InstitutionalTheme.Colors.aurora
+        case "riskOff":   return InstitutionalTheme.Colors.crimson
+        case "defensive": return InstitutionalTheme.Colors.titan
+        default:          return InstitutionalTheme.Colors.textSecondary
+        }
+    }
+
     // MARK: - Disclaimer
+
     private var disclaimerFooter: some View {
         HStack(spacing: 6) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 10))
-                .foregroundColor(InstitutionalTheme.Colors.warning)
+            Image(systemName: "info.circle")
+                .font(.system(size: 11))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Text("Eğitim amaçlıdır, yatırım tavsiyesi değildir.")
-                .font(.system(size: 10))
+                .font(.system(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
         .padding(.vertical, 8)
     }
 
-    private var oracleLensSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(SanctumTheme.aetherColor)
-                Text("ORACLE LENS")
-                    .font(InstitutionalTheme.Typography.micro)
-                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                Spacer()
-            }
+    // MARK: - Makro mercek (eski "Oracle Lens" mitoloji ismi)
+
+    private var macroLensSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Makro mercek")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                .padding(.horizontal, 16)
 
             OracleChamberEmbeddedView()
                 .frame(height: 320)
@@ -159,9 +179,9 @@ struct RejimView: View {
         score = max(0, min(100, score))
 
         if score >= 65 { label = "Boğa"; stance = "riskOn" }
-        else if score >= 50 { label = "Temkinli Boğa" }
+        else if score >= 50 { label = "Temkinli boğa" }
         else if score >= 40 { label = "Nötr" }
-        else if score >= 25 { label = "Temkinli Ayı"; stance = "defensive" }
+        else if score >= 25 { label = "Temkinli ayı"; stance = "defensive" }
         else { label = "Ayı"; stance = "riskOff" }
 
         await MainActor.run {

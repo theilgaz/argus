@@ -7,7 +7,7 @@ import SwiftUI
 /// The "Persona" card. Shows the animated Avatar and a high-level summary/message.
 struct AlkindusSageCard: View {
     let symbol: String
-    @State private var message: String = "Piyasadaki izleri okuyorum..."
+    @State private var message: String = "Piyasa verisi analiz ediliyor."
     @State private var isThinking: Bool = true
     
     // Theme Colors
@@ -21,14 +21,13 @@ struct AlkindusSageCard: View {
             
             // Message Bubble
             VStack(alignment: .leading, spacing: 6) {
-                Text("ALKINDUS")
-                    .font(.system(size: 12, weight: .bold, design: .serif))
-                    .foregroundColor(gold)
-                    .tracking(2)
-                
+                Text("Yorum")
+                    .font(.system(size: 11))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+
                 Text(message)
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
-                    .foregroundColor(.white.opacity(0.9))
+                    .font(.system(size: 14))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .lineLimit(3)
                     .multilineTextAlignment(.leading)
             }
@@ -61,7 +60,7 @@ struct AlkindusSageCard: View {
             // Simulate "Thinking" phase then show wisdom
             try? await Task.sleep(nanoseconds: 2_000_000_000)
             isThinking = false
-            message = "\(symbol) için yıldızlar ve fraktallar belirginleşiyor. Trend yapısında ilginç bir uyum var."
+            message = "\(symbol) için trend yapısında ilginç bir uyum gözleniyor."
         }
     }
 }

@@ -24,17 +24,13 @@ struct AetherHUDView: View {
                             .foregroundColor(scoreColor(r.numericScore))
                     }
                     
-                    // V5 Info — Aether motor logosu + label
+                    // 2026-04-30 H-58 — sade. MotorLogo + caps "AETHER" gitti.
                     VStack(alignment: .leading, spacing: 2) {
-                        HStack(spacing: 6) {
-                            MotorLogo(.aether, size: 12)
-                            Text("AETHER")
-                                .font(InstitutionalTheme.Typography.dataMicro)
-                                .tracking(1)
-                                .foregroundColor(InstitutionalTheme.Colors.Motors.aether)
-                        }
+                        Text("Makro")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         Text(r.regime.rawValue)
-                            .font(InstitutionalTheme.Typography.caption)
+                            .font(.system(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     }
                     

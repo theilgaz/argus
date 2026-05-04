@@ -2,32 +2,37 @@ import SwiftUI
 
 /// Anasayfada görünen makro durum kartı.
 ///
-/// 2026-04-25 H-32 — P3 layout (kullanıcı onayı):
-///   • Sol: "Bugün" 17pt başlık + iki sıfatlık alt satır
-///     (örn. "Tedirgin, dalgalı" / "Sakin, dengeli")
-///   • Sağ: "MAKRO" küçük mono caption + skor (22pt mono)
-///   • Border: nötr slate
-///   • Page header'da zaten "Piyasa" yazdığı için kart başlığı "Bugün" —
-///     duplikasyon çözüldü. Kart fontu da küçük (17pt) ki header'la
-///     hiyerarşi karışmasın.
+/// 2026-04-30 H-58 — sade refactor:
+///   • "MAKRO" caps mono caption gitti, yerine sentence "Makro"
+///   • Skor: 22pt semibold mono → 22pt medium mono, regime-tinted
+///   • Border: 1pt → 0.5pt borderSubtle (hairline)
+///   • "Bugün" başlık + iki sıfat phrase aynen kaldı (P3 onaylı)
 ///
-/// Bu kart hem Aether (skor) hem Chiron (rejim) bilgisini sıfat
-/// zinciri olarak taşır — anasayfada iki ayrı kart yerine tek kart.
-/// Detay sheet'inde tam rejim adı, aktif strateji ("salınım/hücum")
-/// ve üç dilimlik makro skor (leading/coincident/lagging) yaşar.
+/// Bu kart hem makro skoru hem rejim bilgisini sıfat zinciri olarak
+/// taşır — anasayfada iki ayrı kart yerine tek kart. Detay sheet'inde
+/// tam rejim adı, aktif strateji ("salınım/hücum") ve üç dilimlik
+/// makro skor (leading/coincident/lagging) yaşar.
 ///
-/// Tap → Aether (makro) detay sheet.
+/// Tap → makro detay sheet.
 struct AetherDashboardHUD: View {
     let rating: MacroEnvironmentRating?
     let onTap: () -> Void
 
     var body: some View {
+        // 2026-05-03 H-60.2: ölçeklendirme fix (build incelemesi sonrası).
+        //   • Skor 22pt → 30pt: ana sayfa hero kartı, sayı "yamuk" duruyordu;
+        //     başlık 17pt ile birlikte 30pt sayı dengeli görsel ağırlık verir.
+        //   • Vertical padding 14 → 18: sayı büyüdüğü için kart yüksekliği
+        //     genişliyor, dış nefes boşluğu da artırıldı.
+        //   • Horizontal padding 14 → 16: iç içerik diğer kartlarla aynı
+        //     iç boşluk standardına geldi.
+        //   • HStack(alignment: .firstTextBaseline) — "Bugün" başlığı +
+        //     büyük skor sayısı baseline'ı ortalanır, "yana sürünmüş" his
+        //     gider.
+        //   • Sıfat satırı altta hâlâ küçük 13pt, baseline'a değil hizalanır.
         Button(action: onTap) {
-            HStack(alignment: .bottom, spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
-                    // 2026-04-25 H-32: P3 — page header zaten "Piyasa" diyor,
-                    // kart başlığı "Bugün" ile çakışmayı çözüyor. Font 22→17pt
-                    // küçüldü ki page header'la kıyasta dominant durmasın.
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text("Bugün")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
@@ -42,39 +47,45 @@ struct AetherDashboardHUD: View {
 
                 scoreBlock
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 14)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 18)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(InstitutionalTheme.Colors.surface1)
             .overlay(
                 RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                    .stroke(InstitutionalTheme.Colors.border, lineWidth: 1)
+                    .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
             )
             .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous))
         }
         .buttonStyle(.plain)
-        .padding(.horizontal, 12)
+        .padding(.horizontal, 16)
     }
 
-    // MARK: - Score block (sağ alt)
+    // MARK: - Score block (sağ — büyük skor, üstte "Makro" caption inline)
 
     @ViewBuilder
     private var scoreBlock: some View {
-        VStack(alignment: .trailing, spacing: 0) {
-            Text("MAKRO")
-                .font(.system(size: 11, weight: .medium, design: .monospaced))
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Text("Makro")
+                .font(.system(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             if let r = rating {
                 Text("\(Int(r.numericScore))")
-                    .font(.system(size: 22, weight: .semibold, design: .monospaced))
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .font(.system(size: 30, weight: .medium))
+                    .foregroundColor(scoreColor(r.numericScore))
                     .monospacedDigit()
             } else {
                 Text("—")
-                    .font(.system(size: 22, weight: .semibold, design: .monospaced))
+                    .font(.system(size: 30, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
         }
+    }
+
+    private func scoreColor(_ score: Double) -> Color {
+        if score >= 70 { return InstitutionalTheme.Colors.aurora }
+        if score >= 45 { return InstitutionalTheme.Colors.textPrimary }
+        return InstitutionalTheme.Colors.crimson
     }
 
     // MARK: - Adjective dictionary

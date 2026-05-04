@@ -67,7 +67,7 @@ struct ArgusAthenaSheet: View {
 
     var body: some View {
         if let r = result {
-            ModuleSheetShell(title: "ATHENA · FAKTÖR ANALİZİ", motor: .athena) {
+            ModuleSheetShell(title: "Faktör analizi", motor: .athena) {
                 heroCard(r)
                 educationalIntroCard
                 factorCaption
@@ -80,9 +80,9 @@ struct ArgusAthenaSheet: View {
             }
         } else {
             ModulePlaceholderSheet(
-                title: "ATHENA · BEKLİYOR",
-                subtitle: "Faktör analizi hazır değil",
-                message: "Athena bu hisse için 4 faktör skorunu henüz hesaplamadı. Motor daha fazla veri bekliyor.",
+                title: "Faktör analizi",
+                subtitle: "Hazır değil",
+                message: "Bu hisse için 4 faktör skoru henüz hesaplanmadı. Daha fazla veri bekleniyor.",
                 motor: .athena
             )
         }
@@ -91,66 +91,72 @@ struct ArgusAthenaSheet: View {
     // MARK: - Hero
 
     private func heroCard(_ r: AthenaFactorResult) -> some View {
-        let athenaColor = InstitutionalTheme.Colors.Motors.athena
-
-        return HStack(alignment: .center, spacing: 14) {
-            ZStack {
-                Circle()
-                    .stroke(athenaColor.opacity(0.12), lineWidth: 4)
-                Circle()
-                    .trim(from: 0, to: CGFloat(max(0, min(100, r.factorScore)) / 100.0))
-                    .stroke(athenaColor, style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-                VStack(spacing: 1) {
+        // 2026-04-30 H-58 — sade. 76pt motor ring + caps "STRATEJİ ETİKETİ"
+        // + caps "GÜÇLÜ SINIFLA" chip kalktı. Yerine: 32pt skor + sentence
+        // "Strateji" + sentence styleLabel.
+        return HStack(alignment: .firstTextBaseline) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Faktör skoru")
+                    .font(.system(size: 11))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text("\(Int(r.factorScore))")
-                        .font(.system(size: 22, weight: .heavy, design: .monospaced))
-                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                        .font(.system(size: 32, weight: .medium))
+                        .foregroundColor(scoreColor(r.factorScore))
+                        .monospacedDigit()
                     Text("/ 100")
-                        .font(.system(size: 7, weight: .bold, design: .monospaced))
-                        .tracking(1)
-                        .foregroundColor(athenaColor)
+                        .font(.system(size: 13))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
             }
-            .frame(width: 76, height: 76)
 
-            VStack(alignment: .leading, spacing: 6) {
-                ArgusSectionCaption("STRATEJİ ETİKETİ")
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("Strateji")
+                    .font(.system(size: 11))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Text(r.styleLabel)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 13, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                ArgusChip("GÜÇLÜ SINIFLA", tone: .motor(.athena))
+                    .multilineTextAlignment(.trailing)
             }
-            Spacer(minLength: 0)
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                .stroke(athenaColor.opacity(0.3), lineWidth: 1)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous))
+    }
+
+    private func scoreColor(_ score: Double) -> Color {
+        if score >= 70 { return InstitutionalTheme.Colors.aurora }
+        if score >= 45 { return InstitutionalTheme.Colors.textPrimary }
+        return InstitutionalTheme.Colors.crimson
     }
 
     // MARK: - Educational intro
 
     private var educationalIntroCard: some View {
         VStack(alignment: .leading, spacing: 6) {
-            ArgusSectionCaption("NASIL OKUNUR?")
-            Text("Athena, hisseyi 4 akademik faktöre göre puanlar. En yüksek 2 faktör strateji etiketini belirler.")
-                .font(.system(size: 12))
+            Text("Nasıl okunur")
+                .font(.system(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+            Text("Hisse 4 akademik faktöre göre puanlanır. En yüksek 2 faktör strateji etiketini belirler.")
+                .font(.system(size: 13))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
+                .lineSpacing(2)
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(InstitutionalTheme.Colors.surface1.opacity(0.6))
+        .background(InstitutionalTheme.Colors.surface1)
         .overlay(
-            Rectangle()
-                .fill(InstitutionalTheme.Colors.Motors.athena)
-                .frame(width: 2)
-                .frame(maxHeight: .infinity),
-            alignment: .leading
+            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
     }
@@ -159,7 +165,9 @@ struct ArgusAthenaSheet: View {
 
     private var factorCaption: some View {
         HStack {
-            ArgusSectionCaption("4 FAKTÖR · KIRILIM")
+            Text("4 faktör kırılımı")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Spacer()
         }
         .padding(.top, 2)
@@ -171,35 +179,35 @@ struct ArgusAthenaSheet: View {
                             score: Double,
                             strongest: AthenaSheetFactor) -> some View {
         let isStrongest = (factor == strongest)
-        let athenaColor = InstitutionalTheme.Colors.Motors.athena
         let clamped = max(0, min(100, score))
+        let barColor: Color = scoreColor(clamped)
 
         return VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(factor.title)
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
-                    .tracking(1.2)
-                    .foregroundColor(isStrongest ? athenaColor : InstitutionalTheme.Colors.textPrimary)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text(factor.microCaption)
-                    .font(.system(size: 10))
-                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                    .font(.system(size: 11))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Spacer(minLength: 0)
                 if isStrongest {
-                    ArgusChip("EN GÜÇLÜ", tone: .aurora)
+                    Text("en güçlü")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(InstitutionalTheme.Colors.aurora)
                 }
                 Text("\(Int(clamped))")
-                    .font(.system(size: 13, weight: .heavy, design: .monospaced))
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(scoreColor(clamped))
+                    .monospacedDigit()
             }
 
-            ArgusBar(value: clamped / 100.0, color: athenaColor, height: 5)
+            ArgusBar(value: clamped / 100.0, color: barColor, height: 4)
 
             if let line = factorDataLine(factor) {
                 Text(line)
                     .font(.system(size: 11))
-                    .foregroundColor(isStrongest
-                                     ? InstitutionalTheme.Colors.textPrimary
-                                     : InstitutionalTheme.Colors.textSecondary)
+                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, 2)
             }
@@ -209,10 +217,7 @@ struct ArgusAthenaSheet: View {
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
-                .stroke(
-                    isStrongest ? athenaColor.opacity(0.35) : InstitutionalTheme.Colors.border,
-                    lineWidth: 1
-                )
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
     }
@@ -284,18 +289,21 @@ struct ArgusAthenaSheet: View {
         let summary = verdictText(primary: primary, secondary: secondary, styleLabel: r.styleLabel)
 
         return VStack(alignment: .leading, spacing: 8) {
-            ArgusSectionCaption("ATHENA'NIN YARGISI")
+            Text("Yorum")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Text(summary)
-                .font(.system(size: 12))
+                .font(.system(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
+                .lineSpacing(2)
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(InstitutionalTheme.Colors.Motors.athena.opacity(0.08))
+        .background(InstitutionalTheme.Colors.surface1)
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.Motors.athena.opacity(0.3), lineWidth: 1)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
     }
@@ -323,9 +331,11 @@ struct ArgusAthenaSheet: View {
 
     private var pedagogyFooter: some View {
         VStack(alignment: .leading, spacing: 8) {
-            ArgusSectionCaption("FAKTÖR YATIRIMI NEDİR?")
+            Text("Faktör yatırımı nedir")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 8) {
                 pedagogyRow(.value)
                 pedagogyRow(.quality)
                 pedagogyRow(.momentum)
@@ -338,7 +348,7 @@ struct ArgusAthenaSheet: View {
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
                 .strokeBorder(
-                    InstitutionalTheme.Colors.border,
+                    InstitutionalTheme.Colors.borderSubtle,
                     style: StrokeStyle(lineWidth: 0.5, dash: [4, 3])
                 )
         )
@@ -346,16 +356,16 @@ struct ArgusAthenaSheet: View {
     }
 
     private func pedagogyRow(_ factor: AthenaSheetFactor) -> some View {
-        HStack(alignment: .top, spacing: 8) {
+        HStack(alignment: .top, spacing: 10) {
             Text(factor.title)
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .tracking(0.8)
-                .foregroundColor(InstitutionalTheme.Colors.Motors.athena)
-                .frame(width: 80, alignment: .leading)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                .frame(width: 84, alignment: .leading)
             Text(factor.pedagogy)
-                .font(.system(size: 11))
+                .font(.system(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
+                .lineSpacing(2)
         }
     }
 }
@@ -367,10 +377,10 @@ private enum AthenaSheetFactor: Hashable {
 
     var title: String {
         switch self {
-        case .value:    return "DEĞER"
-        case .quality:  return "KALİTE"
-        case .momentum: return "MOMENTUM"
-        case .risk:     return "RİSK"
+        case .value:    return "Değer"
+        case .quality:  return "Kalite"
+        case .momentum: return "Momentum"
+        case .risk:     return "Risk"
         }
     }
 

@@ -186,13 +186,9 @@ struct TradeHistoryCard: View {
     
     private func weightAdjustmentSection(changes: [String: Double]) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("")
-                Text("SİSTEM AYARI")
-                    .font(.caption)
-                    .bold()
-                    .foregroundColor(.cyan)
-            }
+            Text("Sistem ayarı")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             
             ForEach(Array(changes.keys.sorted()), id: \.self) { key in
                 if let value = changes[key] {

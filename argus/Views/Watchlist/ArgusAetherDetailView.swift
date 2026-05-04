@@ -19,10 +19,10 @@ struct ArgusAetherDetailView: View {
 
                 VStack(spacing: 0) {
                     ArgusNavHeader(
-                        title: "AETHER",
-                        subtitle: "MAKRO REJİM · SKOR · FORMÜL",
+                        title: "Makro",
+                        subtitle: "Rejim, skor, formül",
                         leadingDeco: .back(onTap: { dismiss() }),
-                        titlePill: .init(text: "ANALİZ", tone: .motor(.aether)),
+                        titlePill: nil,
                         actions: [
                             .custom(sfSymbol: "slider.horizontal.3",
                                     action: { showExpectationsSheet = true }),
@@ -56,82 +56,75 @@ struct ArgusAetherDetailView: View {
     }
 
     private var headerCard: some View {
-        // V5: 66pt trimmed ring + motor caption + regime + letter grade/multiplier chips
-        HStack(spacing: 14) {
-            ZStack {
-                Circle()
-                    .stroke(InstitutionalTheme.Colors.Motors.aether.opacity(0.3), lineWidth: 4)
-                    .frame(width: 66, height: 66)
-
-                Circle()
-                    .trim(from: 0, to: CGFloat(clampedScore / 100.0))
-                    .stroke(scoreColor,
-                            style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                    .frame(width: 66, height: 66)
-                    .rotationEffect(.degrees(-90))
-
-                VStack(spacing: 0) {
+        // 2026-04-30 H-58 — sade. 66pt motor ring + caps "AETHER" + caps
+        // mono "AETHER · MAKRO REJİM" subtitle + ArgusChip "NOT X" + ×mult
+        // chip motor tone kalktı. Yerine: 32pt skor + sentence rejim adı +
+        // sentence "Not" + ×mult sade text.
+        HStack(alignment: .firstTextBaseline) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Makro skoru")
+                    .font(.system(size: 11))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text("\(Int(clampedScore))")
-                        .font(.system(size: 20, weight: .black, design: .monospaced))
+                        .font(.system(size: 32, weight: .medium))
                         .foregroundColor(scoreColor)
-                    Text("AETHER")
-                        .font(.system(size: 7, weight: .bold, design: .monospaced))
-                        .tracking(0.8)
-                        .foregroundColor(InstitutionalTheme.Colors.Motors.aether)
+                        .monospacedDigit()
+                    Text("/ 100")
+                        .font(.system(size: 13))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
-            }
-
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 6) {
-                    MotorLogo(.aether, size: 12)
-                    Text("AETHER · MAKRO REJİM")
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
-                        .tracking(1.1)
-                        .foregroundColor(InstitutionalTheme.Colors.Motors.aether)
-                }
-
                 Text(rating.regime.displayName)
-                    .font(InstitutionalTheme.Typography.bodyStrong)
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-
-                HStack(spacing: 6) {
-                    ArgusChip("NOT \(rating.letterGrade)", tone: .motor(.aether))
-                    ArgusChip(String(format: "×%.2f", rating.multiplier), tone: .holo)
-                }
+                    .font(.system(size: 13))
+                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                    .padding(.top, 2)
             }
 
             Spacer()
+
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("Not \(rating.letterGrade)")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(scoreColor)
+                Text(String(format: "×%.2f", rating.multiplier))
+                    .font(.system(size: 12))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                    .monospacedDigit()
+            }
         }
         .padding(14)
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.Motors.aether.opacity(0.35), lineWidth: 1)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous))
     }
 
     private var educationalCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            ArgusSectionCaption("NASIL OKUNUR?")
+            Text("Nasıl okunur")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
             HStack(spacing: 10) {
-                legendChip("ÖNCÜ",        tone: .aurora)
-                legendChip("EŞZAMANLI",   tone: .holo)
-                legendChip("GECİKMELİ",   tone: .titan)
+                legendChip("Öncü",      tone: .aurora)
+                legendChip("Eşzamanlı", tone: .holo)
+                legendChip("Gecikmeli", tone: .titan)
             }
 
-            Text("Aether makro ortamı 3 katmanda değerlendirir: öncü (erken sinyal), eşzamanlı (anlık tablo), gecikmeli (onay katmanı).")
-                .font(InstitutionalTheme.Typography.caption)
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+            Text("Makro ortam 3 katmanda değerlendirilir: öncü (erken sinyal), eşzamanlı (anlık tablo), gecikmeli (onay katmanı).")
+                .font(.system(size: 13))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
+                .lineSpacing(2)
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.border, lineWidth: 1)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
     }
@@ -214,18 +207,15 @@ struct ArgusAetherDetailView: View {
                 Button(action: { showExpectationsSheet = true }) {
                     HStack(spacing: 4) {
                         Image(systemName: "pencil.and.list.clipboard")
-                            .font(.system(size: 11, weight: .semibold))
-                        Text("TAHMİN GİR")
-                            .font(.system(size: 9, weight: .bold, design: .monospaced))
-                            .tracking(0.8)
+                            .font(.system(size: 11))
+                        Text("Tahmin gir")
+                            .font(.system(size: 12, weight: .medium))
                     }
-                    .foregroundColor(InstitutionalTheme.Colors.Motors.aether)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm, style: .continuous)
-                            .stroke(InstitutionalTheme.Colors.Motors.aether.opacity(0.4), lineWidth: 1)
-                    )
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(InstitutionalTheme.Colors.surface2)
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                 }
             }
 
@@ -233,21 +223,21 @@ struct ArgusAetherDetailView: View {
                 HStack(spacing: 14) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(String(format: "%.0f%%", overall.accuracy))
-                            .font(.system(size: 24, weight: .black, design: .monospaced))
+                            .font(.system(size: 22, weight: .medium))
                             .foregroundColor(accuracyColor(for: overall.accuracy))
-                        Text("GENEL DOĞRULUK")
-                            .font(.system(size: 9, weight: .bold, design: .monospaced))
-                            .tracking(0.8)
+                            .monospacedDigit()
+                        Text("Genel doğruluk")
+                            .font(.system(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     }
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("\(overall.correct) / \(overall.total)")
-                            .font(.system(size: 15, weight: .bold, design: .monospaced))
+                            .font(.system(size: 15, weight: .medium))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                        Text("SON \(overall.total) TAHMİN")
-                            .font(.system(size: 9, weight: .bold, design: .monospaced))
-                            .tracking(0.8)
+                            .monospacedDigit()
+                        Text("Son \(overall.total) tahmin")
+                            .font(.system(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     }
 

@@ -122,25 +122,25 @@ struct ObservatoryHealthView: View {
             // Drift Warning
             if distribution.isDrifting {
                 HStack {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: 10))
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 11))
                         .foregroundStyle(InstitutionalTheme.Colors.titan)
-                    Text("DRIFT DETECTED: \(distribution.driftReason)")
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    Text("Sapma algılandı: \(distribution.driftReason)")
+                        .font(.system(size: 12))
                         .foregroundStyle(InstitutionalTheme.Colors.titan)
                 }
                 .padding(8)
-                .background(InstitutionalTheme.Colors.titan.opacity(0.1))
+                .background(InstitutionalTheme.Colors.titan.opacity(0.08))
                 .cornerRadius(4)
             }
         }
     }
-    
+
     // MARK: - System Log Console
     private var systemLogConsole: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("SYSTEM_LOGS", systemImage: "exclamationmark.shield")
-                .font(.system(size: 12, weight: .bold, design: .monospaced))
+            Label("Sistem günlüğü", systemImage: "exclamationmark.shield")
+                .font(.system(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             
             if alerts.isEmpty {

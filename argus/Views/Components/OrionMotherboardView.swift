@@ -1,30 +1,24 @@
 import SwiftUI
 
-// MARK: - ORION MOTHERBOARD VIEW (V5.H-11 · Reaktif Grafik Hero)
+// MARK: - Teknik Analiz Ekranı (eski adıyla Orion Motherboard)
 //
-// **2026-04-23 V5.H-11 yeniden yazım.** Eski yapı: timeframe segment +
-// provenance panel + score chips + CPU ring + 2x2 grid 4 kart + advice.
-// Toplam 624 satır, görsel olarak yoğun ve kalabalıktı.
+// 2026-04-30 H-58 — sade refactor.
+// Eski yapı (V5.H-11): MotorLogo + "ORION · TEKNİK ANALİZ" caps mono +
+// 20pt heavy mono sembol + caps mono timeframe pills (motor tint bg) +
+// 52pt motor-tinted ring + AL/TUT/SAT chip + 4 satırlık component pill
+// (kod rozeti + caps mono başlık + motor tint bg) + caps mono "ORION
+// TAVSİYESİ" + sol-bar accent. Toplamda promo kampanyası gibi duruyordu.
 //
-// Yeni tasarım (Yön D onayı):
-//   1. Minimal header (sembol + timeframe tabs)
-//   2. Kompakt skor barı (52pt ring + AL chip + güven metni)
-//   3. HERO grafik — InteractiveCandleChart dominant
-//   4. 4 bileşen satırı — tek sütun, kompakt pill stili (MOM/TRD/YPI/FRM)
-//   5. Orion tavsiyesi — tek cümle
+// Yeni dil:
+//   • Header: "Teknik analiz" 13pt secondary + sembol 22pt medium
+//   • Timeframe: iOS-native segmented (Saatlik / 4 saat / Günlük / Haftalık)
+//   • Skor satırı: 32pt medium skor + "/100" + "Al/Tut/Sat" sentence + güven
+//   • Bileşen satırları: ad + ArgusBar + skor + tek-kelime durum
+//   • Tavsiye: ayrı sade kart, "Yorum" küçük etiket + cümle
 //
-// Reaktif: timeframe değişince `analysis.scoreFor(timeframe:)` her şeyi
-// yeniler — skor, 4 bileşen, tavsiye. Mum grafiği `viewModel.candles`
-// üzerinden `changeTimeframe(to:)` ile yenilenir.
-//
-// Public API korundu — `OrionMotherboardView(analysis:, symbol:, viewModel:)`
-// çağrı siteleri değişmiyor.
-//
-// Provenance paneli (fallback durumu) küçük bir uyarı şeridine indirildi —
-// skor barı altında ince bir satır. Timeframe score chips kaldırıldı
-// (timeframe tab'ı seçime yetiyor).
-//
-// Kart tıklama → `OrionModuleDetailView` overlay (korundu).
+// Public API korundu — `OrionMotherboardView(analysis:, symbol:, viewModel:)`.
+// Mitoloji "Orion" ismi kullanıcı UI'ında görünmez; iç state ve tip adları
+// (CircuitNode, OrionModuleDetailView vs) korundu.
 
 struct OrionMotherboardView: View {
     let analysis: MultiTimeframeAnalysis
@@ -35,9 +29,7 @@ struct OrionMotherboardView: View {
     @State private var selectedTimeframe: TimeframeMode = .daily
     @State private var selectedNode: CircuitNode? = nil
 
-    private let orionTint = InstitutionalTheme.Colors.Motors.orion
-
-    /// Aktif timeframe'in Orion skoru.
+    /// Aktif timeframe'in teknik skoru.
     var currentOrion: OrionScoreResult {
         analysis.scoreFor(timeframe: selectedTimeframe)
     }
@@ -46,24 +38,19 @@ struct OrionMotherboardView: View {
         ZStack {
             InstitutionalTheme.Colors.background.ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                minimalHeader
-                timeframeSegment
-                    .padding(.horizontal, 16)
-                    .padding(.top, 12)
-
-                ScrollView {
-                    VStack(spacing: 14) {
-                        scoreBar
-                        fallbackNoteIfNeeded
-                        chartHero
-                        componentRows
-                        adviceBar
-                        Color.clear.frame(height: 30)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 12)
+            ScrollView {
+                VStack(spacing: 14) {
+                    header
+                    timeframeSegment
+                    scoreCard
+                    fallbackNoteIfNeeded
+                    chartHero
+                    componentList
+                    adviceCard
+                    Color.clear.frame(height: 30)
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
             }
 
             if let node = selectedNode {
@@ -88,35 +75,32 @@ struct OrionMotherboardView: View {
         }
     }
 
-    // MARK: - Minimal Header
+    // MARK: - Header
 
-    private var minimalHeader: some View {
-        HStack(spacing: 10) {
-            MotorLogo(.orion, size: 14)
-            VStack(alignment: .leading, spacing: 2) {
-                ArgusSectionCaption("ORION · TEKNİK ANALİZ")
-                Text(symbol.uppercased())
-                    .font(.system(size: 20, weight: .heavy, design: .monospaced))
-                    .tracking(0.8)
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-            }
-            Spacer()
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("Teknik analiz")
+                .font(.system(size: 13))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+            Text(symbol.uppercased())
+                .font(.system(size: 22, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                .tracking(-0.2)
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 16)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - Timeframe Segment (reaktif — dokunulduğunda skor + grafik + bileşenler yenilenir)
+    // MARK: - Timeframe segmented (iOS-native dili)
 
     private var timeframeSegment: some View {
-        HStack(spacing: 3) {
+        HStack(spacing: 2) {
             ForEach(TimeframeMode.allCases, id: \.rawValue) { mode in
                 timeframeTab(mode)
             }
         }
-        .padding(3)
+        .padding(2)
         .background(InstitutionalTheme.Colors.surface2)
-        .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     private func timeframeTab(_ mode: TimeframeMode) -> some View {
@@ -127,112 +111,109 @@ struct OrionMotherboardView: View {
             }
             Task { await viewModel.changeTimeframe(to: mode) }
         } label: {
-            Text(mode.displayLabel.uppercased())
-                .font(.system(size: 10, weight: .heavy, design: .monospaced))
-                .tracking(0.5)
-                .foregroundColor(
-                    isSelected ? orionTint : InstitutionalTheme.Colors.textSecondary
-                )
+            Text(timeframeLabel(mode))
+                .font(.system(size: 13, weight: isSelected ? .medium : .regular))
+                .foregroundColor(isSelected
+                                 ? InstitutionalTheme.Colors.textPrimary
+                                 : InstitutionalTheme.Colors.textSecondary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 7)
                 .background(
                     isSelected
-                        ? orionTint.opacity(0.2)
+                        ? InstitutionalTheme.Colors.surface1
                         : Color.clear
                 )
-                .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
         }
         .buttonStyle(.plain)
     }
 
-    // MARK: - Kompakt Skor Barı
+    private func timeframeLabel(_ mode: TimeframeMode) -> String {
+        // Sentence case karşılıklar (mitoloji uppercased() yerine)
+        switch mode.displayLabel.lowercased() {
+        case "saatlik", "1s", "1h": return "Saatlik"
+        case "4 saatlik", "4s", "4h": return "4 saat"
+        case "günlük", "1g", "1d", "d": return "Günlük"
+        case "haftalık", "1h", "1w", "w": return "Haftalık"
+        default: return mode.displayLabel.capitalized
+        }
+    }
 
-    /// Sol: 52pt skor ring. Sağ: KONSENSÜS caption + AL/TUT/SAT chip +
-    /// güven metni. Tap → CPU node detail overlay.
-    private var scoreBar: some View {
+    // MARK: - Skor kartı
+
+    /// Tap → CPU node detay overlay (eski "scoreBar" davranışı korundu).
+    private var scoreCard: some View {
         Button {
             withAnimation { selectedNode = .cpu }
         } label: {
-            HStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .stroke(orionTint.opacity(0.15), lineWidth: 4)
-                        .frame(width: 52, height: 52)
-                    Circle()
-                        .trim(from: 0, to: CGFloat(max(0, min(100, currentOrion.score)) / 100.0))
-                        .stroke(verdictTone.foreground,
-                                style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                        .rotationEffect(.degrees(-90))
-                        .animation(.easeOut(duration: 0.5), value: currentOrion.score)
-                        .frame(width: 52, height: 52)
-                    Text(String(format: "%.0f", currentOrion.score))
-                        .font(.system(size: 16, weight: .heavy, design: .monospaced))
-                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+            HStack(alignment: .firstTextBaseline) {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text("\(Int(currentOrion.score))")
+                        .font(.system(size: 32, weight: .medium))
+                        .foregroundColor(scoreColor(currentOrion.score))
                         .monospacedDigit()
+                    Text("/ 100")
+                        .font(.system(size: 13))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("KONSENSÜS · \(selectedTimeframe.displayLabel.uppercased())")
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
-                        .tracking(1.3)
-                        .foregroundColor(orionTint)
-                    HStack(spacing: 8) {
-                        ArgusChip(verdictText, tone: verdictTone)
-                        Text(confidenceText)
-                            .font(.system(size: 10, design: .monospaced))
-                            .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                    }
-                }
-
                 Spacer()
-
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(verdictText)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(scoreColor(currentOrion.score))
+                    Text(confidenceText)
+                        .font(.system(size: 11))
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                }
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 11, weight: .bold))
+                    .font(.system(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                    .padding(.leading, 2)
             }
-            .padding(12)
+            .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(orionTint.opacity(0.06))
+            .background(InstitutionalTheme.Colors.surface1)
             .overlay(
-                RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
-                    .stroke(orionTint.opacity(0.3), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
             )
-            .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
         .buttonStyle(.plain)
     }
 
+    private var verdictText: String {
+        if currentOrion.score >= 55 { return "Al" }
+        if currentOrion.score >= 45 { return "Tut" }
+        return "Sat"
+    }
+
     private var confidenceText: String {
-        // Güven metni — skordan basit türetim (servis güven skoru yoksa).
         let c = max(50, min(95, 50 + Int(currentOrion.score) / 2))
         return "güven %\(c)"
     }
 
-    // MARK: - Fallback uyarı şeridi (sadece gerektiğinde)
+    // MARK: - Fallback uyarı (sadece gerektiğinde)
 
     @ViewBuilder
     private var fallbackNoteIfNeeded: some View {
         if analysis.isFallback(timeframe: selectedTimeframe) {
             let source = analysis.sourceFor(timeframe: selectedTimeframe)
-            HStack(spacing: 8) {
-                ArgusDot(color: InstitutionalTheme.Colors.titan, size: 6)
-                Text("\(selectedTimeframe.displayLabel) skoru \(source.displayLabel) verisinden türetildi.")
-                    .font(.system(size: 10))
-                    .foregroundColor(InstitutionalTheme.Colors.titan)
+            HStack(spacing: 6) {
+                Image(systemName: "info.circle")
+                    .font(.system(size: 11))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                Text("\(timeframeLabel(selectedTimeframe).lowercased()) skoru \(source.displayLabel) verisinden türetildi.")
+                    .font(.system(size: 11))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Spacer()
             }
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(InstitutionalTheme.Colors.titan.opacity(0.06))
-            .overlay(
-                RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm, style: .continuous)
-                    .stroke(InstitutionalTheme.Colors.titan.opacity(0.2), lineWidth: 0.5)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm, style: .continuous))
         }
     }
 
-    // MARK: - HERO Grafik
+    // MARK: - HERO Grafik (sade çerçeve)
 
     private var chartHero: some View {
         ZStack {
@@ -253,13 +234,12 @@ struct OrionMotherboardView: View {
                 .frame(height: 280)
                 .opacity(viewModel.isCandlesLoading ? 0.3 : 1.0)
             } else {
-                VStack(spacing: 10) {
+                VStack(spacing: 8) {
                     Image(systemName: "chart.line.uptrend.xyaxis")
                         .font(.system(size: 22))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                    Text("Grafik verisi yükleniyor…")
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .tracking(0.8)
+                    Text("Grafik verisi yükleniyor")
+                        .font(.system(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
                 .frame(height: 280)
@@ -267,77 +247,90 @@ struct OrionMotherboardView: View {
 
             if viewModel.isCandlesLoading {
                 VStack(spacing: 8) {
-                    ProgressView().tint(orionTint)
-                    Text("\(selectedTimeframe.displayLabel.uppercased()) YÜKLENİYOR…")
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .tracking(1)
-                        .foregroundColor(orionTint)
+                    ProgressView()
+                    Text("\(timeframeLabel(selectedTimeframe).lowercased()) yükleniyor")
+                        .font(.system(size: 12))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
                 .padding(14)
                 .background(InstitutionalTheme.Colors.surface1.opacity(0.92))
                 .overlay(
-                    RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
-                        .stroke(orionTint.opacity(0.3), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
                 )
-                .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
         }
         .padding(8)
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.border, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
-        .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
-    // MARK: - 4 Bileşen Satırı (kompakt pill stili)
+    // MARK: - Bileşen listesi (sade satırlar, kart içinde)
 
-    private var componentRows: some View {
-        VStack(spacing: 6) {
+    private var componentList: some View {
+        VStack(spacing: 0) {
             momentumRow
+            divider
             trendRow
+            divider
             structureRow
+            divider
             patternRow
         }
+        .background(InstitutionalTheme.Colors.surface1)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private var divider: some View {
+        Rectangle()
+            .fill(InstitutionalTheme.Colors.borderSubtle)
+            .frame(height: 0.5)
+            .padding(.leading, 14)
     }
 
     private var momentumRow: some View {
         let rsi = currentOrion.components.rsi ?? (currentOrion.components.momentum * 4)
-        let (status, tone): (String, ArgusChipTone) = {
-            if rsi > 70 { return ("aşırı alım", .crimson) }
-            if rsi < 30 { return ("aşırı satım", .crimson) }
-            if rsi > 55 { return ("güçlü", .aurora) }
-            if rsi < 45 { return ("zayıf", .titan) }
-            return ("nötr", .motor(.orion))
+        let (status, color): (String, Color) = {
+            if rsi > 70 { return ("aşırı alım", InstitutionalTheme.Colors.crimson) }
+            if rsi < 30 { return ("aşırı satım", InstitutionalTheme.Colors.crimson) }
+            if rsi > 55 { return ("güçlü", InstitutionalTheme.Colors.aurora) }
+            if rsi < 45 { return ("zayıf", InstitutionalTheme.Colors.titan) }
+            return ("nötr", InstitutionalTheme.Colors.textSecondary)
         }()
 
         return componentRow(
             node: .momentum,
-            code: "MOM",
-            title: "MOMENTUM",
-            valueText: String(format: "%.0f", rsi),
+            label: "Momentum",
+            valueText: "\(Int(rsi))",
             statusText: status,
-            tone: tone,
+            color: color,
             barRatio: max(0, min(1, rsi / 100))
         )
     }
 
     private var trendRow: some View {
         let adx = currentOrion.components.trendStrength ?? (currentOrion.components.trend * 2)
-        let (status, tone): (String, ArgusChipTone) = {
-            if adx >= 25 { return ("yerleşik", .aurora) }
-            if adx >= 15 { return ("zayıf trend", .titan) }
-            return ("yatay", .neutral)
+        let (status, color): (String, Color) = {
+            if adx >= 25 { return ("yerleşik", InstitutionalTheme.Colors.aurora) }
+            if adx >= 15 { return ("zayıf trend", InstitutionalTheme.Colors.titan) }
+            return ("yatay", InstitutionalTheme.Colors.textSecondary)
         }()
 
         return componentRow(
             node: .trend,
-            code: "TRD",
-            title: "TREND",
-            valueText: String(format: "%.0f", adx),
+            label: "Trend",
+            valueText: "\(Int(adx))",
             statusText: status,
-            tone: tone,
+            color: color,
             barRatio: max(0, min(1, adx / 50))
         )
     }
@@ -345,20 +338,19 @@ struct OrionMotherboardView: View {
     private var structureRow: some View {
         let s = max(0, min(currentOrion.components.structure, 35))
         let pos = s / 35.0
-        let (status, tone): (String, ArgusChipTone) = {
-            if pos > 0.8 { return ("dirence yakın", .crimson) }
-            if pos < 0.2 { return ("desteğe yakın", .aurora) }
-            if pos >= 0.55 { return ("sağlam", .aurora) }
-            return ("kanal içi", .motor(.orion))
+        let (status, color): (String, Color) = {
+            if pos > 0.8 { return ("dirence yakın", InstitutionalTheme.Colors.crimson) }
+            if pos < 0.2 { return ("desteğe yakın", InstitutionalTheme.Colors.aurora) }
+            if pos >= 0.55 { return ("sağlam", InstitutionalTheme.Colors.aurora) }
+            return ("kanal içi", InstitutionalTheme.Colors.textSecondary)
         }()
 
         return componentRow(
             node: .structure,
-            code: "YPI",
-            title: "YAPI",
-            valueText: "\(Int(s))/35",
+            label: "Yapı",
+            valueText: "\(Int(s))",
             statusText: status,
-            tone: tone,
+            color: color,
             barRatio: pos
         )
     }
@@ -367,130 +359,90 @@ struct OrionMotherboardView: View {
         let desc = currentOrion.components.patternDesc
         let isEmpty = desc.isEmpty || desc == "Yok"
         let status = isEmpty ? "tespit yok" : desc.lowercased()
-        let tone: ArgusChipTone = isEmpty ? .neutral : .aurora
+        let color: Color = isEmpty
+            ? InstitutionalTheme.Colors.textSecondary
+            : InstitutionalTheme.Colors.aurora
 
         return componentRow(
             node: .pattern,
-            code: "FRM",
-            title: "FORMASYON",
+            label: "Formasyon",
             valueText: "",
             statusText: status,
-            tone: tone,
+            color: color,
             barRatio: isEmpty ? 0 : 1
         )
     }
 
-    /// Tek satır bileşen kartı — 26pt kod rozeti + isim + skor + durum +
-    /// altta ince bar. Tıklanınca detay overlay açılır.
     private func componentRow(
         node: CircuitNode,
-        code: String,
-        title: String,
+        label: String,
         valueText: String,
         statusText: String,
-        tone: ArgusChipTone,
+        color: Color,
         barRatio: Double
     ) -> some View {
         Button {
             withAnimation { selectedNode = node }
         } label: {
             HStack(spacing: 10) {
-                // Kod rozeti
-                Text(code)
-                    .font(.system(size: 8, weight: .heavy, design: .monospaced))
-                    .tracking(0.4)
-                    .foregroundColor(tone.foreground)
-                    .frame(width: 28, height: 28)
-                    .background(
-                        Circle().fill(tone.background)
-                    )
-                    .overlay(
-                        Circle().stroke(tone.foreground.opacity(0.35), lineWidth: 0.5)
-                    )
+                Text(label)
+                    .font(.system(size: 13))
+                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                    .frame(width: 84, alignment: .leading)
 
-                VStack(alignment: .leading, spacing: 5) {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text(title)
-                            .font(.system(size: 10.5, weight: .bold, design: .monospaced))
-                            .tracking(0.8)
-                            .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                        Spacer()
-                        if !valueText.isEmpty {
-                            Text(valueText)
-                                .font(.system(size: 11, weight: .heavy, design: .monospaced))
-                                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                                .monospacedDigit()
-                            Text("·")
-                                .font(.system(size: 10))
-                                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                        }
-                        Text(statusText)
-                            .font(.system(size: 10.5, weight: .heavy, design: .monospaced))
-                            .foregroundColor(tone.foreground)
-                            .lineLimit(1)
-                            .truncationMode(.tail)
-                    }
-                    ArgusBar(value: barRatio, color: tone.foreground, height: 3)
+                ArgusBar(value: barRatio, color: color, height: 4)
+
+                if !valueText.isEmpty {
+                    Text(valueText)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                        .monospacedDigit()
+                        .frame(width: 28, alignment: .trailing)
                 }
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                Text(statusText)
+                    .font(.system(size: 11))
+                    .foregroundColor(color)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(width: valueText.isEmpty ? 92 : 70, alignment: .trailing)
             }
-            .padding(10)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 11)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(tone.background.opacity(0.4))
-            .overlay(
-                RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm, style: .continuous)
-                    .stroke(tone.foreground.opacity(0.25), lineWidth: 0.5)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm, style: .continuous))
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
 
-    // MARK: - Tavsiye Barı
+    // MARK: - Tavsiye kartı
 
-    private var adviceBar: some View {
-        HStack(alignment: .top, spacing: 10) {
-            ArgusDot(color: orionTint)
-                .padding(.top, 5)
-            VStack(alignment: .leading, spacing: 4) {
-                Text("ORION · \(selectedTimeframe.displayLabel.uppercased()) TAVSİYESİ")
-                    .font(.system(size: 8, weight: .bold, design: .monospaced))
-                    .tracking(1.3)
-                    .foregroundColor(orionTint)
-                Text(analysis.strategicAdvice)
-                    .font(.system(size: 12))
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer()
+    private var adviceCard: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Yorum")
+                .font(.system(size: 11))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+            Text(analysis.strategicAdvice)
+                .font(.system(size: 14))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+                .lineSpacing(2)
         }
-        .padding(12)
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(orionTint.opacity(0.06))
+        .background(InstitutionalTheme.Colors.surface1)
         .overlay(
-            Rectangle()
-                .fill(orionTint)
-                .frame(width: 2)
-                .frame(maxHeight: .infinity),
-            alignment: .leading
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
-        .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
-    // MARK: - Verdict helpers
+    // MARK: - Tone
 
-    private var verdictText: String {
-        if currentOrion.score >= 55 { return "AL" }
-        if currentOrion.score >= 45 { return "TUT" }
-        return "SAT"
-    }
-
-    private var verdictTone: ArgusChipTone {
-        if currentOrion.score >= 55 { return .aurora }
-        if currentOrion.score >= 45 { return .titan }
-        return .crimson
+    private func scoreColor(_ score: Double) -> Color {
+        if score >= 55 { return InstitutionalTheme.Colors.aurora }
+        if score >= 45 { return InstitutionalTheme.Colors.textPrimary }
+        return InstitutionalTheme.Colors.crimson
     }
 }

@@ -71,18 +71,20 @@ struct SettingsView: View {
     //     intelligenceSection, vs.) şimdilik kodda kaldı, sonraki cleanup
     //     turunda silinecek. Artık çağrılmıyor.
     var body: some View {
-        NavigationStack {
-            ZStack {
-                InstitutionalTheme.Colors.background.edgesIgnoringSafeArea(.all)
+        // 2026-05-03 H-59: nested NavigationStack kaldırıldı — ContentView
+        // root'taki NavigationStack(path: $router.navigationStack) ile çakışıp
+        // back butonunu ve toolbar'ı bozuyordu.
+        ZStack {
+            InstitutionalTheme.Colors.background.edgesIgnoringSafeArea(.all)
 
-                VStack(spacing: 0) {
-                    topNav
-                    ScrollView {
-                        settingsList
-                            .padding(.top, 14)
-                            .padding(.bottom, 60)
-                    }
+            VStack(spacing: 0) {
+                topNav
+                ScrollView {
+                    settingsList
+                        .padding(.top, 14)
+                        .padding(.bottom, 60)
                 }
+            }
                 .task { await refreshSnapshots() }
                 .sheet(isPresented: $showStatusConsole) {
                     ArgusStatusConsoleView(
@@ -115,13 +117,9 @@ struct SettingsView: View {
                     }
                     .zIndex(200)
                 }
-            }
-            .navigationTitle("")
-            .navigationBarHidden(true)
         }
+        .navigationBarHidden(true)
         .preferredColorScheme(.dark)
-        // NavigationStack zaten stack davranışı veriyor; navigationViewStyle
-        // modifier'ı NavigationView için tasarlanmıştı, NavigationStack'e gerek yok.
     }
 }
 
@@ -140,7 +138,11 @@ extension SettingsView {
 
             Spacer()
 
-            Button(action: { showDrawer = true }) {
+            Button(action: {
+                withAnimation(ArgusDrawerView.toggleAnimation) {
+                    showDrawer = true
+                }
+            }) {
                 Image(systemName: "line.3.horizontal")
                     .font(.system(size: 18, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)

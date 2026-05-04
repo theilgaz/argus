@@ -152,17 +152,15 @@ struct AgoraDetailPanel: View {
                     // 3. Phoenix Guidance
                     if let ph = plan.entryGuidance {
                         VStack(alignment: .trailing) {
-                            Text("PHOENIX")
-                                .font(.caption2)
-                                .bold()
-                                .foregroundColor(.purple)
+                            Text("Risk")
+                                .font(.system(size: 11))
+                                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                             Text(ph.priceBand)
-                                .font(.caption2)
-                                .foregroundColor(.white)
+                                .font(.system(size: 11))
+                                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                             Text(ph.recommendedEntry)
-                                .font(.caption2)
-                                .italic()
-                                .foregroundColor(.gray)
+                                .font(.system(size: 11))
+                                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         }
                     }
                 }
@@ -175,10 +173,9 @@ struct AgoraDetailPanel: View {
             if !t.unusedFactors.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
                     Divider().padding(.vertical, 4)
-                    Text("KULLANILMAYAN FAKTÖRLER")
-                        .font(.caption2)
-                        .bold()
-                        .foregroundColor(.gray)
+                    Text("Kullanılmayan faktörler")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     
                     ForEach(t.unusedFactors, id: \.self) { factor in
                         HStack(spacing: 6) {
@@ -378,10 +375,9 @@ struct AgoraDetailPanel: View {
     
     private func evidenceList(s: DecisionSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("KARAR MANTIĞI")
-                .font(.caption2)
-                .bold()
-                .foregroundColor(.gray)
+            Text("Karar mantığı")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             
             ForEach(s.evidence, id: \.claim) { item in
                 HStack(alignment: .top, spacing: 8) {

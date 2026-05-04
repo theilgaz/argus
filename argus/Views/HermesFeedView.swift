@@ -18,10 +18,10 @@ struct HermesFeedView: View {
 
             VStack(spacing: 0) {
                 ArgusNavHeader(
-                    title: "HERMES",
-                    subtitle: "HABER · OLAY · ANALİZ",
+                    title: "Haber",
+                    subtitle: "Olay, analiz, akış",
                     leadingDeco: .back(onTap: { dismiss() }),
-                    titlePill: .init(text: "AKIŞ", tone: .motor(.hermes)),
+                    titlePill: nil,
                     actions: [
                         .custom(sfSymbol: "arrow.clockwise",
                                 action: {
@@ -61,28 +61,28 @@ struct HermesFeedView: View {
 
     private var headerStatus: ArgusNavHeader.Status {
         if feedState.isLoading {
-            return .custom(dotColor: InstitutionalTheme.Colors.Motors.hermes,
-                           label: "TARANIYOR",
+            return .custom(dotColor: InstitutionalTheme.Colors.textTertiary,
+                           label: "Taranıyor",
                            trailing: scopeLabel)
         }
         if feedState.errorMessage != nil {
             return .custom(dotColor: InstitutionalTheme.Colors.crimson,
-                           label: "HATA",
+                           label: "Hata",
                            trailing: scopeLabel)
         }
         let total = feedState.events.count + feedState.insights.count + feedState.rawArticles.count
         if total == 0 {
             return .custom(dotColor: InstitutionalTheme.Colors.textTertiary,
-                           label: "AKIŞ BOŞ",
+                           label: "Akış boş",
                            trailing: scopeLabel)
         }
-        return .custom(dotColor: InstitutionalTheme.Colors.Motors.hermes,
-                       label: "\(total) KAYIT",
+        return .custom(dotColor: InstitutionalTheme.Colors.aurora,
+                       label: "\(total) kayıt",
                        trailing: scopeLabel)
     }
 
     private var scopeLabel: String {
-        selectedScope == 0 ? "TAKİP · PORTFÖY" : "GENEL PİYASA"
+        selectedScope == 0 ? "Takip" : "Piyasa"
     }
 
     private var feedContent: some View {
@@ -468,29 +468,12 @@ struct RawNewsCard: View {
 
 struct LoadingStateView: View {
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 12) {
             Spacer()
-
-            ArgusOrb(size: 96,
-                     ringColor: InstitutionalTheme.Colors.Motors.hermes,
-                     glowColor: InstitutionalTheme.Colors.Motors.hermes) {
-                MotorLogo(.hermes, size: 48)
-            }
-
-            VStack(spacing: 4) {
-                Text("HABER AKIŞI TARANIYOR")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                    .tracking(1.2)
-                    .foregroundColor(InstitutionalTheme.Colors.Motors.hermes)
-                Text("Hermes yapay zekası haberleri analiz ediyor…")
-                    .font(InstitutionalTheme.Typography.caption)
-                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-            }
-
             ProgressView()
-                .scaleEffect(1.1)
-                .tint(InstitutionalTheme.Colors.Motors.hermes)
-
+            Text("Haber akışı taranıyor")
+                .font(.system(size: 13))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Spacer()
         }
     }
@@ -501,27 +484,22 @@ struct ErrorStateView: View {
     let onRetry: () -> Void
 
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 16) {
             Spacer()
 
-            ArgusOrb(size: 80,
-                     ringColor: InstitutionalTheme.Colors.crimson,
-                     glowColor: InstitutionalTheme.Colors.crimson) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 32, weight: .semibold))
-                    .foregroundColor(InstitutionalTheme.Colors.crimson)
-            }
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 28))
+                .foregroundColor(InstitutionalTheme.Colors.crimson)
 
             Text(message)
-                .font(InstitutionalTheme.Typography.caption)
+                .font(.system(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
 
-            v5FeedActionButton(icon: "arrow.clockwise",
-                               label: "TEKRAR DENE",
-                               tone: .motor(.hermes),
-                               action: onRetry)
+            sadeFeedActionButton(icon: "arrow.clockwise",
+                                 label: "Tekrar dene",
+                                 action: onRetry)
 
             Spacer()
         }
@@ -533,67 +511,53 @@ struct EmptyFeedView: View {
     let onRetry: () -> Void
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 16) {
             Spacer()
 
-            ArgusOrb(size: 80,
-                     ringColor: InstitutionalTheme.Colors.border,
-                     glowColor: nil) {
-                Image(systemName: "newspaper")
-                    .font(.system(size: 30))
-                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-            }
+            Image(systemName: "newspaper")
+                .font(.system(size: 28))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
 
-            VStack(spacing: 6) {
-                Text(scope == 0 ? "TAKİP LİSTESİ BOŞ" : "HABER BULUNAMADI")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                    .tracking(1.2)
+            VStack(spacing: 4) {
+                Text(scope == 0 ? "Takip listesi boş" : "Haber bulunamadı")
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text(scope == 0 ? "Takip listenizdeki hisseler için haber bulunamadı."
                                 : "Genel piyasa haberi bulunamadı.")
-                    .font(InstitutionalTheme.Typography.caption)
+                    .font(.system(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
             }
 
-            v5FeedActionButton(icon: "magnifyingglass",
-                               label: "TARA",
-                               tone: .motor(.hermes),
-                               action: onRetry)
+            sadeFeedActionButton(icon: "magnifyingglass",
+                                 label: "Tara",
+                                 action: onRetry)
 
             Spacer()
         }
     }
 }
 
-/// V5 aksiyon butonu — mono caps + motor renkli kenarlık + dolgu.
-private struct v5FeedActionButton: View {
+/// Sade aksiyon butonu — sentence label + hairline border.
+private struct sadeFeedActionButton: View {
     let icon: String
     let label: String
-    let tone: ArgusChipTone
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 8) {
                 Image(systemName: icon)
-                    .font(.system(size: 11, weight: .bold))
+                    .font(.system(size: 12))
                 Text(label)
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
-                    .tracking(0.8)
+                    .font(.system(size: 13, weight: .medium))
             }
-            .foregroundColor(tone.foreground)
-            .padding(.horizontal, 18)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm, style: .continuous)
-                    .fill(tone.background)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm, style: .continuous)
-                    .stroke(tone.foreground.opacity(0.35), lineWidth: 1)
-            )
+            .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 9)
+            .background(InstitutionalTheme.Colors.surface2)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         }
         .buttonStyle(.plain)
     }
@@ -603,19 +567,17 @@ struct ScopeSelectorBar: View {
     @Binding var selectedScope: Int
 
     var body: some View {
-        // V5 pill toggle — market/portföy toggle ile aynı dil.
-        HStack(spacing: 4) {
-            ScopeButton(title: "PORTFÖY & TAKİP", isSelected: selectedScope == 0) {
+        HStack(spacing: 2) {
+            ScopeButton(title: "Takip", isSelected: selectedScope == 0) {
                 withAnimation(.spring(response: 0.3)) { selectedScope = 0 }
             }
-            ScopeButton(title: "GENEL PİYASA", isSelected: selectedScope == 1) {
+            ScopeButton(title: "Piyasa", isSelected: selectedScope == 1) {
                 withAnimation(.spring(response: 0.3)) { selectedScope = 1 }
             }
         }
-        .padding(4)
+        .padding(2)
         .background(
-            Capsule().fill(InstitutionalTheme.Colors.surface2)
-                .overlay(Capsule().stroke(InstitutionalTheme.Colors.border, lineWidth: 1))
+            RoundedRectangle(cornerRadius: 8, style: .continuous).fill(InstitutionalTheme.Colors.surface2)
         )
         .padding(.horizontal)
     }
@@ -629,20 +591,18 @@ struct ScopeButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .tracking(0.5)
-                .foregroundColor(isSelected ? .white : InstitutionalTheme.Colors.textTertiary)
+                .font(.system(size: 13, weight: isSelected ? .medium : .regular))
+                .foregroundColor(isSelected
+                                 ? InstitutionalTheme.Colors.textPrimary
+                                 : InstitutionalTheme.Colors.textSecondary)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 6)
+                .padding(.vertical, 7)
                 .background(
-                    Group {
-                        if isSelected {
-                            Capsule().fill(InstitutionalTheme.Colors.Motors.hermes)
-                        } else {
-                            Color.clear
-                        }
-                    }
+                    isSelected
+                        ? InstitutionalTheme.Colors.surface1
+                        : Color.clear
                 )
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
         }
         .buttonStyle(.plain)
     }

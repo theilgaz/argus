@@ -1,6 +1,14 @@
 import SwiftUI
 import Charts
 
+// 2026-04-30 H-58 — sade refactor.
+// Eski yapı V5: ArgusOrb + MotorLogo(.prometheus) + caps "PROMETHEUS · FIYAT
+// PROJEKSİYONU" başlık + caps mono "TAHMİN" + 28pt black mono fiyat + ArgusPill
+// uppercased + caps mono mini metric titles + motor tint border.
+// Yeni: "Tahmin" sentence başlık + sentence "Fiyat projeksiyonu" subtitle +
+// 28pt medium fiyat + sade hairline kart + sentence "Al/Tut/Sat" + sentence
+// metric başlıkları + sade numaralı liste.
+
 struct PrometheusPanelView: View {
     let symbol: String
     let candles: [Candle]
@@ -13,9 +21,6 @@ struct PrometheusPanelView: View {
     }
 
     var body: some View {
-        // 2026-04-23 QA: iç ScrollView kaldırıldı. HoloPanelView zaten
-        // dış ScrollView sağlıyor; nested scroll view iç bounds'u çökertip
-        // paneli boş gösteriyordu. Artık dış scroll paneli naturel sarıyor.
         VStack(alignment: .leading, spacing: 14) {
             header
             summaryCard
@@ -28,34 +33,21 @@ struct PrometheusPanelView: View {
         }
     }
 
+    // MARK: - Header (sade)
+
     private var header: some View {
-        // V5.B-4 — motor avatar + mono caps başlık + info chip
-        HStack(spacing: 12) {
-            ArgusOrb(size: 44,
-                     ringColor: InstitutionalTheme.Colors.Motors.prometheus,
-                     glowColor: InstitutionalTheme.Colors.Motors.prometheus) {
-                MotorLogo(.prometheus, size: 24)
-            }
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
-                    Text("PROMETHEUS")
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .tracking(1.2)
-                        .foregroundColor(InstitutionalTheme.Colors.Motors.prometheus)
-                    Text("·")
-                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                    Text("FIYAT PROJEKSİYONU")
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
-                        .tracking(1)
-                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                }
-                Text("Kısa vadeli trend projeksiyonu (Damped Holt)")
-                    .font(InstitutionalTheme.Typography.caption)
-                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-            }
-            Spacer()
+        VStack(alignment: .leading, spacing: 2) {
+            Text("Tahmin")
+                .font(.system(size: 17, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+            Text("Kısa vadeli fiyat projeksiyonu")
+                .font(.system(size: 12))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
+
+    // MARK: - Summary card
 
     private var summaryCard: some View {
         Group {
@@ -63,48 +55,53 @@ struct PrometheusPanelView: View {
                 loadingBlock
             } else if let f = forecast, f.isValid {
                 VStack(alignment: .leading, spacing: 12) {
+
+                    // Üst satır: tavsiye + ufuk
                     HStack(spacing: 10) {
-                        recommendationBadge(f.recommendation)
+                        Text(recommendationLabel(f.recommendation))
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(recommendationColor(f.recommendation))
                         Spacer()
-                        ArgusChip("UFUK · \(f.horizonDays)G", tone: .motor(.prometheus))
+                        Text("\(f.horizonDays) gün")
+                            .font(.system(size: 12))
+                            .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     }
 
-                    // Büyük skor: tahmin fiyatı
+                    // Tahmin fiyatı
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("TAHMİN")
-                            .font(.system(size: 9, weight: .bold, design: .monospaced))
-                            .tracking(0.8)
+                        Text("Tahmin")
+                            .font(.system(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                        HStack(alignment: .firstTextBaseline, spacing: 10) {
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
                             Text(formatPrice(f.predictedPrice))
-                                .font(.system(size: 28, weight: .black, design: .monospaced))
+                                .font(.system(size: 28, weight: .medium))
                                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                                .monospacedDigit()
                             Text(f.formattedChange)
-                                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                                .font(.system(size: 13, weight: .medium))
                                 .foregroundColor(recommendationColor(f.recommendation))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 4, style: .continuous)
-                                        .fill(recommendationColor(f.recommendation).opacity(0.18))
-                                )
+                                .monospacedDigit()
                         }
                     }
 
-                    ArgusHair()
+                    Rectangle()
+                        .fill(InstitutionalTheme.Colors.borderSubtle)
+                        .frame(height: 0.5)
 
                     HStack(spacing: 12) {
-                        v5Metric("ŞİMDİ", value: formatPrice(f.currentPrice))
-                        v5Metric("GÜVEN", value: "%\(Int(f.confidence))",
-                                 tone: confidenceTone(f.confidence))
-                        v5Metric("MAPE", value: String(format: "%.2f%%", f.validationMAPE))
+                        sadeMetric("Şimdi", value: formatPrice(f.currentPrice))
+                        sadeMetric("Güven", value: "%\(Int(f.confidence))",
+                                   color: confidenceColor(f.confidence))
+                        sadeMetric("MAPE", value: String(format: "%.2f%%", f.validationMAPE))
                     }
 
                     HStack(spacing: 12) {
-                        v5Metric("YÖN İSABET",
-                                 value: String(format: "%.1f%%", f.directionalAccuracy * 100),
-                                 tone: f.directionalAccuracy >= 0.55 ? .aurora : .titan)
-                        v5Metric("VERİ", value: "\(f.dataPointsUsed) bar")
+                        sadeMetric("Yön isabeti",
+                                   value: String(format: "%.1f%%", f.directionalAccuracy * 100),
+                                   color: f.directionalAccuracy >= 0.55
+                                          ? InstitutionalTheme.Colors.aurora
+                                          : InstitutionalTheme.Colors.titan)
+                        sadeMetric("Veri", value: "\(f.dataPointsUsed) bar")
                     }
                 }
             } else {
@@ -115,30 +112,30 @@ struct PrometheusPanelView: View {
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.Motors.prometheus.opacity(0.3), lineWidth: 1)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous))
     }
 
-    /// V5 metrik kutusu — mini-stat; opsiyonel ton vurgusu.
-    private func v5Metric(_ title: String, value: String, tone: ArgusChipTone? = nil) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+    /// Sade metrik kutusu — sentence başlık + değer.
+    private func sadeMetric(_ title: String, value: String, color: Color? = nil) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
             Text(title)
-                .font(.system(size: 9, weight: .bold, design: .monospaced))
-                .tracking(0.7)
+                .font(.system(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Text(value)
-                .font(.system(size: 12, weight: .bold, design: .monospaced))
-                .foregroundColor(tone?.foreground ?? InstitutionalTheme.Colors.textPrimary)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(color ?? InstitutionalTheme.Colors.textPrimary)
+                .monospacedDigit()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func confidenceTone(_ value: Double) -> ArgusChipTone {
-        if value >= 70 { return .aurora }
-        if value >= 50 { return .motor(.prometheus) }
-        if value >= 30 { return .titan }
-        return .crimson
+    private func confidenceColor(_ value: Double) -> Color {
+        if value >= 70 { return InstitutionalTheme.Colors.aurora }
+        if value >= 50 { return InstitutionalTheme.Colors.textPrimary }
+        if value >= 30 { return InstitutionalTheme.Colors.titan }
+        return InstitutionalTheme.Colors.crimson
     }
 
     private func recommendationColor(_ rec: PrometheusRecommendation) -> Color {
@@ -149,20 +146,34 @@ struct PrometheusPanelView: View {
         }
     }
 
+    private func recommendationLabel(_ rec: PrometheusRecommendation) -> String {
+        switch rec {
+        case .buy:  return "Al"
+        case .sell: return "Sat"
+        case .hold: return "Tut"
+        }
+    }
+
+    // MARK: - Chart card
+
     private var continuationChartCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                ArgusSectionCaption("FİYAT DEVAM GRAFİĞİ")
+                Text("Fiyat devam grafiği")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Spacer()
                 if let f = forecast, f.isValid {
-                    ArgusChip("\(historicalTail.count) + \(f.predictions.count)",
-                              tone: .motor(.prometheus))
+                    Text("\(historicalTail.count) + \(f.predictions.count)")
+                        .font(.system(size: 11))
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                        .monospacedDigit()
                 }
             }
 
             if let f = forecast, f.isValid, !historicalTail.isEmpty {
                 let chartData = buildChartData(forecast: f, history: historicalTail)
-                let promColor = InstitutionalTheme.Colors.Motors.prometheus
+                let lineColor = InstitutionalTheme.Colors.textPrimary
 
                 Chart {
                     ForEach(chartData.history) { p in
@@ -178,8 +189,8 @@ struct PrometheusPanelView: View {
                             x: .value("Tarih", p.date),
                             y: .value("Tahmin", p.price)
                         )
-                        .foregroundStyle(promColor)
-                        .lineStyle(StrokeStyle(lineWidth: 2.2, dash: [6, 4]))
+                        .foregroundStyle(lineColor)
+                        .lineStyle(StrokeStyle(lineWidth: 2, dash: [6, 4]))
                     }
 
                     ForEach(chartData.futureBand) { p in
@@ -188,23 +199,25 @@ struct PrometheusPanelView: View {
                             yStart: .value("Alt", p.lower),
                             yEnd: .value("Üst", p.upper)
                         )
-                        .foregroundStyle(promColor.opacity(0.18))
+                        .foregroundStyle(InstitutionalTheme.Colors.textPrimary.opacity(0.08))
                     }
                 }
                 .frame(height: 230)
 
-                HStack(spacing: 10) {
-                    legendDot(color: InstitutionalTheme.Colors.textSecondary, label: "GEÇMİŞ")
-                    legendDot(color: InstitutionalTheme.Colors.Motors.prometheus, label: "TAHMİN")
-                    legendDot(color: InstitutionalTheme.Colors.Motors.prometheus.opacity(0.5),
-                              label: "GÜVEN ARALIĞI")
+                HStack(spacing: 14) {
+                    legendDot(color: InstitutionalTheme.Colors.textSecondary, label: "geçmiş")
+                    legendDot(color: InstitutionalTheme.Colors.textPrimary, label: "tahmin")
+                    legendDot(color: InstitutionalTheme.Colors.textPrimary.opacity(0.3),
+                              label: "güven aralığı")
                     Spacer()
                 }
             } else {
                 HStack(spacing: 8) {
-                    ArgusDot(color: InstitutionalTheme.Colors.textTertiary)
+                    Circle()
+                        .fill(InstitutionalTheme.Colors.textTertiary)
+                        .frame(width: 4, height: 4)
                     Text("Grafik için tahmin verisi yok.")
-                        .font(InstitutionalTheme.Typography.caption)
+                        .font(.system(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
             }
@@ -214,7 +227,7 @@ struct PrometheusPanelView: View {
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.border, lineWidth: 1)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous))
     }
@@ -223,40 +236,43 @@ struct PrometheusPanelView: View {
         HStack(spacing: 5) {
             Circle().fill(color).frame(width: 6, height: 6)
             Text(label)
-                .font(.system(size: 9, weight: .bold, design: .monospaced))
-                .tracking(0.6)
+                .font(.system(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
     }
 
+    // MARK: - Rationale card
+
     private var rationaleCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            ArgusSectionCaption("NEDEN BU KARAR?")
+            Text("Neden bu karar")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
             if let f = forecast, !f.rationale.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
                     ForEach(Array(f.rationale.enumerated()), id: \.offset) { idx, line in
                         HStack(alignment: .top, spacing: 10) {
-                            Text("\(idx + 1)")
-                                .font(.system(size: 10, weight: .black, design: .monospaced))
-                                .foregroundColor(InstitutionalTheme.Colors.Motors.prometheus)
-                                .frame(width: 18, height: 18)
-                                .background(
-                                    Circle()
-                                        .fill(InstitutionalTheme.Colors.Motors.prometheus.opacity(0.16))
-                                )
+                            Text("\(idx + 1).")
+                                .font(.system(size: 12))
+                                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                                .monospacedDigit()
+                                .frame(width: 18, alignment: .leading)
                             Text(line)
-                                .font(.system(size: 11))
-                                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                                .font(.system(size: 13))
+                                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                 .fixedSize(horizontal: false, vertical: true)
+                                .lineSpacing(2)
                         }
                     }
                 }
             } else {
                 HStack(spacing: 8) {
-                    ArgusDot(color: InstitutionalTheme.Colors.textTertiary)
+                    Circle()
+                        .fill(InstitutionalTheme.Colors.textTertiary)
+                        .frame(width: 4, height: 4)
                     Text("Açıklama verisi hazır değil.")
-                        .font(InstitutionalTheme.Typography.caption)
+                        .font(.system(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
             }
@@ -266,18 +282,19 @@ struct PrometheusPanelView: View {
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.border, lineWidth: 1)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous))
     }
 
+    // MARK: - States
+
     private var loadingBlock: some View {
         VStack(spacing: 10) {
-            ProgressView().tint(InstitutionalTheme.Colors.Motors.prometheus)
-            Text("PROMETHEUS HESAPLANIYOR…")
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .tracking(1)
-                .foregroundColor(InstitutionalTheme.Colors.Motors.prometheus)
+            ProgressView()
+            Text("Tahmin hesaplanıyor")
+                .font(.system(size: 12))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
         .frame(maxWidth: .infinity, minHeight: 96)
     }
@@ -288,21 +305,13 @@ struct PrometheusPanelView: View {
                 .font(.system(size: 18))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Text("Tahmin için yeterli veri yok")
-                .font(InstitutionalTheme.Typography.caption)
+                .font(.system(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
         .frame(maxWidth: .infinity, minHeight: 96)
     }
 
-    private func recommendationBadge(_ recommendation: PrometheusRecommendation) -> some View {
-        let tone: ArgusChipTone
-        switch recommendation {
-        case .buy:  tone = .aurora
-        case .sell: tone = .crimson
-        case .hold: tone = .titan
-        }
-        return ArgusPill(recommendation.rawValue.uppercased(), tone: tone)
-    }
+    // MARK: - Helpers
 
     private func formatPrice(_ price: Double) -> String {
         let isBist = symbol.uppercased().hasSuffix(".IS")
@@ -315,7 +324,6 @@ struct PrometheusPanelView: View {
     private func loadForecast() async {
         isLoading = true
         defer { isLoading = false }
-        // Engine artık oldest-first kapanış serisi bekliyor — codebase konvansiyonu ile aynı.
         forecast = await PrometheusEngine.shared.forecast(
             symbol: symbol,
             historicalPrices: candles.map(\.close)

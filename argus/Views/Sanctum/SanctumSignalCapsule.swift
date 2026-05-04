@@ -18,9 +18,10 @@ struct SanctumSignalCapsule: View {
                     .shadow(color: healthColor.opacity(0.5), radius: 4)
                 
                 // Quality Score is Int (0-100)
-                Text("KALİTE %\(dataHealth?.qualityScore ?? 0)")
-                    .font(InstitutionalTheme.Typography.dataSmall)
+                Text("Kalite %\(dataHealth?.qualityScore ?? 0)")
+                    .font(.system(size: 11, weight: .medium))
                     .foregroundColor(healthColor)
+                    .monospacedDigit()
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 6)

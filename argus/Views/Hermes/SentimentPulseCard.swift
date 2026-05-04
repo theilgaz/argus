@@ -180,11 +180,10 @@ struct SentimentPulseCard: View {
 
     private var loadingBlock: some View {
         VStack(spacing: 8) {
-            ProgressView().tint(InstitutionalTheme.Colors.Motors.hermes)
-            Text("HERMES DİNLİYOR…")
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .tracking(1)
-                .foregroundColor(InstitutionalTheme.Colors.Motors.hermes)
+            ProgressView()
+            Text("Haber taranıyor")
+                .font(.system(size: 12))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
         .frame(maxWidth: .infinity, minHeight: 96)
     }

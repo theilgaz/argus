@@ -53,13 +53,13 @@ struct OracleChamberView: View {
     
     private var headerView: some View {
         VStack(spacing: 4) {
-            Text("PİYASANIN KAHİNİ")
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .foregroundColor(.gray)
-            
-            Text("Makro Veri → Sektör Etkisi")
-                .font(.caption)
-                .foregroundColor(.white.opacity(0.6))
+            Text("Makro mercek")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+
+            Text("Makro veri → sektör etkisi")
+                .font(.system(size: 11))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
     }
     
@@ -110,8 +110,8 @@ struct OracleChamberView: View {
                     .font(.system(size: 28, weight: .heavy, design: .rounded))
                     .foregroundColor(viewModel.coreColor)
                 
-                Text("EKONOMİ SKORU")
-                    .font(.system(size: 8, weight: .medium, design: .monospaced))
+                Text("Ekonomi skoru")
+                    .font(.system(size: 10))
                     .foregroundColor(.gray)
             }
         }
@@ -124,9 +124,9 @@ struct OracleChamberView: View {
     
     private var sectorGridView: some View {
         VStack(spacing: 12) {
-            Text("SEKTÖR ETKİLERİ")
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .foregroundColor(.gray)
+            Text("Sektör etkileri")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             
             LazyVGrid(columns: [
                 GridItem(.flexible()),
@@ -157,9 +157,9 @@ struct OracleChamberView: View {
             HStack {
                 Image(systemName: "bolt.fill")
                     .foregroundColor(.orange)
-                Text("ZİNCİR REAKSİYON")
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
-                    .foregroundColor(.gray)
+                Text("Zincir reaksiyon")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Spacer()
             }
             
@@ -187,9 +187,9 @@ struct OracleChamberView: View {
     private var simulatorPanel: some View {
         VStack(spacing: 16) {
             HStack {
-                Text("SİMÜLASYON MODU")
-                    .font(.system(size: 12, weight: .bold, design: .monospaced))
-                    .foregroundColor(.cyan)
+                Text("Simülasyon modu")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Spacer()
                 Button(action: { withAnimation { showSimulator = false } }) {
                     Image(systemName: "xmark.circle.fill")
@@ -226,17 +226,16 @@ struct OracleChamberView: View {
                 Task { await viewModel.runSimulation() }
             }) {
                 HStack {
-                    Image(systemName: "sparkles")
-                    Text("ETKİYİ HESAPLA")
-                        .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 11))
+                    Text("Etkiyi hesapla")
+                        .font(.system(size: 13, weight: .medium))
                 }
-                .foregroundColor(.black)
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(
-                    LinearGradient(colors: [.cyan, .blue], startPoint: .leading, endPoint: .trailing)
-                )
-                .cornerRadius(8)
+                .padding(.vertical, 11)
+                .background(InstitutionalTheme.Colors.surface2)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
         }
         .padding()
@@ -625,13 +624,13 @@ struct OracleChamberEmbeddedView: View {
         VStack(spacing: 20) {
             // Header
             VStack(spacing: 4) {
-                Text("PİYASANIN KAHİNİ")
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
-                    .foregroundColor(.gray)
+                Text("Makro mercek")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
-                Text("Makro Veri → Sektör Etkisi")
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.6))
+                Text("Makro veri → sektör etkisi")
+                    .font(.system(size: 11))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
 
             // Merkezi Ekonomi Skoru
@@ -656,8 +655,8 @@ struct OracleChamberEmbeddedView: View {
                         .font(.system(size: 24, weight: .heavy, design: .rounded))
                         .foregroundColor(viewModel.coreColor)
 
-                    Text("EKONOMİ SKORU")
-                        .font(.system(size: 7, weight: .medium, design: .monospaced))
+                    Text("Ekonomi skoru")
+                        .font(.system(size: 9))
                         .foregroundColor(.gray)
                 }
             }

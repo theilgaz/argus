@@ -1,23 +1,16 @@
 import SwiftUI
 import Charts
 
-// MARK: - Phoenix Detail View (V5)
+// MARK: - Risk Fırsatı Detay Ekranı (eski adıyla Phoenix Detail)
 //
-// **2026-04-23 V5.H-2.** Eski `NavigationView` + `toolbar` + `navigationTitle`
-// chrome'u atıldı. Yeni iskelet:
-//
-//   • `ModuleSheetShell` → `ArgusNavHeader` + dismiss + scroll sarmal.
-//   • Hero kart: dairesel güven skoru ring + status chip + timeframe chip.
-//   • Regresyon Kanalı kartı (`PhoenixChannelChart` korundu, SwiftUI Charts).
-//   • Analiz Detayı kartı: `advice.reasonShort` + statik pedagoji metni.
-//   • 6'lı istatistik grid: Eğim / Sigma / Pivot / Kanal Genişliği /
-//     R² Güvenilirlik / Lookback — V5 token'larıyla (eski StatBox gitti).
-//   • Sinyal Kontrol Listesi: 4 tetik, V5 `ArgusDot` + durum chip.
-//   • BIST Seans Tetikleri: sadece `.IS` sembollerde — V5 chrome.
-//   • Pedagoji footer: "Phoenix dip avcısıdır..."
-//
-// Eski `Badge`, `StatBox`, `CheckRow` support view'ları kaldırıldı
-// (sadece bu dosyada kullanılıyordu). Yerlerine V5 token'ları kullanıldı.
+// 2026-04-30 H-58 — sade refactor.
+// Eski yapı V5: ModuleSheetShell title "PHOENIX · DÖNÜŞ" + 76pt motor
+// ring + caps "GÜVEN SKORU" + caps "FIRSAT (A+)" status + caps mono
+// statBox başlıkları + caps "EVET/BEKLİYOR" + holo tint backtest button +
+// "PHOENIX NEDİR?" pedagoji + Motor tint chrome her yerde.
+// Yeni: "Risk fırsatı" sentence + sade hairline kartlar + sentence
+// statBox başlıkları + ✓ icon checkrow + sade pedagoji.
+// Public API korundu — `init(symbol:, advice:, candles:, onRunBacktest:)`.
 
 struct PhoenixDetailView: View {
     let symbol: String
@@ -27,12 +20,11 @@ struct PhoenixDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
 
-    // Institution Rates (global metalar için — yan görev)
     @State private var institutionRates: [InstitutionRate] = []
     @State private var showInstitutionRates = false
 
     var body: some View {
-        ModuleSheetShell(title: "PHOENIX · DÖNÜŞ", motor: .phoenix) {
+        ModuleSheetShell(title: "Risk fırsatı", motor: .phoenix) {
             heroCard
             chartCard
             analysisCard
@@ -54,50 +46,48 @@ struct PhoenixDetailView: View {
         }
     }
 
-    // MARK: - Hero
+    // MARK: - Hero (sade)
 
     private var heroCard: some View {
-        let color = InstitutionalTheme.Colors.Motors.phoenix
         let conf = max(0, min(100, advice.confidence))
 
-        return HStack(alignment: .center, spacing: 14) {
-            ZStack {
-                Circle()
-                    .stroke(color.opacity(0.12), lineWidth: 4)
-                Circle()
-                    .trim(from: 0, to: CGFloat(conf / 100.0))
-                    .stroke(color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-                VStack(spacing: 1) {
+        return HStack(alignment: .firstTextBaseline) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Güven skoru")
+                    .font(.system(size: 11))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text("\(Int(conf))")
-                        .font(.system(size: 22, weight: .heavy, design: .monospaced))
-                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                        .font(.system(size: 32, weight: .medium))
+                        .foregroundColor(scoreColor(conf))
+                        .monospacedDigit()
                     Text("/ 100")
-                        .font(.system(size: 7, weight: .bold, design: .monospaced))
-                        .tracking(1)
-                        .foregroundColor(color)
+                        .font(.system(size: 13))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
-            }
-            .frame(width: 76, height: 76)
-
-            VStack(alignment: .leading, spacing: 6) {
-                ArgusSectionCaption("GÜVEN SKORU")
                 Text(symbol.uppercased())
-                    .font(.system(size: 16, weight: .heavy, design: .monospaced))
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                HStack(spacing: 6) {
-                    ArgusChip(statusText, tone: statusTone)
-                    ArgusChip("UFUK · \(advice.timeframe.localizedName)", tone: .motor(.phoenix))
-                }
+                    .font(.system(size: 13))
+                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                    .padding(.top, 2)
             }
-            Spacer(minLength: 0)
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(statusText)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(scoreColor(conf))
+                Text("Ufuk · \(advice.timeframe.localizedName)")
+                    .font(.system(size: 11))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+            }
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                .stroke(color.opacity(0.35), lineWidth: 1)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous))
     }
@@ -106,7 +96,9 @@ struct PhoenixDetailView: View {
 
     private var chartCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            ArgusSectionCaption("REGRESYON KANALI")
+            Text("Regresyon kanalı")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
             ZStack {
                 if candles.count > 20 {
@@ -114,9 +106,11 @@ struct PhoenixDetailView: View {
                         .frame(height: 220)
                 } else {
                     VStack(spacing: 8) {
-                        ArgusDot(color: InstitutionalTheme.Colors.titan)
+                        Image(systemName: "chart.line.uptrend.xyaxis")
+                            .font(.system(size: 18))
+                            .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         Text("Grafik için yetersiz veri (en az 20 mum gerekli)")
-                            .font(.system(size: 11))
+                            .font(.system(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     }
                     .frame(height: 160)
@@ -129,30 +123,30 @@ struct PhoenixDetailView: View {
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.border, lineWidth: 0.5)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
     }
 
-    // MARK: - Analysis
+    // MARK: - Analysis (sade — sol-bar accent kalktı)
 
     private var analysisCard: some View {
         VStack(alignment: .leading, spacing: 6) {
-            ArgusSectionCaption("ANALİZ DETAYI")
+            Text("Analiz")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Text(advice.reasonShort)
-                .font(.system(size: 12))
+                .font(.system(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
+                .lineSpacing(2)
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(InstitutionalTheme.Colors.surface1.opacity(0.6))
+        .background(InstitutionalTheme.Colors.surface1)
         .overlay(
-            Rectangle()
-                .fill(InstitutionalTheme.Colors.Motors.phoenix)
-                .frame(width: 2)
-                .frame(maxHeight: .infinity),
-            alignment: .leading
+            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
     }
@@ -161,30 +155,27 @@ struct PhoenixDetailView: View {
 
     private var statsGridCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            ArgusSectionCaption("İSTATİSTİK · 6 METRİK")
+            Text("İstatistik")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
             LazyVGrid(
                 columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)],
                 spacing: 8
             ) {
-                statBox(label: "Eğim (Slope)",
-                        value: advice.regressionSlope.map { String(format: "%.4f", $0) } ?? "—",
-                        tone: .neutral)
-                statBox(label: "Sigma (Sapma)",
-                        value: advice.sigma.map { String(format: "%.2f", $0) } ?? "—",
-                        tone: .neutral)
-                statBox(label: "Pivot (Orta)",
-                        value: advice.channelMid.map { String(format: "%.2f", $0) } ?? "—",
-                        tone: .neutral)
-                statBox(label: "Kanal Genişliği",
-                        value: channelWidthText,
-                        tone: .neutral)
-                statBox(label: "R² Güvenilirlik",
+                statBox(label: "Eğim",
+                        value: advice.regressionSlope.map { String(format: "%.4f", $0) } ?? "—")
+                statBox(label: "Sigma",
+                        value: advice.sigma.map { String(format: "%.2f", $0) } ?? "—")
+                statBox(label: "Pivot",
+                        value: advice.channelMid.map { String(format: "%.2f", $0) } ?? "—")
+                statBox(label: "Kanal genişliği",
+                        value: channelWidthText)
+                statBox(label: "R² güvenilirlik",
                         value: advice.rSquared.map { String(format: "%.0f%%", $0 * 100) } ?? "—",
-                        tone: rSquaredTone)
+                        color: rSquaredColor)
                 statBox(label: "Lookback",
-                        value: "\(advice.lookback) gün",
-                        tone: .neutral)
+                        value: "\(advice.lookback) gün")
             }
         }
         .padding(12)
@@ -192,27 +183,25 @@ struct PhoenixDetailView: View {
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.border, lineWidth: 0.5)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
     }
 
-    private func statBox(label: String, value: String, tone: ArgusChipTone) -> some View {
+    private func statBox(label: String, value: String, color: Color? = nil) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(label.uppercased())
-                .font(.system(size: 8.5, weight: .bold, design: .monospaced))
-                .tracking(0.8)
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+            Text(label)
+                .font(.system(size: 11))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Text(value)
-                .font(.system(size: 13, weight: .heavy, design: .monospaced))
-                .foregroundColor(tone == .neutral
-                                 ? InstitutionalTheme.Colors.textPrimary
-                                 : tone.foreground)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(color ?? InstitutionalTheme.Colors.textPrimary)
+                .monospacedDigit()
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(InstitutionalTheme.Colors.surface2.opacity(0.6))
-        .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm, style: .continuous))
+        .background(InstitutionalTheme.Colors.surface2)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     private var channelWidthText: String {
@@ -220,20 +209,22 @@ struct PhoenixDetailView: View {
         return String(format: "%%%.1f", (sigma / mid) * 400)
     }
 
-    private var rSquaredTone: ArgusChipTone {
-        guard let r = advice.rSquared else { return .neutral }
-        if r > 0.5 { return .aurora }
-        if r > 0.25 { return .titan }
-        return .crimson
+    private var rSquaredColor: Color? {
+        guard let r = advice.rSquared else { return nil }
+        if r > 0.5 { return InstitutionalTheme.Colors.aurora }
+        if r > 0.25 { return InstitutionalTheme.Colors.titan }
+        return InstitutionalTheme.Colors.crimson
     }
 
-    // MARK: - Checklist
+    // MARK: - Checklist (sade)
 
     private var checklistCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            ArgusSectionCaption("SİNYAL KONTROL LİSTESİ")
+            Text("Sinyal kontrol listesi")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 8) {
                 checkRow("Kanal dibi teması", advice.triggers.touchLowerBand)
                 checkRow("RSI dönüş sinyali", advice.triggers.rsiReversal)
                 checkRow("Pozitif uyumsuzluk", advice.triggers.bullishDivergence)
@@ -245,40 +236,39 @@ struct PhoenixDetailView: View {
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.border, lineWidth: 0.5)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
     }
 
     private func checkRow(_ title: String, _ isActive: Bool) -> some View {
         HStack(spacing: 10) {
-            ArgusDot(
-                color: isActive
-                    ? InstitutionalTheme.Colors.aurora
-                    : InstitutionalTheme.Colors.textTertiary,
-                size: 8
-            )
+            Image(systemName: isActive ? "checkmark.circle.fill" : "circle")
+                .font(.system(size: 13))
+                .foregroundColor(isActive
+                                 ? InstitutionalTheme.Colors.aurora
+                                 : InstitutionalTheme.Colors.textTertiary)
+                .frame(width: 18)
             Text(title)
-                .font(.system(size: 12))
+                .font(.system(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Spacer()
-            Text(isActive ? "EVET" : "BEKLİYOR")
-                .font(.system(size: 9, weight: .bold, design: .monospaced))
-                .tracking(0.8)
-                .foregroundColor(
-                    isActive
-                        ? InstitutionalTheme.Colors.aurora
-                        : InstitutionalTheme.Colors.textTertiary
-                )
+            Text(isActive ? "evet" : "bekliyor")
+                .font(.system(size: 11))
+                .foregroundColor(isActive
+                                 ? InstitutionalTheme.Colors.aurora
+                                 : InstitutionalTheme.Colors.textTertiary)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 2)
     }
 
     // MARK: - BIST Session Triggers
 
     private var bistSessionCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            ArgusSectionCaption("BIST SEANS TETİKLERİ")
+            Text("BIST seans tetikleri")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             BistSessionTriggers(advice: advice)
         }
         .padding(12)
@@ -286,12 +276,12 @@ struct PhoenixDetailView: View {
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.Motors.aether.opacity(0.25), lineWidth: 0.5)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
     }
 
-    // MARK: - Backtest button
+    // MARK: - Backtest button (sade)
 
     private var backtestButton: some View {
         Button {
@@ -302,34 +292,39 @@ struct PhoenixDetailView: View {
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "clock.arrow.circlepath")
-                    .font(.system(size: 12, weight: .semibold))
-                Text("GEÇMİŞ TEST")
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
-                    .tracking(1.2)
+                    .font(.system(size: 13))
+                Text("Geçmiş test")
+                    .font(.system(size: 13, weight: .medium))
                 Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
-            .foregroundColor(InstitutionalTheme.Colors.holo)
-            .background(InstitutionalTheme.Colors.holo.opacity(0.14))
+            .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+            .background(InstitutionalTheme.Colors.surface1)
             .overlay(
-                RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm, style: .continuous)
-                    .stroke(InstitutionalTheme.Colors.holo.opacity(0.35), lineWidth: 1)
+                RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
+                    .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
             )
-            .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
         }
         .buttonStyle(.plain)
     }
 
-    // MARK: - Pedagogy footer
+    // MARK: - Pedagoji footer (mitoloji ismi gizli)
 
     private var pedagogyFooter: some View {
         VStack(alignment: .leading, spacing: 6) {
-            ArgusSectionCaption("PHOENIX NEDİR?")
-            Text("Phoenix bir dip avcısıdır. Fiyat regresyon kanalının dibine değdiğinde, RSI toparlandığında ve hacim dönüş mumu geldiğinde güven skoru yükselir. Sadece teknik sinyal — temel analiz Atlas'ın işidir.")
-                .font(.system(size: 11))
+            Text("Bu nedir?")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+            Text("Risk fırsatı bir dip dedektörüdür. Fiyat regresyon kanalının dibine değdiğinde, RSI toparlandığında ve hacim dönüş mumu geldiğinde güven skoru yükselir. Sadece teknik sinyal — temel analiz bilanço motorunun işidir.")
+                .font(.system(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
+                .lineSpacing(2)
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -337,7 +332,7 @@ struct PhoenixDetailView: View {
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
                 .strokeBorder(
-                    InstitutionalTheme.Colors.border,
+                    InstitutionalTheme.Colors.borderSubtle,
                     style: StrokeStyle(lineWidth: 0.5, dash: [4, 3])
                 )
         )
@@ -348,19 +343,17 @@ struct PhoenixDetailView: View {
 
     private var statusText: String {
         switch advice.confidence {
-        case 80...100: return "FIRSAT (A+)"
-        case 60..<80:  return "GÜÇLÜ"
-        case 40..<60:  return "NÖTR"
-        default:       return "ZAYIF"
+        case 80...100: return "Fırsat (A+)"
+        case 60..<80:  return "Güçlü"
+        case 40..<60:  return "Nötr"
+        default:       return "Zayıf"
         }
     }
 
-    private var statusTone: ArgusChipTone {
-        switch advice.confidence {
-        case 70...100: return .aurora
-        case 40..<70:  return .titan
-        default:       return .crimson
-        }
+    private func scoreColor(_ score: Double) -> Color {
+        if score >= 70 { return InstitutionalTheme.Colors.aurora }
+        if score >= 40 { return InstitutionalTheme.Colors.titan }
+        return InstitutionalTheme.Colors.crimson
     }
 
     // MARK: - Data loading
@@ -392,7 +385,7 @@ struct PhoenixDetailView: View {
     }
 }
 
-// MARK: - BIST Session Triggers (V5)
+// MARK: - BIST Session Triggers
 
 struct BistSessionTriggers: View {
     let advice: PhoenixAdvice
@@ -403,8 +396,8 @@ struct BistSessionTriggers: View {
             Picker("", selection: $currentSession) {
                 Text("Genel").tag(BistSession.none)
                 Text("Rönesan").tag(BistSession.ronesan)
-                Text("Kur Şoku").tag(BistSession.kurSoku)
-                Text("Seans Kapanışı").tag(BistSession.seansKapanisi)
+                Text("Kur şoku").tag(BistSession.kurSoku)
+                Text("Seans kapanışı").tag(BistSession.seansKapanisi)
             }
             .pickerStyle(.segmented)
 
@@ -427,24 +420,23 @@ struct BistSessionTriggers: View {
     private func sessionList(items: [SessionItem], caption: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(caption)
-                .font(.system(size: 10))
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                .font(.system(size: 11))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
 
             ForEach(items) { item in
                 HStack(alignment: .top, spacing: 8) {
-                    ArgusDot(
-                        color: item.isActive
-                            ? InstitutionalTheme.Colors.aurora
-                            : InstitutionalTheme.Colors.textTertiary,
-                        size: 6
-                    )
-                    .padding(.top, 5)
+                    Circle()
+                        .fill(item.isActive
+                              ? InstitutionalTheme.Colors.aurora
+                              : InstitutionalTheme.Colors.textTertiary)
+                        .frame(width: 5, height: 5)
+                        .padding(.top, 6)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(item.condition)
-                            .font(.system(size: 11))
+                            .font(.system(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         Text(item.action)
-                            .font(.system(size: 10))
+                            .font(.system(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     }
                     Spacer()
@@ -452,14 +444,11 @@ struct BistSessionTriggers: View {
                 .padding(.vertical, 4)
                 .padding(.horizontal, 8)
                 .background(InstitutionalTheme.Colors.surface2.opacity(0.4))
-                .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
         }
     }
 
-    // Session-specific tetik listeleri. Şu an hepsi placeholder `isActive: false`
-    // (kodda advice.triggers'a bağlı custom session trigger yok). Motor bu
-    // alanları üretmeye başladığında buraya bağlanır.
     private var ronesanItems: [SessionItem] {
         [
             SessionItem(condition: "Gündüz seans 09:30'dan önce", action: "Alış yap", isActive: false),
@@ -480,7 +469,7 @@ struct BistSessionTriggers: View {
     }
     private var generalItems: [SessionItem] {
         [
-            SessionItem(condition: "Genel tetikler yükleniyor…", action: "Motor tamamlanınca doldurulacak", isActive: false),
+            SessionItem(condition: "Genel tetikler yükleniyor", action: "Motor tamamlanınca doldurulacak", isActive: false),
         ]
     }
 }
@@ -488,11 +477,11 @@ struct BistSessionTriggers: View {
 enum BistSession: String, CaseIterable {
     case none = "Genel"
     case ronesan = "Rönesan"
-    case kurSoku = "Kur Şoku"
-    case seansKapanisi = "Seans Kapanışı"
+    case kurSoku = "Kur şoku"
+    case seansKapanisi = "Seans kapanışı"
 }
 
-// MARK: - Chart Component
+// MARK: - Chart Component (sade — motor tint kalktı)
 
 struct PhoenixChannelChart: View {
     let candles: [Candle]
@@ -523,10 +512,10 @@ struct PhoenixChannelChart: View {
                     yEnd: .value("High", candle.high)
                 )
                 .lineStyle(StrokeStyle(lineWidth: 1))
-                .foregroundStyle(InstitutionalTheme.Colors.neutral)
+                .foregroundStyle(InstitutionalTheme.Colors.textTertiary)
             }
 
-            // 2. Channel Lines
+            // 2. Channel Lines (sade — orta çizgi nötr, kanal hatları nötr)
             if !sorted.isEmpty {
                 ForEach(Array(sorted.enumerated()), id: \.offset) { index, candle in
                     if index >= (sorted.count - advice.lookback) {
@@ -537,14 +526,14 @@ struct PhoenixChannelChart: View {
                         let lowerY = midY - (2.0 * (advice.sigma ?? 0.0))
 
                         LineMark(x: .value("Tarih", candle.date), y: .value("Mid", midY))
-                            .foregroundStyle(InstitutionalTheme.Colors.Motors.chiron)
+                            .foregroundStyle(InstitutionalTheme.Colors.textSecondary)
                             .lineStyle(StrokeStyle(lineWidth: 1, dash: [4]))
 
                         LineMark(x: .value("Tarih", candle.date), y: .value("Upper", upperY))
-                            .foregroundStyle(InstitutionalTheme.Colors.Motors.phoenix.opacity(0.55))
+                            .foregroundStyle(InstitutionalTheme.Colors.textTertiary.opacity(0.55))
 
                         LineMark(x: .value("Tarih", candle.date), y: .value("Lower", lowerY))
-                            .foregroundStyle(InstitutionalTheme.Colors.Motors.phoenix.opacity(0.55))
+                            .foregroundStyle(InstitutionalTheme.Colors.textTertiary.opacity(0.55))
                     }
                 }
             }

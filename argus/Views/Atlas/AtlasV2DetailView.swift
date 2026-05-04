@@ -1,12 +1,15 @@
 import SwiftUI
 
-// MARK: - Atlas V2 Detail View
-// Şirketi A'dan Z'ye öğreten eğitici arayüz
+// MARK: - Bilanço Detay Ekranı (eski adıyla Atlas V2 Detail)
+// Şirketi A'dan Z'ye öğreten arayüz.
 //
-// V5 mockup dil bütünlüğü için in-place refactor.
-// 2026-04-22 Sprint 3 — üst chrome `ArgusNavHeader`'a alındı (geri deco +
-// Atlas motor pill, status satırı sembol + skor bandını gösterir). Panel
-// içerik, metric kartları ve veri yükleme akışı aynı.
+// 2026-04-30 H-58 — sade refactor.
+// Eski yapı V5: "ATLAS · TEMEL ANALİZ" caps subtitle + "ATLAS" pill +
+// ArgusOrb + 84pt motor-tinted ring + caps mono captions her yerde
+// ("ATLAS ÇEKİRDEĞİ", "POZİTİF SİNYALLER", "KARLILIK" mini grid).
+// Yeni dil: "Bilanço analizi" sentence subtitle, mitoloji pill kalktı,
+// orb + ring gitti, sade hairline kartlar, sentence başlıklar.
+// Public API ve loadData() flow korundu.
 
 struct AtlasV2DetailView: View {
     let symbol: String
@@ -21,9 +24,9 @@ struct AtlasV2DetailView: View {
         VStack(spacing: 0) {
             ArgusNavHeader(
                 title: symbol.replacingOccurrences(of: ".IS", with: ""),
-                subtitle: "ATLAS · TEMEL ANALİZ",
+                subtitle: "Bilanço analizi",
                 leadingDeco: .back(onTap: { dismiss() }),
-                titlePill: .init(text: "ATLAS", tone: .motor(.atlas)),
+                titlePill: nil,
                 status: headerStatus
             )
 
@@ -129,20 +132,20 @@ struct AtlasV2DetailView: View {
 
     private var headerStatus: ArgusNavHeader.Status {
         if isLoading {
-            return .custom(dotColor: InstitutionalTheme.Colors.Motors.atlas,
-                           label: "ANALİZ EDİLİYOR",
+            return .custom(dotColor: InstitutionalTheme.Colors.textTertiary,
+                           label: "Analiz ediliyor",
                            trailing: symbol.uppercased())
         }
         if error != nil {
             return .custom(dotColor: InstitutionalTheme.Colors.crimson,
-                           label: "HATA",
+                           label: "Hata",
                            trailing: symbol.uppercased())
         }
         if let r = result {
             let score = Int(r.totalScore.rounded())
             return .custom(dotColor: atlasScoreTone(r.totalScore).foreground,
-                           label: "SKOR · \(score)",
-                           trailing: r.qualityBand.rawValue.uppercased())
+                           label: "Skor \(score)",
+                           trailing: r.qualityBand.rawValue)
         }
         return .none
     }
@@ -150,40 +153,28 @@ struct AtlasV2DetailView: View {
     // MARK: - Header Card
     
     private func headerCard(_ result: AtlasV2Result) -> some View {
-        // V5.B-2 — Atlas detay header. Motor orb + şirket künyesi +
-        // mono caps band chip + dairesel skor + summary.
+        // 2026-04-30 H-58 — sade. Orb + 84pt ring + caps "ATLAS ÇEKİRDEĞİ"
+        // gitti. Yerine: şirket adı + sektör + market cap (sentence) +
+        // skor satırı (32pt medium + /100 + kalite bandı sentence).
         VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 10) {
-                ArgusSectionCaption("ATLAS ÇEKİRDEĞİ")
-                Spacer()
-                ArgusChip(result.qualityBand.rawValue.uppercased(),
-                          tone: atlasScoreTone(result.totalScore))
-            }
 
-            // 1. Şirket künyesi
-            HStack(spacing: 14) {
-                ArgusOrb(size: 52,
-                         ringColor: InstitutionalTheme.Colors.Motors.atlas,
-                         glowColor: InstitutionalTheme.Colors.Motors.atlas) {
-                    MotorLogo(.atlas, size: 28)
-                }
-                VStack(alignment: .leading, spacing: 4) {
+            // Şirket künyesi
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text(result.profile.name)
-                        .font(.system(size: 17, weight: .bold))
+                        .font(.system(size: 17, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                        .lineLimit(1)
+                        .lineLimit(2)
                     HStack(spacing: 6) {
                         Text(result.symbol)
-                            .font(.system(size: 11, weight: .bold, design: .monospaced))
-                            .tracking(0.8)
-                            .foregroundColor(InstitutionalTheme.Colors.Motors.atlas)
+                            .font(.system(size: 12))
+                            .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         if let sector = result.profile.sector {
                             Text("·")
                                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                            Text(sector.uppercased())
-                                .font(.system(size: 9, weight: .bold, design: .monospaced))
-                                .tracking(0.8)
-                                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                            Text(sector)
+                                .font(.system(size: 12))
+                                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                                 .lineLimit(1)
                         }
                     }
@@ -191,78 +182,60 @@ struct AtlasV2DetailView: View {
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(result.profile.formattedMarketCap)
-                        .font(.system(size: 13, weight: .black, design: .monospaced))
+                        .font(.system(size: 13, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                    Text(result.profile.marketCapTier.uppercased())
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
-                        .tracking(0.7)
+                        .monospacedDigit()
+                    Text(result.profile.marketCapTier.lowercased())
+                        .font(.system(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
             }
 
             if let industry = result.profile.industry {
-                HStack(spacing: 6) {
-                    Image(systemName: "building.2.fill")
-                        .font(.system(size: 10))
-                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                    Text(industry)
-                        .font(.system(size: 11))
-                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                    Spacer()
-                }
+                Text(industry)
+                    .font(.system(size: 12))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
 
-            ArgusHair()
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
 
-            // 2. Genel skor + kalite bandı
-            HStack(spacing: 18) {
-                ZStack {
-                    Circle()
-                        .stroke(InstitutionalTheme.Colors.Motors.atlas.opacity(0.25), lineWidth: 6)
-                        .frame(width: 84, height: 84)
-                    Circle()
-                        .trim(from: 0, to: result.totalScore / 100)
-                        .stroke(
-                            atlasScoreColor(result.totalScore),
-                            style: StrokeStyle(lineWidth: 6, lineCap: .round)
-                        )
-                        .frame(width: 84, height: 84)
-                        .rotationEffect(.degrees(-90))
-                    VStack(spacing: 0) {
-                        Text("\(Int(result.totalScore))")
-                            .font(.system(size: 24, weight: .black, design: .monospaced))
-                            .foregroundColor(atlasScoreColor(result.totalScore))
-                        Text("/100")
-                            .font(.system(size: 8, weight: .semibold, design: .monospaced))
-                            .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                    }
-                }
-
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("KALİTE BANDI")
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
-                        .tracking(1)
-                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                    Text(result.qualityBand.rawValue)
-                        .font(.system(size: 22, weight: .black))
+            // Skor satırı — sade
+            HStack(alignment: .firstTextBaseline) {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text("\(Int(result.totalScore))")
+                        .font(.system(size: 32, weight: .medium))
                         .foregroundColor(atlasScoreColor(result.totalScore))
-                    Text(result.qualityBand.description)
-                        .font(InstitutionalTheme.Typography.caption)
+                        .monospacedDigit()
+                    Text("/ 100")
+                        .font(.system(size: 13))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                    Text(result.summary)
-                        .font(.system(size: 11))
-                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                        .lineLimit(2)
                 }
                 Spacer()
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(result.qualityBand.rawValue)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(atlasScoreColor(result.totalScore))
+                    Text(result.qualityBand.description)
+                        .font(.system(size: 11))
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                        .lineLimit(1)
+                }
             }
+
+            Text(result.summary)
+                .font(.system(size: 13))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .lineSpacing(2)
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                .stroke(atlasScoreColor(result.totalScore).opacity(0.35), lineWidth: 1)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous))
     }
@@ -287,19 +260,17 @@ struct AtlasV2DetailView: View {
         VStack(alignment: .leading, spacing: 14) {
             if !result.highlights.isEmpty {
                 highlightBlock(
-                    caption: "POZİTİF SİNYALLER",
+                    title: "Pozitif sinyaller",
                     items: result.highlights,
-                    tone: .aurora,
-                    dotColor: InstitutionalTheme.Colors.aurora
+                    color: InstitutionalTheme.Colors.aurora
                 )
             }
 
             if !result.warnings.isEmpty {
                 highlightBlock(
-                    caption: "KRİTİK NOTLAR",
+                    title: "Kritik notlar",
                     items: result.warnings,
-                    tone: .titan,
-                    dotColor: InstitutionalTheme.Colors.titan
+                    color: InstitutionalTheme.Colors.titan
                 )
             }
         }
@@ -308,40 +279,42 @@ struct AtlasV2DetailView: View {
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.Motors.atlas.opacity(0.3), lineWidth: 1)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous))
     }
 
-    private func highlightBlock(caption: String,
+    private func highlightBlock(title: String,
                                  items: [String],
-                                 tone: ArgusChipTone,
-                                 dotColor: Color) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+                                 color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
-                ArgusSectionCaption(caption)
+                Text(title)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(color)
                 Spacer()
-                ArgusChip("\(items.count)", tone: tone)
+                Text("\(items.count)")
+                    .font(.system(size: 11))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                    .monospacedDigit()
             }
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 6) {
                 ForEach(items, id: \.self) { item in
-                    HStack(alignment: .top, spacing: 10) {
-                        ArgusDot(color: dotColor)
-                            .padding(.top, 5)
+                    HStack(alignment: .top, spacing: 8) {
+                        Circle()
+                            .fill(color)
+                            .frame(width: 4, height: 4)
+                            .padding(.top, 6)
                         Text(item)
-                            .font(.system(size: 12.5))
+                            .font(.system(size: 13))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                             .fixedSize(horizontal: false, vertical: true)
+                            .lineSpacing(2)
                     }
                 }
             }
         }
-        .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
-                .fill(tone.background)
-        )
     }
     
     // MARK: - Section Card
@@ -458,26 +431,30 @@ struct AtlasV2DetailView: View {
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .monospacedDigit()
                 
-                ArgusChip(metric.status.label.uppercased(),
-                          tone: statusTone(metric.status))
+                Text(metric.status.label)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(explanationColor(metric.status))
             }
 
             ArgusBar(value: max(0, min(1, metric.score / 100)),
                      color: explanationColor(metric.status),
-                     height: 5)
+                     height: 4)
 
             // Sektör karşılaştırması
             if let sectorAvg = metric.sectorAverage {
-                HStack(spacing: 8) {
-                    Text("SEKTÖR ORT")
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
-                        .tracking(0.6)
+                HStack(spacing: 6) {
+                    Text("Sektör ort.")
+                        .font(.system(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     Text(AtlasMetric.format(sectorAvg))
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                        .font(.system(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                        .monospacedDigit()
                     if let deltaText = metricDeltaText(metric) {
-                        ArgusChip(deltaText, tone: statusTone(metric.status))
+                        Text(deltaText)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(explanationColor(metric.status))
+                            .monospacedDigit()
                     }
                 }
             }
@@ -521,16 +498,16 @@ struct AtlasV2DetailView: View {
         .background(InstitutionalTheme.Colors.surface2)
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.border, lineWidth: 1)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
     }
 
-    /// AtlasMetricStatus → V5 chip tone mapping.
+    /// AtlasMetricStatus → chip tone (sade — motor tint yerine nötr).
     private func statusTone(_ status: AtlasMetricStatus) -> ArgusChipTone {
         switch status {
         case .excellent, .good: return .aurora
-        case .neutral:          return .motor(.atlas)
+        case .neutral:          return .neutral
         case .warning:          return .titan
         case .bad, .critical:   return .crimson
         case .noData:           return .neutral
@@ -541,31 +518,31 @@ struct AtlasV2DetailView: View {
     
     private func summaryCard(_ result: AtlasV2Result) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
-                MotorLogo(.atlas, size: 14)
-                ArgusSectionCaption("YATIRIMCI İÇİN ÖZET")
-                Spacer()
-                ArgusChip("ATLAS · ÖZET", tone: .motor(.atlas))
-            }
+            Text("Yatırımcı için özet")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
             Text(result.summary)
-                .font(.system(size: 12.5))
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                .font(.system(size: 13))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
+                .lineSpacing(2)
 
-            ArgusHair()
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
 
             LazyVGrid(columns: [
                 GridItem(.flexible()),
                 GridItem(.flexible()),
                 GridItem(.flexible())
             ], spacing: 10) {
-                miniScoreCard("KARLILIK", result.profitabilityScore)
-                miniScoreCard("DEĞERLEME", result.valuationScore)
-                miniScoreCard("SAĞLIK", result.healthScore)
-                miniScoreCard("BÜYÜME", result.growthScore)
-                miniScoreCard("NAKİT", result.cashScore)
-                miniScoreCard("TEMETTÜ", result.dividendScore)
+                miniScoreCard("Karlılık", result.profitabilityScore)
+                miniScoreCard("Değerleme", result.valuationScore)
+                miniScoreCard("Sağlık", result.healthScore)
+                miniScoreCard("Büyüme", result.growthScore)
+                miniScoreCard("Nakit", result.cashScore)
+                miniScoreCard("Temettü", result.dividendScore)
             }
 
             if symbol.hasSuffix(".IS") {
@@ -578,7 +555,7 @@ struct AtlasV2DetailView: View {
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.Motors.atlas.opacity(0.3), lineWidth: 1)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous))
     }
@@ -586,32 +563,30 @@ struct AtlasV2DetailView: View {
     // MARK: - Value Alert System (BIST-ÖZEL)
     
     private func valueAlertCard(_ result: AtlasV2Result) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
-                MotorLogo(.atlas, size: 14)
-                ArgusSectionCaption("VALUE ALERT SİSTEMİ")
-                Spacer()
-            }
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Değer uyarıları")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
             if isDeepValue(result) {
                 alertLine(
-                    title: "DERİN DEĞER FIRSATI",
-                    icon: "star.fill",
-                    tone: .aurora
+                    title: "Derin değer fırsatı",
+                    icon: "star",
+                    color: InstitutionalTheme.Colors.aurora
                 )
             }
             if isValueTrap(result) {
                 alertLine(
-                    title: "VALUE TRAP UYARISI",
-                    icon: "exclamationmark.triangle.fill",
-                    tone: .crimson
+                    title: "Value trap uyarısı",
+                    icon: "exclamationmark.triangle",
+                    color: InstitutionalTheme.Colors.crimson
                 )
             }
             if isHighDividendRisky(result) {
                 alertLine(
-                    title: "SÜRDÜRÜLEMEZ TEMETTÜ",
-                    icon: "exclamationmark.octagon.fill",
-                    tone: .titan
+                    title: "Sürdürülemez temettü",
+                    icon: "exclamationmark.octagon",
+                    color: InstitutionalTheme.Colors.titan
                 )
             }
         }
@@ -620,7 +595,7 @@ struct AtlasV2DetailView: View {
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.titan.opacity(0.3), lineWidth: 1)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous))
     }
@@ -647,27 +622,17 @@ struct AtlasV2DetailView: View {
         isDeepValue(result) || isValueTrap(result) || isHighDividendRisky(result)
     }
 
-    private func alertLine(title: String, icon: String, tone: ArgusChipTone) -> some View {
+    private func alertLine(title: String, icon: String, color: Color) -> some View {
         HStack(spacing: 8) {
             Image(systemName: icon)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(tone.foreground)
+                .font(.system(size: 12))
+                .foregroundColor(color)
             Text(title)
-                .font(.system(size: 10, weight: .black, design: .monospaced))
-                .tracking(0.8)
-                .foregroundColor(tone.foreground)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Spacer()
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
-        .background(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm, style: .continuous)
-                .fill(tone.background)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm, style: .continuous)
-                .stroke(tone.foreground.opacity(0.28), lineWidth: 1)
-        )
+        .padding(.vertical, 4)
     }
 }
 
@@ -675,34 +640,28 @@ struct AtlasV2DetailView: View {
 extension AtlasV2DetailView {
     
     private func miniScoreCard(_ title: String, _ score: Double) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 5) {
             Text(title)
-                .font(.system(size: 9, weight: .bold, design: .monospaced))
-                .tracking(0.8)
-                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                .font(.system(size: 11))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                .lineLimit(1)
 
-            HStack(alignment: .firstTextBaseline, spacing: 5) {
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text("\(Int(score))")
-                    .font(.system(size: 16, weight: .black, design: .monospaced))
+                    .font(.system(size: 18, weight: .medium))
                     .foregroundColor(scoreColor(score))
                     .monospacedDigit()
                 Text(sectionGrade(score))
-                    .font(.system(size: 9, weight: .black, design: .monospaced))
-                    .foregroundColor(scoreColor(score))
+                    .font(.system(size: 10))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             ArgusBar(value: max(0, min(1, score / 100)),
                      color: scoreColor(score),
-                     height: 4)
+                     height: 3)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 8)
         .padding(.horizontal, 10)
-        .background(InstitutionalTheme.Colors.surface2)
-        .overlay(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.border, lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
     }
 
     // 2026-04-23 V5.C: metricScoreBar kaldırıldı — çağrıldığı yerlerde
@@ -732,12 +691,12 @@ extension AtlasV2DetailView {
         if !drivers.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("NEDEN BÖYLE?")
-                        .font(.caption.weight(.bold))
+                    Text("Skoru ne belirledi")
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     Spacer()
-                    Text("İlk \(min(3, drivers.count)) etken")
-                        .font(.caption2.weight(.semibold))
+                    Text("ilk \(min(3, drivers.count)) etken")
+                        .font(.system(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
 
@@ -754,47 +713,33 @@ extension AtlasV2DetailView {
                     }
                 }
 
-                HStack(spacing: 12) {
-                    let slices = donutSlices(from: Array(drivers.prefix(4)))
-                    ZStack {
-                        Circle()
-                            .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 9)
-                            .frame(width: 72, height: 72)
-                        ForEach(slices) { slice in
-                            Circle()
-                                .trim(from: slice.start, to: slice.end)
-                                .stroke(slice.color, style: StrokeStyle(lineWidth: 9, lineCap: .round))
-                                .rotationEffect(.degrees(-90))
-                        }
-                        Text("Katkı")
-                            .font(.caption2.weight(.semibold))
-                            .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                    }
+                Rectangle()
+                    .fill(InstitutionalTheme.Colors.borderSubtle)
+                    .frame(height: 0.5)
 
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("KATKI DAĞILIMI")
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
-                            .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                        ForEach(Array(drivers.prefix(3))) { driver in
-                            HStack(spacing: 6) {
-                                Circle()
-                                    .fill(driverColor(for: driver.impact))
-                                    .frame(width: 6, height: 6)
-                                Text(driver.name)
-                                    .font(.caption2)
-                                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                                    .lineLimit(1)
-                                Spacer(minLength: 0)
-                                Text(String(format: "%+.0f", driver.score - 50))
-                                    .font(.caption2.weight(.semibold))
-                                    .foregroundColor(driverColor(for: driver.impact))
-                                    .monospacedDigit()
-                            }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Katkı dağılımı")
+                        .font(.system(size: 11))
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                    ForEach(Array(drivers.prefix(3))) { driver in
+                        HStack(spacing: 8) {
+                            Circle()
+                                .fill(driverColor(for: driver.impact))
+                                .frame(width: 5, height: 5)
+                            Text(driver.name)
+                                .font(.system(size: 12))
+                                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                                .lineLimit(1)
+                            Spacer(minLength: 0)
+                            Text(String(format: "%+.0f", driver.score - 50))
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(driverColor(for: driver.impact))
+                                .monospacedDigit()
                         }
                     }
                 }
             }
-            .padding()
+            .padding(14)
             .background(cardBackground)
         }
     }
@@ -868,27 +813,25 @@ extension AtlasV2DetailView {
     // MARK: - Helper Views
     
     private var loadingView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             ProgressView()
-                .scaleEffect(1.5)
-                .tint(InstitutionalTheme.Colors.primary)
-            Text("Atlas analiz ediliyor...")
-                .font(.subheadline)
+            Text("Bilanço analiz ediliyor")
+                .font(.system(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
-        .frame(maxWidth: .infinity, minHeight: 300)
+        .frame(maxWidth: .infinity, minHeight: 240)
         .padding()
         .background(cardBackground)
     }
-    
+
     private func errorView(_ message: String) -> some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-            .font(.largeTitle)
-            .foregroundColor(InstitutionalTheme.Colors.negative)
-            Text("Analiz Hatası")
-            .font(.headline)
-            .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                .font(.system(size: 24))
+                .foregroundColor(InstitutionalTheme.Colors.crimson)
+            Text("Analiz hatası")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Text(message)
                 .font(.subheadline)
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
@@ -933,15 +876,15 @@ extension AtlasV2DetailView {
         }
     }
     
-    /// V5 surface1 + motor(.atlas) tint kenarlık. Shadow kaldırıldı —
-    /// V5 dili düz yüzey istiyor. Kullanıldığı yerler section card ve
-    /// educational rationale card.
+    /// 2026-04-30 H-58 — sade. Motor tint border gitti, hairline borderSubtle.
+    /// Kullanıldığı yerler: section card, educational rationale card,
+    /// loadingView, errorView.
     private var cardBackground: some View {
         RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
             .fill(InstitutionalTheme.Colors.surface1)
             .overlay(
                 RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                    .stroke(InstitutionalTheme.Colors.Motors.atlas.opacity(0.25), lineWidth: 1)
+                    .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
             )
     }
     
@@ -1063,29 +1006,25 @@ private struct AtlasDriverChip: View {
     let tint: Color
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(title.uppercased())
-                    .font(.system(size: 9, weight: .bold, design: .monospaced))
-                    .foregroundColor(tint)
+                Text(title)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .lineLimit(1)
                 Text(subtitle)
-                    .font(.caption2)
+                    .font(.system(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .lineLimit(1)
             }
             Text(impactText)
-                .font(.caption2.weight(.bold))
+                .font(.system(size: 12, weight: .medium))
                 .foregroundColor(tint)
                 .monospacedDigit()
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
         .background(InstitutionalTheme.Colors.surface2)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(tint.opacity(0.22), lineWidth: 1)
-        )
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }

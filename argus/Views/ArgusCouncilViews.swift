@@ -20,20 +20,18 @@ struct ArgusGrandCouncilCard: View {
                     .symbolEffect(.bounce, value: isPulsing)
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("KONSEY KARARI")
-                        .font(.caption)
-                        .fontWeight(.bold)
+                    Text("Konsey kararı")
+                        .font(.system(size: 12))
                         .foregroundColor(.white.opacity(0.7))
-                        .tracking(2)
-                    
+
                     Text(education.badgeText)
-                        .font(.system(size: 28, weight: .heavy, design: .rounded))
+                        .font(.system(size: 26, weight: .medium))
                         .foregroundColor(.white)
                         .minimumScaleFactor(0.8)
-                    
-                    Text(education.title.uppercased())
-                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.88))
+
+                    Text(education.title)
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.85))
                         .minimumScaleFactor(0.8)
                 }
                 

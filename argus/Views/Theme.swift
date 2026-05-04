@@ -25,6 +25,7 @@ struct Theme {
     // MARK: - Typography Colors
     static let textPrimary = Color.white
     static let textSecondary = Color(hex: "8A8F98") // Stardust Gray
+    static let textTertiary = Color(hex: "5B6782")  // InstitutionalTheme.Colors.textTertiary ile uyumlu
     
     // MARK: - Signal Colors
     static let positive = Color(hex: "16A34A")  // Yeşil

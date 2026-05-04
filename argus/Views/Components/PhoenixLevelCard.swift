@@ -7,23 +7,14 @@ struct PhoenixLevelCard: View {
         VStack(alignment: .leading, spacing: 12) {
             // Header
             HStack {
-                Image(systemName: "flame.fill")
-                    .foregroundColor(.orange)
-                Text("PHOENIX SEVİYELERİ")
-                    .font(.caption)
-                    .bold()
+                Text("Risk seviyeleri")
+                    .font(.system(size: 12, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Spacer()
-                
-                // Timeframe Badge
+
                 Text(advice.timeframe.localizedName)
-                    .font(.caption2)
-                    .bold()
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(InstitutionalTheme.Colors.holo.opacity(0.1))
-                    .cornerRadius(4)
-                    .foregroundColor(InstitutionalTheme.Colors.holo)
+                    .font(.system(size: 11))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             
             if advice.status == .active {

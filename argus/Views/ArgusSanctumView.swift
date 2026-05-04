@@ -248,9 +248,9 @@ struct ArgusSanctumView: View {
                 title: "Ekranlar",
                 items: [
                     ArgusDrawerView.DrawerItem(title: "Alkindus Merkez",
-                                               subtitle: "Yapay zeka ana sayfa",
+                                               subtitle: "Yapay zeka merkezi",
                                                icon: "AlkindusIcon") {
-                        deepLinkManager.navigate(to: .home)
+                        router.navigate(to: .alkindusDashboard)
                         showDrawer = false
                     },
                     ArgusDrawerView.DrawerItem(title: "Piyasalar",
@@ -401,32 +401,9 @@ struct ArgusSanctumView: View {
             ArgusDrawerView.DrawerSection(title: "Modüller", items: moduleItems)
         )
         
-        sections.append(commonToolsSection(openSheet: openSheet))
-        
+        sections.append(ArgusDrawerView.commonToolsSection(openSheet: openSheet))
+
         return sections
-    }
-    
-    private func commonToolsSection(openSheet: @escaping (ArgusDrawerView.DrawerSheet) -> Void) -> ArgusDrawerView.DrawerSection {
-        ArgusDrawerView.DrawerSection(
-            title: "Araçlar",
-            items: [
-                ArgusDrawerView.DrawerItem(title: "Ekonomi Takvimi", subtitle: "Gercek takvim", icon: "calendar") {
-                    openSheet(.calendar)
-                },
-                ArgusDrawerView.DrawerItem(title: "Finans Sozlugu", subtitle: "Terimler", icon: "character.book.closed") {
-                    openSheet(.dictionary)
-                },
-                ArgusDrawerView.DrawerItem(title: "Unlu Finans Sozleri", subtitle: "Finans alintilari", icon: "quote.opening") {
-                    openSheet(.financeWisdom)
-                },
-                ArgusDrawerView.DrawerItem(title: "Sistem Durumu", subtitle: "Servis sağlığı", icon: "waveform.path.ecg") {
-                    openSheet(.systemHealth)
-                },
-                ArgusDrawerView.DrawerItem(title: "Geri Bildirim", subtitle: "Sorun bildir", icon: "envelope") {
-                    openSheet(.feedback)
-                }
-            ]
-        )
     }
 
     // MARK: - Subviews (Computed Properties)
@@ -473,7 +450,11 @@ struct ArgusSanctumView: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Argus analizi")
 
-            Button(action: { showDrawer = true }) {
+            Button(action: {
+                withAnimation(ArgusDrawerView.toggleAnimation) {
+                    showDrawer = true
+                }
+            }) {
                 Image(systemName: "line.3.horizontal")
                     .font(.system(size: 18, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)

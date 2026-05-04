@@ -75,18 +75,12 @@ struct OrionCouncilCard: View {
             }
             
             VStack(alignment: .leading, spacing: 2) {
-                Text("ORİON KONSEYİ")
-                    .font(.system(size: 13, weight: .heavy))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.purple, .blue],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                Text("Teknik Karar Kurulu")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                Text("Teknik konsey")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                Text("Teknik karar kurulu")
+                    .font(.system(size: 11))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             
             Spacer()

@@ -207,14 +207,12 @@ struct SplashScreenView: View {
 
                     // Alt başlık
                     VStack(spacing: 4) {
-                        Text("INSTITUTIONAL DECISION CORE")
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
-                            .tracking(3.2)
+                        Text("Yatırım kararları için kurumsal motor")
+                            .font(.system(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                        Text("100 GÖZ · 8 MOTOR · 1 KARAR")
-                            .font(.system(size: 8, weight: .semibold, design: .monospaced))
-                            .tracking(2)
-                            .foregroundColor(InstitutionalTheme.Colors.Motors.argus.opacity(0.7))
+                        Text("100 göz · 8 motor · 1 karar")
+                            .font(.system(size: 11))
+                            .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     }
                     .opacity(subtitleOpacity)
 

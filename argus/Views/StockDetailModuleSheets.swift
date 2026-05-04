@@ -34,7 +34,7 @@ struct ModuleSheetShell<Content: View>: View {
         VStack(spacing: 0) {
             ArgusNavHeader(
                 title: title,
-                subtitle: "HİSSE · MODÜL DETAYI",
+                subtitle: "Modül detayı",
                 leadingDeco: .bars3([.holo, .text, .text]),
                 actions: [
                     .custom(sfSymbol: "xmark", action: { dismiss() })

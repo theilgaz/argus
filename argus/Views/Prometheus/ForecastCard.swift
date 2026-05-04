@@ -146,20 +146,18 @@ struct ForecastCard: View {
     }
 
     private var footerLine: some View {
-        Text("HOLT-WINTERS EXPONENTIAL SMOOTHING")
-            .font(.system(size: 8, weight: .bold, design: .monospaced))
-            .tracking(0.8)
-            .foregroundColor(InstitutionalTheme.Colors.textTertiary.opacity(0.6))
+        Text("Holt-Winters üstel düzleştirme")
+            .font(.system(size: 11))
+            .foregroundColor(InstitutionalTheme.Colors.textTertiary.opacity(0.7))
             .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
     private var loadingBlock: some View {
         VStack(spacing: 8) {
-            ProgressView().tint(InstitutionalTheme.Colors.Motors.prometheus)
-            Text("PROMETHEUS HESAPLANIYOR…")
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .tracking(1)
-                .foregroundColor(InstitutionalTheme.Colors.Motors.prometheus)
+            ProgressView()
+            Text("Tahmin hesaplanıyor")
+                .font(.system(size: 12))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
         .frame(maxWidth: .infinity, minHeight: 120)
     }
