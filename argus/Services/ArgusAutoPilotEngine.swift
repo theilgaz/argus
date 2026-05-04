@@ -39,8 +39,14 @@ struct AutoPilotConfig {
     static let entryScoreThreshold: Double = 65.0  // Giriş için minimum puan
     static let exitScoreThreshold: Double = 55.0   // Çıkış için minimum puan (10 puan buffer)
     
-    /// Minimum Güven Filtresi: Bu değerin altındaki sinyaller reddedilir
-    static let minimumConfidencePercent: Double = 40.0 // %40 (NEW)
+    /// Minimum Güven Filtresi: Bu değerin altındaki sinyaller reddedilir.
+    /// 2026-05-04: %40 → %25. Sistem paper-trading için kalibre — Yahoo'nun
+    /// gecikmeli/eksik verisiyle %40+ council confidence çoğu zaman erişilemez
+    /// (üyeler "Veri yok" deyip abstain ediyordu). %25 hâlâ council'in en az
+    /// 1/4'ünün net BUY oyu vermesini gerektirir; "tamamen gevşek" değil ama
+    /// gerçek-para paranoyasını eğitim bağlamına taşımıyor.
+    /// Gerçek paraya geçilirse 50.0+ değerine yeniden tighten edilmeli.
+    static let minimumConfidencePercent: Double = 25.0 // %25 (paper-tuned)
 }
 
 enum AutoPilotStrategy: String {

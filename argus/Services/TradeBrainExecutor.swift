@@ -925,9 +925,15 @@ class TradeBrainExecutor: ObservableObject {
     ) async -> SymbolExecutionProfile {
         var allocationMultiplier = 1.0
         var cooldownMultiplier = 1.0
-        // BİRİKTİR (accumulate) zaten muhafazakar bir karar — %50 güven yeterli.
-        // AGRESİF ALIM için %55 taban. Aksi halde kademeli alım sinyalleri kaçar.
-        var minConfidence: Double = decision.action == .accumulate ? 0.50 : 0.55
+        // 2026-05-04: Paper-trading kalibrasyonu. Eski (real-money kalibrasyonu):
+        // accumulate %50 / aggressive %55 başlangıç + %42 / %48 taban → Yahoo'nun
+        // gecikmeli/eksik verisiyle çoğu council kararı bu eşiklerin altında kaldığı
+        // için trade hiç tetiklenmiyordu (kullanıcı "0 ya da 1 güven" sorununu yaşadı).
+        // Yeni: accumulate %35 / aggressive %40 başlangıç + %25 / %30 taban.
+        // Volatilite/event/zayıf-geçmiş çarpanları hâlâ minConfidence'i yukarı çeker
+        // (aşırı riskli sembolde tighten korunur). Gerçek paraya geçilirse eski
+        // değerlere (0.50/0.55 + 0.42/0.48) geri dönülmeli.
+        var minConfidence: Double = decision.action == .accumulate ? 0.35 : 0.40
         var notes: [String] = []
 
         let referencePrice = quote?.currentPrice ?? candles.last?.close ?? 0
@@ -992,9 +998,11 @@ class TradeBrainExecutor: ObservableObject {
 
         allocationMultiplier = min(max(allocationMultiplier, 0.35), 1.45)
         cooldownMultiplier = min(max(cooldownMultiplier, 0.75), 2.5)
-        // Alt sınır BİRİKTİR için 0.42, AGRESİF için 0.48. Volatilite/event riski
-        // çarpanları eklense bile BİRİKTİR için aşırı katı eşik oluşmasın.
-        let minConfFloor = decision.action == .accumulate ? 0.42 : 0.48
+        // 2026-05-04 paper-tuned: BİRİKTİR taban 0.42 → 0.25, AGRESİF 0.48 → 0.30.
+        // Volatilite/event/zayıf-geçmiş çarpanları minConfidence'i yukarı çeker —
+        // riskli sembollerde tighten otomatik. Bu taban "tamamen gevşek" değil:
+        // %25 hâlâ council üyelerinin en az ¼'ünün net BUY oyu vermesini gerektirir.
+        let minConfFloor = decision.action == .accumulate ? 0.25 : 0.30
         minConfidence = min(max(minConfidence, minConfFloor), 0.85)
 
         let tier: SymbolExecutionProfile.RiskTier
