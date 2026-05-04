@@ -33,12 +33,15 @@ struct PortfolioHeatGate: Sendable {
     }
 
     /// Isı seviyesine göre pozisyon boyutu çarpanı döner.
+    /// 2026-05-04: critical level 0.0 → 0.10. Hard-stop yerine çok küçük
+    /// pozisyona izin ver — paper trading'de drawdown'da bile öğrenme momentum
+    /// devam etsin. Gerçek paraya geçilirse 0.0'a tighten edilmeli.
     static func positionMultiplier(for heatLevel: HeatLevel) -> Double {
         switch heatLevel {
         case .cool:     return 1.0
         case .warm:     return 0.5
         case .hot:      return 0.2
-        case .critical: return 0.0
+        case .critical: return 0.10 // was 0.0 — paper-tuned (learning over hard stop)
         }
     }
 }

@@ -9,27 +9,33 @@ class PortfolioRiskManager {
     // MARK: - Risk Limitleri (Configurable)
     
     struct RiskLimits {
+        // 2026-05-04: Paper-trading kalibrasyonu. Eski (real-money) eşikler tüm
+        // alımları sessizce reddediyordu. "Tamamen gevşek" değil, ama eğitim
+        // bağlamına uygun. Gerçek paraya geçilirse eski değerlere tighten:
+        // minCashRatio 0.20, emergencyCashRatio 0.10, maxOpenPositions 15,
+        // maxPositionWeight 0.15, maxDailyTrades 10, cooldownBetweenTrades 300.
+
         // Nakit Limitleri
-        var minCashRatio: Double = 0.20          // Minimum %20 nakit tut
-        var emergencyCashRatio: Double = 0.10    // Acil durum nakit eşiği
-        
+        var minCashRatio: Double = 0.10          // Minimum %10 nakit (was 0.20)
+        var emergencyCashRatio: Double = 0.05    // Acil durum %5 (was 0.10)
+
         // Pozisyon Limitleri
-        var maxOpenPositions: Int = 15           // Maksimum açık pozisyon
-        var maxPositionWeight: Double = 0.15     // Tek pozisyon maksimum %15
-        var minPositionSizeBist: Double = 1000   // BIST minimum pozisyon (TRY)
-        var minPositionSizeGlobal: Double = 50   // Global minimum pozisyon (USD)
-        
+        var maxOpenPositions: Int = 30           // Max 30 açık pozisyon (was 15)
+        var maxPositionWeight: Double = 0.15     // Tek pozisyon max %15 (unchanged)
+        var minPositionSizeBist: Double = 500    // BIST min ₺500 (was 1000)
+        var minPositionSizeGlobal: Double = 25   // Global min $25 (was 50)
+
         // Sektör Limitleri
-        var maxSectorConcentration: Double = 0.40 // Tek sektörde maksimum %40
-        var maxSectorPositions: Int = 5          // Tek sektörde maksimum 5 hisse
-        
-        // Risk Limitleri
-        var maxPortfolioDrawdown: Double = 0.15  // Maksimum %15 drawdown
-        var maxDailyLoss: Double = 0.03          // Günlük maksimum %3 kayıp
-        
-        // AutoPilot Limitleri
-        var maxDailyTrades: Int = 10             // Günlük maksimum işlem
-        var cooldownBetweenTrades: TimeInterval = 300 // 5 dakika bekleme
+        var maxSectorConcentration: Double = 0.50 // Tek sektörde max %50 (was 40)
+        var maxSectorPositions: Int = 8          // Tek sektörde max 8 hisse (was 5)
+
+        // Risk Limitleri (UNCHANGED — gerçek koruma)
+        var maxPortfolioDrawdown: Double = 0.15  // Max %15 drawdown
+        var maxDailyLoss: Double = 0.03          // Günlük max %3 kayıp
+
+        // AutoPilot Limitleri — paper trading öğrenme için gevşedi
+        var maxDailyTrades: Int = 50             // Günlük max 50 işlem (was 10)
+        var cooldownBetweenTrades: TimeInterval = 60 // 1 dakika bekleme (was 300)
     }
     
     var limits = RiskLimits()
