@@ -516,20 +516,36 @@ struct ArgusDecisionEngine {
             // Legacy Chiron Journal Removed (Phase 4 Refactor)
             
             // --- ALKINDUS OBSERVATION (Shadow Mode) ---
-            await AlkindusCalibrationEngine.shared.observe(
-                symbol: symbol,
-                action: finalAction.rawValue,
-                moduleScores: [
-                    "orion": orion ?? 0,
-                    "atlas": atlas ?? 0,
-                    "aether": aether ?? 0,
-                    "hermes": hermes ?? 0,
-                    "phoenix": phoenixOp.score
-                ],
-                regime: chironResult.regime.rawValue,
-                currentPrice: marketData?.price ?? 0,
-                reasoning: rationale
-            )
+            // 2026-05-04 BUG FIX: finalAction.rawValue Türkçe ("HÜCUM"/"BİRİKTİR"/...)
+            // dönüyor ama AlkindusCalibrationEngine.observe filtresi `action == "BUY" || "SELL"`
+            // bekliyor → bu yoldan gelen gözlemler sessizce siliniyordu (yarım kanal kapalı).
+            // ArgusGrandCouncil ile tutarlı mapping uygulanır.
+            let alkindusAction: String? = {
+                switch finalAction {
+                case .aggressiveBuy, .accumulate: return "BUY"
+                case .trim, .liquidate:           return "SELL"
+                case .neutral:                    return nil
+                }
+            }()
+            // priceAtDecision = 0 olursa evaluateOutcome'da division-by-zero → wasCorrect
+            // güvenilmez. marketData price yoksa observe'u atla (Council yolu da aynısını yapar).
+            if let action = alkindusAction,
+               let price = marketData?.price, price > 0 {
+                await AlkindusCalibrationEngine.shared.observe(
+                    symbol: symbol,
+                    action: action,
+                    moduleScores: [
+                        "orion": orion ?? 0,
+                        "atlas": atlas ?? 0,
+                        "aether": aether ?? 0,
+                        "hermes": hermes ?? 0,
+                        "phoenix": phoenixOp.score
+                    ],
+                    regime: chironResult.regime.rawValue,
+                    currentPrice: price,
+                    reasoning: rationale
+                )
+            }
         }
         
         return (trace, legacy)

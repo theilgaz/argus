@@ -85,13 +85,18 @@ actor TradeBrainLearningService {
                 guard Date() >= maturityDate else { continue }
                 
                 guard let currentPrice = currentPrices[task.symbol] else { continue }
-                
-                let outcome = evaluateOutcome(
+
+                // evaluateOutcome nil döndürürse: entry_price kaydedilmemiş, sessizce
+                // skip et (sahte false-negative ile stat'ı kirletme).
+                guard let outcome = evaluateOutcome(
                     decision: task.decision,
                     currentPrice: currentPrice,
                     horizon: horizon
-                )
-                
+                ) else {
+                    print("TradeBrainLearning: \(task.symbol) T+\(horizon) entry_price yok, skip")
+                    continue
+                }
+
                 task.outcomes[horizon] = LearningTask.Outcome(
                     horizon: horizon,
                     wasCorrect: outcome.wasCorrect,
@@ -99,9 +104,9 @@ actor TradeBrainLearningService {
                     evaluatedAt: Date()
                 )
                 task.evaluatedAt[horizon] = Date()
-                
+
                 await recordLearning(task: task, horizon: horizon, outcome: outcome)
-                
+
                 processedCount += 1
                 print("TradeBrainLearning: \(task.symbol) T+\(horizon) gun degerlendirildi - \(outcome.wasCorrect ? "BASARILI" : "BASARISIZ")")
             }
@@ -122,26 +127,33 @@ actor TradeBrainLearningService {
         decision: TradeBrainDecision,
         currentPrice: Double,
         horizon: Int
-    ) -> (wasCorrect: Bool, pnlPercent: Double) {
+    ) -> (wasCorrect: Bool, pnlPercent: Double)? {
+        // 2026-05-04 BUG FIX: entry_price indicator hiçbir yerde set edilmiyordu →
+        // entryPrice daima 0 → guard fail → her değerlendirme false. Bu sahte
+        // "%0 doğruluk" istatistiği üretiyordu. Şimdi entry_price yoksa **nil
+        // döner** (skip) — false döndürmek yerine.
         let entryPrice = decision.multiHorizon.primaryRecommendation.indicators["entry_price"]
             .flatMap { Double($0) } ?? 0
-        
+
         guard entryPrice > 0 else {
-            return (wasCorrect: false, pnlPercent: 0)
+            // Entry price kaydedilmemiş — değerlendirilemez. Skip rather than
+            // pollute stats with false-negative.
+            return nil
         }
-        
+
         let pnlPercent = (currentPrice - entryPrice) / entryPrice * 100
         let wasCorrect: Bool
-        
+
+        // ArgusAction Turkish rawValue de eklendi (HÜCUM/BİRİKTİR/AZALT/ÇIK)
         switch decision.finalAction {
-        case "BUY", "ACCUMULATE", "AGGRESSIVE_BUY":
+        case "BUY", "ACCUMULATE", "AGGRESSIVE_BUY", "HÜCUM", "BİRİKTİR":
             wasCorrect = pnlPercent > 0
-        case "SELL", "TRIM", "LIQUIDATE":
+        case "SELL", "TRIM", "LIQUIDATE", "AZALT", "ÇIK":
             wasCorrect = pnlPercent < 0
         default:
             wasCorrect = abs(pnlPercent) < 2
         }
-        
+
         return (wasCorrect, pnlPercent)
     }
     
