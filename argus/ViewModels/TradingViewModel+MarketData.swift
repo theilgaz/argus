@@ -131,7 +131,11 @@ extension TradingViewModel {
     
     // MARK: - Watchlist Loop
     func startWatchlistLoop() {
-        Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+        // 2026-05-04: Refresh interval 60s → 180s. Sebep: quote TTL=180sn ile aynı.
+        // 60sn'de 319 sembol × 1.5sn ÷ 4 inflight = 120sn — refresh kendi süresinden
+        // daha sık tetikleniyordu, queue şişiyor, 30sn rate-cap timeout veriyordu.
+        // 180sn aralık + eşit TTL → AutoPilot/Scout/UI cache hit garantili.
+        Timer.scheduledTimer(withTimeInterval: 180, repeats: true) { [weak self] _ in
             Task {
                 await self?.fetchQuotes()
             }

@@ -37,11 +37,14 @@ final class MarketDataStore: ObservableObject {
     }
     
     // MARK: - Configuration
-    // Phase 5 (2026-04-29): Quote TTL 15s → 60s. Yahoo rate baskısı altında 15sn'lik
-    // refresh agresifti — UI 5sn auto-refresh'i ile çakışıyor, fan-out hacmini şişiriyordu.
-    // Intra-day fiyat hareketi için 60s yeterli; Engine'in kendi event-driven
-    // invalidation'ı (yeni bar geldiğinde) zaten cache'i güncelliyor.
-    private let quoteTTL: TimeInterval = 60 // 60 seconds (was 15)
+    // 2026-05-04: Quote TTL 60 → 180s (3 dakika). Watchlist refresh interval'iyle
+    // hizalandı. Eski 60sn'de refresh tam TTL süresinde tekrar tetikleniyordu →
+    // AutoPilot/Scout her seferinde stale cache + SWR triggering = Yahoo'ya çift
+    // fan-out. 180sn TTL + 180sn refresh = aynı pencere içinde gerçek cache hit.
+    // Intra-day fiyat hareketi için 180sn hâlâ kabul edilebilir (UI 5sn streaming
+    // injection ile zaten taze).
+    // Phase 5 (2026-04-29): Quote TTL 15s → 60s.
+    private let quoteTTL: TimeInterval = 180 // 180 seconds (was 60, was 15)
     private let macroTTL: TimeInterval = 3600 // 1 hour (Macro changes slowly)
     private let fundamentalsTTL: TimeInterval = 86400 // 24 hours
     

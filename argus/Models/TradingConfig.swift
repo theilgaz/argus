@@ -49,7 +49,10 @@ struct TradingConfig {
     // MARK: - Cache TTLs (Time To Live)
     
     /// Quote cache süresi (saniye)
-    var quoteTTL: TimeInterval = 15
+    /// 2026-05-04: 15 → 60. MarketDataStore.swift zaten 60 kullanıyordu;
+    /// bu config alanı kullanılmıyordu (dead config) ama tutarsızlık kafa
+    /// karıştırmasın diye eşitlendi.
+    var quoteTTL: TimeInterval = 60
     
     /// Candle cache süresi (saniye)
     var candlesTTL: TimeInterval = 300 // 5 dakika
