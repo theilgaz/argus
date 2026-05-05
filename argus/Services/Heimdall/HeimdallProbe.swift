@@ -34,7 +34,10 @@ actor HeimdallProbe {
         
         // 1. Test Auth (Profile)
         // Cheapest endpoint, usually available on all plans.
-        let authResult = await testEndpoint(url: "https://financialmodelingprep.com/api/v3/profile/AAPL?apikey=\(k)")
+        // 2026-05-05: /api/v3/* → /stable/* migration. Yeni aboneler için
+        // v3 endpoint'leri "Legacy Endpoint" 403 dönüyor, valid key bile
+        // doğrulamadan geçemiyordu.
+        let authResult = await testEndpoint(url: "https://financialmodelingprep.com/stable/profile?symbol=AAPL&apikey=\(k)")
         
         if case .authInvalid = authResult {
             print("🛑 Probe: FMP Auth Failed. Locking.")
@@ -49,7 +52,7 @@ actor HeimdallProbe {
         
         // 2. Test Entitlement (Intraday vs Daily)
         // Try the risky endpoint that caused "Legacy Endpoint" error
-        let legacyResult = await testEndpoint(url: "https://financialmodelingprep.com/api/v3/historical-chart/1hour/AAPL?apikey=\(k)")
+        let legacyResult = await testEndpoint(url: "https://financialmodelingprep.com/stable/historical-chart/1hour?symbol=AAPL&apikey=\(k)")
         
         if case .entitlementDenied = legacyResult {
             print("⚠️ Probe: FMP Intraday (Legacy/1h) Denied. Mode -> DAILY_ONLY")
@@ -64,7 +67,8 @@ actor HeimdallProbe {
         }
         
         // Fallback: If 1h chart failed with something else, check Daily
-        let dailyResult = await testEndpoint(url: "https://financialmodelingprep.com/api/v3/historical-price-full/AAPL?timeseries=1&apikey=\(k)")
+        // /stable namespace'de "historical-price-full" → "historical-price-eod/full"
+        let dailyResult = await testEndpoint(url: "https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=AAPL&apikey=\(k)")
         if case .success = dailyResult {
              print("✅ Probe: FMP Daily OK. Mode -> DAILY_ONLY (Conservative)")
              return .dailyOnly
@@ -82,20 +86,21 @@ actor HeimdallProbe {
         print("\n=== 🕵️ HEIMDALL SMOKE TESTS (PROOF) ===")
         guard let k = await APIKeyStore.shared.getKey(for: .fmp) else { return }
         
-        // 1. AMD 1h Candles (Legacy)
-        await logEvidence(label: "TEST 1: AMD 1h Candles", url: "https://financialmodelingprep.com/api/v3/historical-chart/1hour/AMD?apikey=\(k)")
-        
+        // 1. AMD 1h Candles (Intraday entitlement check)
+        await logEvidence(label: "TEST 1: AMD 1h Candles", url: "https://financialmodelingprep.com/stable/historical-chart/1hour?symbol=AMD&apikey=\(k)")
+
         // 2. SPY Quote (Standard)
-        await logEvidence(label: "TEST 2: SPY Quote", url: "https://financialmodelingprep.com/api/v3/quote/SPY?apikey=\(k)")
-        
+        await logEvidence(label: "TEST 2: SPY Quote", url: "https://financialmodelingprep.com/stable/quote?symbol=SPY&apikey=\(k)")
+
         // 3. AAPL Profile (Fallback Source)
-        await logEvidence(label: "TEST 3: AAPL Profile", url: "https://financialmodelingprep.com/api/v3/profile/AAPL?apikey=\(k)")
-        
+        await logEvidence(label: "TEST 3: AAPL Profile", url: "https://financialmodelingprep.com/stable/profile?symbol=AAPL&apikey=\(k)")
+
         // 4. TSLA News (Premium Feature Check)
-        await logEvidence(label: "TEST 4: TSLA News", url: "https://financialmodelingprep.com/api/v3/stock_news?tickers=TSLA&limit=1&apikey=\(k)")
-        
+        // /stable namespace'de "stock_news" → "news/stock", parametre "tickers" → "symbols"
+        await logEvidence(label: "TEST 4: TSLA News", url: "https://financialmodelingprep.com/stable/news/stock?symbols=TSLA&limit=1&apikey=\(k)")
+
         // 5. MSFT Fundamentals (Income Statement)
-        await logEvidence(label: "TEST 5: MSFT Fundamentals", url: "https://financialmodelingprep.com/api/v3/income-statement/MSFT?limit=1&apikey=\(k)")
+        await logEvidence(label: "TEST 5: MSFT Fundamentals", url: "https://financialmodelingprep.com/stable/income-statement?symbol=MSFT&limit=1&apikey=\(k)")
 
         // 6. TwelveData Connectivity
         if let tdKey = await APIKeyStore.shared.getKey(for: .twelveData) {
@@ -163,7 +168,9 @@ actor HeimdallProbe {
         case .eodhd:
             urlString = "https://eodhd.com/api/real-time/AAPL.US?api_token=\(key)&fmt=json"
         case .fmp:
-            urlString = "https://financialmodelingprep.com/api/v3/profile/AAPL?apikey=\(key)"
+            // 2026-05-05: /api/v3/* legacy oldu, /stable/* yeni namespace.
+            // Yeni FMP aboneleri (31 Ağustos 2025 sonrası) v3'e 403 yiyor.
+            urlString = "https://financialmodelingprep.com/stable/profile?symbol=AAPL&apikey=\(key)"
         case .twelveData:
             urlString = "https://api.twelvedata.com/quote?symbol=AAPL&apikey=\(key)"
         default:

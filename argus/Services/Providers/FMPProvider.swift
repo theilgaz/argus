@@ -2,15 +2,20 @@ import Foundation
 
 class FMPProvider {
     static let shared = FMPProvider()
-    
+
     private let hardcodedKey = Secrets.fmpKey
-    private let baseURL = "https://financialmodelingprep.com/api/v3"
-    
+
+    /// 2026-05-05: FMP, 31 Ağustos 2025 sonrası `/api/v3/*` endpoint'lerini
+    /// "Legacy" olarak işaretledi. Yeni aboneler `/stable/*` namespace'ini
+    /// kullanmak zorunda. URL formatı da değişti: sembol path'ten query
+    /// parametresine taşındı (`/profile/AAPL` → `/profile?symbol=AAPL`).
+    private let baseURL = "https://financialmodelingprep.com/stable"
+
     private init() {}
-    
+
     // MARK: - Fetch Methods
     func fetchProfile(symbol: String) async throws -> FMPProfile? {
-        let urlString = "\(baseURL)/profile/\(symbol)?apikey=\(hardcodedKey)"
+        let urlString = "\(baseURL)/profile?symbol=\(symbol)&apikey=\(hardcodedKey)"
         guard let url = URL(string: urlString) else { return nil }
 
         // Y2: 15s timeout (fundamentals endpoint; default 60s UI'yi donduruyordu).
@@ -28,7 +33,7 @@ class FMPProvider {
     }
 
     func fetchQuote(symbol: String) async throws -> FMPQuote? {
-        let urlString = "\(baseURL)/quote/\(symbol)?apikey=\(hardcodedKey)"
+        let urlString = "\(baseURL)/quote?symbol=\(symbol)&apikey=\(hardcodedKey)"
         guard let url = URL(string: urlString) else { return nil }
 
         let request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 15)
@@ -56,6 +61,12 @@ class FMPProvider {
 }
 
 // Basic Structures for FMP
+//
+// 2026-05-05: FMP /stable/* namespace bazı field'ları yeniden adlandırdı.
+// Swift property adlarını korumak (call-site değişmesin) için CodingKeys
+// ile yeni JSON adlarına eşliyoruz. Yeni şemada olmayan field'lar
+// (dcf, dcfDiff, eps, pe, vb.) optional kaldığı için decode başarılı —
+// sadece nil dönerler.
 struct FMPProfile: Codable {
     let symbol: String
     let price: Double?
@@ -90,6 +101,19 @@ struct FMPProfile: Codable {
     let defaultImage: Bool?
     let isEtf: Bool?
     let isActivelyTrading: Bool?
+
+    enum CodingKeys: String, CodingKey {
+        case symbol, price, beta, range, companyName, currency, isin, cusip
+        case exchange, industry, website, description, ceo, sector, country
+        case fullTimeEmployees, phone, address, city, state, zip
+        case dcfDiff, dcf, image, ipoDate, defaultImage, isEtf, isActivelyTrading
+        // Yeni JSON adları (FMP /stable/*) — eski Swift adlarına eşleniyor
+        case volAvg = "averageVolume"
+        case mktCap = "marketCap"
+        case lastDiv = "lastDividend"
+        case changes = "change"
+        case exchangeShortName = "exchangeFullName"
+    }
 }
 
 struct FMPQuote: Codable {
@@ -114,4 +138,14 @@ struct FMPQuote: Codable {
     let earningsAnnouncement: String?
     let sharesOutstanding: Int?
     let timestamp: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case symbol, name, price, change
+        case dayLow, dayHigh, yearHigh, yearLow
+        case marketCap, priceAvg50, priceAvg200
+        case volume, avgVolume, open, previousClose
+        case eps, pe, earningsAnnouncement, sharesOutstanding, timestamp
+        // FMP /stable/quote artık "changesPercentage" yerine "changePercentage" kullanıyor
+        case changesPercentage = "changePercentage"
+    }
 }
