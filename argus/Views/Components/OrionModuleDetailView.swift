@@ -1,14 +1,22 @@
 import SwiftUI
 
-// MARK: - Orion Module Detail View (V5)
+// MARK: - Modül detay overlay (eski adıyla Orion Module Detail)
 //
-// **2026-04-23 V5.C estetik refactor.**
-// Kullanıcı Motherboard'daki modül kartına (Momentum/Trend/Yapı/Formasyon)
-// tıklayınca açılan full-bleed overlay. Eski: 6 hardcoded Color(red:green:blue:)
-// literal (darkBg/cardBg/cyan/orange/green/red/purple), Color.white.opacity
-// chain'leri, "LIVE ANALYSIS" ham başlık. Yeni: motor(.orion) tint sarmalı,
-// surface1 kartlar, mono caps section caption, ArgusChip delta rozeti,
-// ArgusHair ayırıcılar, alarm/paylaş action bar V5 chrome.
+// 2026-05-04 H-63 — sade refactor.
+// Eski yapı: motor(.orion) tint sarmalı + ArgusSectionCaption "CANLI ANALİZ"
+// caps + 13.5pt monospaced colored segment text + technicalCard caps mono
+// başlık + ArgusChip delta rozeti + 9pt black mono caption + 16pt black
+// mono değer + DisclosureGroup "ÖĞREN · X NEDİR?" caps + bottom action bar
+// solid motor button + emptyChartLabel uppercased.
+//
+// Yeni dil:
+//   • Üst nav: chevron + ortalı node başlığı + alt "Teknik · SYMBOL" + xmark
+//   • Canlı analiz: sentence dynamic text (system font), inline renk vurgusu
+//   • Göstergeler: sade kart başlığı + büyük renkli skor + sade chart
+//   • "Bu nedir?" mini açıklama (DisclosureGroup yerine inline)
+//   • Bottom outline butonlar (Alarm + Paylaş)
+//
+// Public API korundu: `init(type:, symbol:, analysis:, candles:, onClose:)`.
 
 struct OrionModuleDetailView: View {
     let type: CircuitNode
@@ -22,27 +30,18 @@ struct OrionModuleDetailView: View {
             InstitutionalTheme.Colors.background.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                headerView
+                topNav
 
                 ScrollView {
-                    VStack(spacing: 16) {
+                    VStack(spacing: 12) {
                         liveAnalysisCard
-
-                        HStack(spacing: 8) {
-                            MotorLogo(.orion, size: 14)
-                            ArgusSectionCaption("TEKNİK GÖSTERGELER")
-                            Spacer()
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 4)
-
                         indicatorsSection
-
-                        learningSection
+                        learningCard
 
                         Color.clear.frame(height: 100)
                     }
-                    .padding(.vertical, 12)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 14)
                 }
             }
 
@@ -53,169 +52,235 @@ struct OrionModuleDetailView: View {
         }
     }
 
-    // MARK: - Dynamic Content Switching
+    // MARK: - Üst nav
+
+    private var topNav: some View {
+        HStack {
+            Button(action: onClose) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .frame(width: 36, height: 36)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            Spacer()
+
+            VStack(spacing: 1) {
+                Text(nodeTitle)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                Text("Teknik · \(symbol.uppercased())")
+                    .font(.system(size: 11))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+            }
+
+            Spacer()
+
+            Button(action: onClose) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 14))
+                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                    .frame(width: 36, height: 36)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 8)
+        .background(InstitutionalTheme.Colors.surface1)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
+        }
+    }
+
+    private var nodeTitle: String {
+        switch type {
+        case .trend:     return "Trend"
+        case .momentum:  return "Momentum"
+        case .structure: return "Yapı"
+        case .pattern:   return "Formasyon"
+        default:         return "Detay"
+        }
+    }
+
+    // MARK: - Canlı analiz kartı (sentence + inline renk vurgusu)
+
+    private var liveAnalysisCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Canlı analiz")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                Spacer()
+                Text("son \(min(50, candles.count)) mum")
+                    .font(.system(size: 11))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+            }
+
+            // OrionTextGenerator zaten colored segments üretiyor — bunu sade
+            // dile uyarlamak için system font + 13pt + lineSpacing 4. Renk
+            // vurguları korunuyor (skoru sözle açıklayan yapı için kritik).
+            let dynamicText = getDynamicText()
+            dynamicText.segments
+                .reduce(Text("")) { result, segment in
+                    result + Text(segment.text)
+                        .foregroundColor(segment.color)
+                        .fontWeight(segment.isBold ? .medium : .regular)
+                }
+                .font(.system(size: 13))
+                .lineSpacing(4)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(cardBackground)
+    }
+
+    // MARK: - Göstergeler (4 node case)
 
     @ViewBuilder
     private var indicatorsSection: some View {
         switch type {
         case .trend:
-            technicalCard(
-                title: "PRICE ACTION",
-                subtitle: "Hareketli Ortalamalar",
+            indicatorCard(
+                title: "Hareketli ortalamalar",
+                subtitle: "Fiyat / SMA(10)",
                 value: String(format: "%.2f", candles.last?.close ?? 0),
-                delta: getPriceChangeText(),
-                deltaTone: priceDeltaTone,
-                chartTone: .motor(.orion)
+                valueColor: priceDeltaColor,
+                meta: getPriceChangeText()
             ) {
                 maChart
             }
 
-            technicalCard(
-                title: "GÖRECELİ GÜÇ ENDEKSİ",
-                subtitle: "RSI (14)",
-                value: "Momentum",
-                delta: "14P",
-                deltaTone: .motor(.orion),
-                chartTone: .motor(.orion)
+            indicatorCard(
+                title: "RSI (14)",
+                subtitle: "Göreceli güç endeksi",
+                value: String(format: "%.0f", analysis.components.rsi ?? 50),
+                valueColor: rsiColor(analysis.components.rsi ?? 50),
+                meta: rsiZoneLabel(analysis.components.rsi ?? 50)
             ) {
                 rsiChart
             }
 
         case .momentum:
-            technicalCard(
-                title: "MOMENTUM",
-                subtitle: "RSI & Velocity",
-                value: String(format: "%.0f", analysis.components.momentum),
-                delta: "/ 25",
-                deltaTone: .motor(.orion),
-                chartTone: .motor(.orion)
+            indicatorCard(
+                title: "RSI (14)",
+                subtitle: "Göreceli güç endeksi",
+                value: String(format: "%.0f", analysis.components.rsi ?? 50),
+                valueColor: rsiColor(analysis.components.rsi ?? 50),
+                meta: rsiZoneLabel(analysis.components.rsi ?? 50)
             ) {
                 rsiChart
             }
 
+            indicatorCard(
+                title: "Hız",
+                subtitle: "Velocity (5 mum)",
+                value: getPriceChangeText(),
+                valueColor: priceDeltaColor,
+                meta: nil
+            ) {
+                EmptyView()
+            }
+
         case .structure:
-            technicalCard(
-                title: "YAPI ANALİZİ",
-                subtitle: "Kanal & Hacim",
-                value: String(format: "%.0f", analysis.components.structure),
-                delta: "/ 35",
-                deltaTone: .motor(.orion),
-                chartTone: .aurora
+            indicatorCard(
+                title: "Hacim",
+                subtitle: "Son 50 mum",
+                value: "\(Int(analysis.components.structure))",
+                valueColor: scoreColor(analysis.components.structure / 35.0),
+                meta: "/ 35"
             ) {
                 volumeChart
             }
 
         case .pattern:
-            technicalCard(
-                title: "FORMASYON",
-                subtitle: analysis.components.patternDesc.isEmpty
-                    ? "Tespit Edilemedi"
-                    : "Grafik Formasyonu",
-                value: analysis.components.patternDesc,
-                delta: "",
-                deltaTone: .crimson,
-                chartTone: .crimson
-            ) {
-                patternSketch
-            }
+            patternCard
 
         default:
             EmptyView()
         }
     }
 
-    // MARK: - Live Analysis Card
-
-    private var liveAnalysisCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
-                ArgusDot(color: InstitutionalTheme.Colors.Motors.orion)
-                ArgusSectionCaption("CANLI ANALİZ")
-                Spacer()
-                ArgusChip(symbol.uppercased(), tone: .motor(.orion))
-            }
-
-            let dynamicText = getDynamicText()
-
-            dynamicText.segments
-                .reduce(Text("")) { result, segment in
-                    result + Text(segment.text)
-                        .foregroundColor(segment.color)
-                        .fontWeight(segment.isBold ? .bold : .regular)
-                }
-                .font(.system(size: 13.5, design: .monospaced))
-                .lineSpacing(4)
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(InstitutionalTheme.Colors.surface1)
-        .overlay(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg,
-                             style: .continuous)
-                .stroke(InstitutionalTheme.Colors.Motors.orion.opacity(0.3), lineWidth: 1)
-        )
-        .clipShape(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg,
-                             style: .continuous)
-        )
-        .padding(.horizontal, 16)
-    }
-
-    // MARK: - Technical Card Builder (V5)
-
-    private func technicalCard<Content: View>(
+    private func indicatorCard<Content: View>(
         title: String,
         subtitle: String,
         value: String,
-        delta: String,
-        deltaTone: ArgusChipTone,
-        chartTone: ArgusChipTone,
+        valueColor: Color,
+        meta: String?,
         @ViewBuilder content: @escaping () -> Content
     ) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(title.uppercased())
-                        .font(.system(size: 9, weight: .black, design: .monospaced))
-                        .tracking(1.2)
-                        .foregroundColor(chartTone.foreground)
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.system(size: 12))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     Text(subtitle)
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 }
                 Spacer()
-                VStack(alignment: .trailing, spacing: 4) {
+                VStack(alignment: .trailing, spacing: 2) {
                     Text(value)
-                        .font(.system(size: 16, weight: .black, design: .monospaced))
-                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                        .font(.system(size: 22, weight: .medium))
+                        .foregroundColor(valueColor)
                         .monospacedDigit()
-                    if !delta.isEmpty {
-                        ArgusChip(delta, tone: deltaTone)
+                    if let meta = meta {
+                        Text(meta)
+                            .font(.system(size: 11))
+                            .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     }
                 }
             }
 
-            ArgusHair()
+            // Sade hairline ayraç
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
 
             content()
-                .frame(height: 110)
+                .frame(height: 90)
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(InstitutionalTheme.Colors.surface1)
-        .overlay(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg,
-                             style: .continuous)
-                .stroke(chartTone.foreground.opacity(0.28), lineWidth: 1)
-        )
-        .clipShape(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg,
-                             style: .continuous)
-        )
-        .padding(.horizontal, 16)
+        .background(cardBackground)
     }
 
-    // MARK: - Charts (V5 tinted)
+    /// Pattern özel kartı — sketch + opsiyonel açıklama
+    private var patternCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Formasyon")
+                        .font(.system(size: 12))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                    Text(analysis.components.patternDesc.isEmpty || analysis.components.patternDesc == "Yok"
+                         ? "Tespit yok"
+                         : analysis.components.patternDesc)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                }
+                Spacer()
+            }
+
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
+
+            patternSketch
+                .frame(height: 90)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(cardBackground)
+    }
+
+    // MARK: - Charts (sade)
 
     private var rsiChart: some View {
         GeometryReader { geo in
@@ -227,11 +292,12 @@ struct OrionModuleDetailView: View {
                 let normalized = OrionChartHelpers.normalize(rsiData)
 
                 ZStack {
+                    // Aşırı alım/satım bölgeleri çok soluk
                     VStack(spacing: 0) {
-                        InstitutionalTheme.Colors.crimson.opacity(0.08)
+                        InstitutionalTheme.Colors.crimson.opacity(0.06)
                             .frame(height: geo.size.height * 0.3)
                         Color.clear.frame(height: geo.size.height * 0.4)
-                        InstitutionalTheme.Colors.aurora.opacity(0.08)
+                        InstitutionalTheme.Colors.aurora.opacity(0.06)
                             .frame(height: geo.size.height * 0.3)
                     }
 
@@ -251,8 +317,8 @@ struct OrionModuleDetailView: View {
                             }
                         }
                     }
-                    .stroke(InstitutionalTheme.Colors.Motors.orion,
-                            style: StrokeStyle(lineWidth: 1.8, lineCap: .round, lineJoin: .round))
+                    .stroke(InstitutionalTheme.Colors.holo,
+                            style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
                 }
             }
         }
@@ -271,11 +337,11 @@ struct OrionModuleDetailView: View {
                 ZStack {
                     pathShape(values: normPrices, in: geo.size)
                         .stroke(InstitutionalTheme.Colors.textPrimary,
-                                style: StrokeStyle(lineWidth: 1.8, lineCap: .round))
+                                style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
 
                     pathShape(values: normSMA, in: geo.size)
                         .stroke(InstitutionalTheme.Colors.titan,
-                                style: StrokeStyle(lineWidth: 1.8, lineCap: .round))
+                                style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
                 }
             }
         }
@@ -306,9 +372,8 @@ struct OrionModuleDetailView: View {
                 emptyChartLabel("Hacim verisi yok")
             } else {
                 let maxVol = max(volumes.max() ?? 1.0, 1.0)
-                let width = geo.size.width
                 let count = CGFloat(volumes.count)
-                let step = width / count
+                let step = geo.size.width / count
                 let height = geo.size.height
 
                 HStack(alignment: .bottom, spacing: 1) {
@@ -318,8 +383,8 @@ struct OrionModuleDetailView: View {
                         let safeBarH = barH.isNaN ? 0 : CGFloat(max(barH, 1.0))
                         Rectangle()
                             .fill(lastCandles[i].close >= lastCandles[i].open
-                                  ? InstitutionalTheme.Colors.aurora
-                                  : InstitutionalTheme.Colors.crimson)
+                                  ? InstitutionalTheme.Colors.aurora.opacity(0.6)
+                                  : InstitutionalTheme.Colors.crimson.opacity(0.6))
                             .frame(width: max(step - 1, 1), height: safeBarH)
                     }
                 }
@@ -331,162 +396,115 @@ struct OrionModuleDetailView: View {
         GeometryReader { geo in
             let w = geo.size.width
             let h = geo.size.height
-            let initial = analysis.components.patternDesc.isEmpty
-                ? "—"
-                : String(analysis.components.patternDesc.prefix(1))
 
-            ZStack {
-                Path { path in
-                    path.move(to: CGPoint(x: 0, y: h * 0.8))
-                    path.addCurve(
-                        to: CGPoint(x: w, y: h * 0.2),
-                        control1: CGPoint(x: w * 0.4, y: h * 0.1),
-                        control2: CGPoint(x: w * 0.6, y: h * 0.9)
-                    )
-                }
-                .stroke(InstitutionalTheme.Colors.crimson,
-                        style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [5, 5]))
-
-                Text(initial.uppercased())
-                    .font(.system(size: 38, weight: .black, design: .monospaced))
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary.opacity(0.08))
-                    .position(x: w / 2, y: h / 2)
+            Path { path in
+                path.move(to: CGPoint(x: 0, y: h * 0.8))
+                path.addCurve(
+                    to: CGPoint(x: w, y: h * 0.2),
+                    control1: CGPoint(x: w * 0.4, y: h * 0.1),
+                    control2: CGPoint(x: w * 0.6, y: h * 0.9)
+                )
             }
+            .stroke(InstitutionalTheme.Colors.textSecondary,
+                    style: StrokeStyle(lineWidth: 1.5, lineCap: .round, dash: [4, 4]))
         }
     }
 
     private func emptyChartLabel(_ text: String) -> some View {
-        Text(text.uppercased())
-            .font(.system(size: 10, weight: .bold, design: .monospaced))
-            .tracking(0.8)
+        Text(text)
+            .font(.system(size: 12))
             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    // MARK: - Header
+    // MARK: - "Bu nedir?" mini açıklama
 
-    private var headerView: some View {
-        HStack(spacing: 10) {
-            Button(action: onClose) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                    .frame(width: 36, height: 36)
-                    .background(InstitutionalTheme.Colors.surface2)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm,
-                                         style: .continuous)
-                            .stroke(InstitutionalTheme.Colors.border, lineWidth: 1)
-                    )
-                    .clipShape(
-                        RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm,
-                                         style: .continuous)
-                    )
-            }
-            .buttonStyle(.plain)
-
-            VStack(alignment: .leading, spacing: 2) {
-                ArgusSectionCaption("DETAY ANALİZİ")
-                Text(type.title.uppercased())
-                    .font(.system(size: 15, weight: .black, design: .monospaced))
-                    .tracking(0.6)
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-            }
-
-            Spacer()
-
-            Image(systemName: "antenna.radiowaves.left.and.right")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(InstitutionalTheme.Colors.Motors.orion)
+    private var learningCard: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Bu nedir?")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+            Text(type.educationalContent(for: analysis))
+                .font(.system(size: 12))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .lineSpacing(2)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(InstitutionalTheme.Colors.surface1)
-        .overlay(ArgusHair(), alignment: .bottom)
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(InstitutionalTheme.Colors.surface1.opacity(0.6))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(
+                    InstitutionalTheme.Colors.borderSubtle,
+                    style: StrokeStyle(lineWidth: 0.5, dash: [4, 3])
+                )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
-    // MARK: - Bottom Action Bar
+    // MARK: - Bottom action bar (sade outline)
 
     private var bottomActionBar: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             Button(action: {}) {
-                HStack(spacing: 8) {
-                    Image(systemName: "bell.fill")
-                        .font(.system(size: 13, weight: .semibold))
-                    Text("ALARM KUR")
-                        .font(.system(size: 12, weight: .black, design: .monospaced))
-                        .tracking(0.6)
+                HStack(spacing: 6) {
+                    Image(systemName: "bell")
+                        .font(.system(size: 12))
+                    Text("Alarm")
+                        .font(.system(size: 13, weight: .medium))
                 }
-                .foregroundColor(InstitutionalTheme.Colors.background)
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .frame(maxWidth: .infinity)
-                .frame(height: 46)
-                .background(InstitutionalTheme.Colors.Motors.orion)
-                .clipShape(
-                    RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md,
-                                     style: .continuous)
+                .padding(.vertical, 12)
+                .background(InstitutionalTheme.Colors.surface1)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
                 )
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
             .buttonStyle(.plain)
 
             Button(action: {}) {
-                Image(systemName: "square.and.arrow.up")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                    .frame(width: 46, height: 46)
-                    .background(InstitutionalTheme.Colors.surface2)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md,
-                                         style: .continuous)
-                            .stroke(InstitutionalTheme.Colors.border, lineWidth: 1)
-                    )
-                    .clipShape(
-                        RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md,
-                                         style: .continuous)
-                    )
+                HStack(spacing: 6) {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: 12))
+                    Text("Paylaş")
+                        .font(.system(size: 13, weight: .medium))
+                }
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(InstitutionalTheme.Colors.surface1)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
             .buttonStyle(.plain)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .background(InstitutionalTheme.Colors.background.opacity(0.96))
-        .overlay(ArgusHair(), alignment: .top)
-    }
-
-    // MARK: - Learning Section
-
-    private var learningSection: some View {
-        DisclosureGroup {
-            Text(type.educationalContent(for: analysis))
-                .font(.system(size: 12))
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 8)
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "graduationcap.fill")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(InstitutionalTheme.Colors.titan)
-                ArgusSectionCaption("ÖĞREN · \(type.title.uppercased()) NEDİR?")
-                Spacer()
-            }
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
         }
-        .accentColor(InstitutionalTheme.Colors.textPrimary)
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(InstitutionalTheme.Colors.surface1)
-        .overlay(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg,
-                             style: .continuous)
-                .stroke(InstitutionalTheme.Colors.titan.opacity(0.22), lineWidth: 1)
-        )
-        .clipShape(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg,
-                             style: .continuous)
-        )
-        .padding(.horizontal, 16)
     }
 
     // MARK: - Helpers
+
+    private var cardBackground: some View {
+        RoundedRectangle(cornerRadius: 12, style: .continuous)
+            .fill(InstitutionalTheme.Colors.surface1)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
+            )
+    }
 
     private func getDynamicText() -> DynamicAnalysisText {
         switch type {
@@ -505,11 +523,33 @@ struct OrionModuleDetailView: View {
         return String(format: "%+.2f%%", diff)
     }
 
-    private var priceDeltaTone: ArgusChipTone {
+    private var priceDeltaColor: Color {
         guard let last = candles.last,
-              let prev = candles.dropLast().last else { return .titan }
-        if last.close > prev.close { return .aurora }
-        if last.close < prev.close { return .crimson }
-        return .titan
+              let prev = candles.dropLast().last else { return InstitutionalTheme.Colors.textPrimary }
+        if last.close > prev.close { return InstitutionalTheme.Colors.aurora }
+        if last.close < prev.close { return InstitutionalTheme.Colors.crimson }
+        return InstitutionalTheme.Colors.textPrimary
+    }
+
+    private func rsiColor(_ rsi: Double) -> Color {
+        if rsi >= 70 { return InstitutionalTheme.Colors.crimson }
+        if rsi <= 30 { return InstitutionalTheme.Colors.crimson }
+        if rsi >= 55 { return InstitutionalTheme.Colors.aurora }
+        if rsi <= 45 { return InstitutionalTheme.Colors.titan }
+        return InstitutionalTheme.Colors.textPrimary
+    }
+
+    private func rsiZoneLabel(_ rsi: Double) -> String {
+        if rsi >= 70 { return "aşırı alım" }
+        if rsi <= 30 { return "aşırı satım" }
+        if rsi >= 55 { return "güçlü" }
+        if rsi <= 45 { return "zayıf" }
+        return "nötr"
+    }
+
+    private func scoreColor(_ rate: Double) -> Color {
+        if rate >= 0.6 { return InstitutionalTheme.Colors.aurora }
+        if rate >= 0.45 { return InstitutionalTheme.Colors.titan }
+        return InstitutionalTheme.Colors.crimson
     }
 }

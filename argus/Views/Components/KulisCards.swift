@@ -1,13 +1,15 @@
 import SwiftUI
 
-// MARK: - Piyasa Duygu Barometresi Kartı (V5)
+// MARK: - Piyasa Duygu Barometresi Kartı
 //
-// **2026-04-23 V5.C estetik refactor.**
-// BIST Kulis modülünün hero kartı. Eski: orange lightbulb butonu, 💡 emoji
-// eğitim balonu, gradient bar üzerinde beyaz shadowlu daire pointer.
-// Yeni: motor(.hermes) tint, mono caps caption, aurora↔titan↔crimson
-// gradient spectrum üzerinde motor-tint dot, `ArgusChip("NE DEMEK?")`
-// toggle, hairline separator'lı eğitim kartı.
+// 2026-05-04 H-62 sade refactor:
+//   • MotorLogo(.hermes) + caps "PİYASA DUYGU BAROMETRESİ" caption + mono
+//     "Haber · Algı Analizi" subtitle gitti
+//   • Sentiment hero kartında "DUYGU"/"SKOR" caps mono + 24pt black mono
+//     skor + tone background dolgusu temizlendi (sade flat)
+//   • "KORKU/NÖTR/AÇGÖZLÜLÜK" caps mono → sentence
+//   • Hermes motor tint border + pointer fill → hairline + sade dot
+//   • "BAROMETRE OKUNUYOR…" caps mono → "Yükleniyor"
 
 struct DuyguBarometresiCard: View {
     let symbol: String
@@ -39,7 +41,7 @@ struct DuyguBarometresiCard: View {
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.Motors.hermes.opacity(0.3), lineWidth: 1)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(
             RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
@@ -50,13 +52,13 @@ struct DuyguBarometresiCard: View {
     // MARK: - Sections
 
     private var header: some View {
-        HStack(spacing: 8) {
-            MotorLogo(.hermes, size: 14)
+        HStack {
             VStack(alignment: .leading, spacing: 2) {
-                ArgusSectionCaption("PİYASA DUYGU BAROMETRESİ")
-                Text("Haber · Algı Analizi")
-                    .font(.system(size: 10, weight: .medium, design: .monospaced))
-                    .tracking(0.4)
+                Text("Duygu barometresi")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                Text("Haber, algı analizi")
+                    .font(.system(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             Spacer()
@@ -65,55 +67,48 @@ struct DuyguBarometresiCard: View {
     }
 
     private var sentimentHero: some View {
-        HStack(spacing: 14) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("DUYGU")
-                    .font(.system(size: 9, weight: .bold, design: .monospaced))
-                    .tracking(0.8)
+        HStack(alignment: .firstTextBaseline) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Duygu")
+                    .font(.system(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                Text(sentimentLabel.uppercased())
-                    .font(.system(size: 14, weight: .black, design: .monospaced))
-                    .tracking(0.6)
+                Text(sentimentLabel)
+                    .font(.system(size: 17, weight: .medium))
                     .foregroundColor(tone.foreground)
             }
 
             Spacer()
 
-            VStack(alignment: .trailing, spacing: 4) {
-                Text("SKOR")
-                    .font(.system(size: 9, weight: .bold, design: .monospaced))
-                    .tracking(0.8)
+            VStack(alignment: .trailing, spacing: 3) {
+                Text("Skor")
+                    .font(.system(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Text(sentimentScore >= 0
                      ? "+\(Int(sentimentScore))"
                      : "\(Int(sentimentScore))")
-                    .font(.system(size: 24, weight: .black, design: .monospaced))
+                    .font(.system(size: 24, weight: .medium))
                     .foregroundColor(tone.foreground)
+                    .monospacedDigit()
             }
         }
         .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
-                .fill(tone.background)
-        )
+        .background(InstitutionalTheme.Colors.surface2)
+        .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
     }
 
     private var spectrumBar: some View {
         VStack(spacing: 6) {
             HStack {
-                Text("KORKU")
-                    .font(.system(size: 9, weight: .bold, design: .monospaced))
-                    .tracking(0.6)
+                Text("Korku")
+                    .font(.system(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.crimson)
                 Spacer()
-                Text("NÖTR")
-                    .font(.system(size: 9, weight: .bold, design: .monospaced))
-                    .tracking(0.6)
+                Text("Nötr")
+                    .font(.system(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Spacer()
-                Text("AÇGÖZLÜLÜK")
-                    .font(.system(size: 9, weight: .bold, design: .monospaced))
-                    .tracking(0.6)
+                Text("Açgözlülük")
+                    .font(.system(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.aurora)
             }
 
@@ -131,32 +126,30 @@ struct DuyguBarometresiCard: View {
                                 endPoint: .trailing
                             )
                         )
-                        .frame(height: 5)
+                        .frame(height: 4)
 
-                    // Pointer — kart yüzeyiyle aynı surface1 halka, motor tint dolgu
+                    // Sade pointer — surface halka, textPrimary dolgu
                     let clampedPos = max(0, min(1, (sentimentScore + 100) / 200))
                     Circle()
                         .strokeBorder(InstitutionalTheme.Colors.surface1, lineWidth: 2)
                         .background(
-                            Circle().fill(InstitutionalTheme.Colors.Motors.hermes)
+                            Circle().fill(InstitutionalTheme.Colors.textPrimary)
                         )
-                        .frame(width: 14, height: 14)
-                        .offset(x: geo.size.width * clampedPos - 7)
+                        .frame(width: 12, height: 12)
+                        .offset(x: geo.size.width * clampedPos - 6)
                         .animation(.easeOut(duration: 0.4), value: sentimentScore)
                 }
             }
-            .frame(height: 14)
+            .frame(height: 12)
         }
     }
 
     private var loadingBlock: some View {
         HStack(spacing: 10) {
             ProgressView().scaleEffect(0.7)
-                .tint(InstitutionalTheme.Colors.Motors.hermes)
-            Text("BAROMETRE OKUNUYOR…")
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .tracking(1)
-                .foregroundColor(InstitutionalTheme.Colors.Motors.hermes)
+            Text("Yükleniyor")
+                .font(.system(size: 12))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
         .frame(maxWidth: .infinity, minHeight: 60)
     }

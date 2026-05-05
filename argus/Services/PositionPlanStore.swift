@@ -202,9 +202,13 @@ class PositionPlanStore: ObservableObject {
         let symbolCandles = candleStore[trade.symbol] ?? []
 
         // 1. Create Snapshot from Decision
-        // OrionScoreResult uses 'score' (0-100)
-        let orionScore = decision.orionDecision.netSupport * 100 // Use netSupport (0-1) and convert to 0-100
-        let atlasScore = 50.0 // Default
+        // 2026-05-04: hardcoded atlasScore=50 fake'i kaldırıldı. Gerçek
+        // değerler MotorReasoning computed property'leri (decision.atlasScore,
+        // decision.hermesScore) üzerinden alınıyor — atlasDecision/hermesDecision
+        // varsa netSupport*100, yoksa nötr 50 fallback.
+        let orionScore = decision.orionDecision.netSupport * 100
+        let atlasScore = decision.atlasScore
+        let hermesScore = decision.hermesScore
         
         // Varsayılan tez
         let defaultThesis = generateThesis(for: trade.symbol, decision: decision)
@@ -251,11 +255,18 @@ class PositionPlanStore: ObservableObject {
             grandDecision: decision,
             orionScore: orionScore,
             atlasScore: atlasScore,
+            hermesScore: hermesScore,
             technicalData: techData,
             macroData: nil,
             fundamentalData: nil
         )
-        
+
+        // 2026-05-04: snapshot'ı EntrySnapshotStore'a da kaydet —
+        // ChironHealthMonitor ve TradeDetailSheet bu store'dan okuyor,
+        // önceden hiçbir yerde captureSnapshot çağrılmadığı için store
+        // sürekli boştu.
+        EntrySnapshotStore.shared.saveSnapshot(snapshot)
+
         // 2. Delegate to Vortex Engine
         var plan = VortexEngine.shared.createPlan(
             for: trade,

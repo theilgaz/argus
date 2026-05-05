@@ -829,38 +829,11 @@ extension SettingsView {
 
 extension SettingsView {
     private func drawerSections(openSheet: @escaping (ArgusDrawerView.DrawerSheet) -> Void) -> [ArgusDrawerView.DrawerSection] {
-        [
-            ArgusDrawerView.DrawerSection(
-                title: "Ekranlar",
-                items: [
-                    ArgusDrawerView.DrawerItem(title: "Ana Sayfa", subtitle: "Piyasa özeti", icon: "waveform.path.ecg") {
-                        deepLinkManager.navigate(to: .home)
-                        showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Kokpit", subtitle: "Tam liste", icon: "chart.line.uptrend.xyaxis") {
-                        deepLinkManager.navigate(to: .kokpit)
-                        showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Portföy", subtitle: "Pozisyonlar", icon: "briefcase.fill") {
-                        deepLinkManager.navigate(to: .portfolio)
-                        showDrawer = false
-                    }
-                ]
-            ),
-            ArgusDrawerView.DrawerSection(
-                title: "Araçlar",
-                items: [
-                    ArgusDrawerView.DrawerItem(title: "Ekonomi Takvimi", subtitle: "Önemli tarihler", icon: "calendar") {
-                        openSheet(.calendar)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Finans Sözlüğü", subtitle: "Terimler", icon: "character.book.closed") {
-                        openSheet(.dictionary)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Geri Bildirim", subtitle: "Sorun bildir", icon: "envelope") {
-                        openSheet(.feedback)
-                    }
-                ]
-            )
+        let dismiss = ArgusDrawerView.dismissClosure($showDrawer)
+
+        return [
+            ArgusDrawerView.commonScreensSection(excluding: [.settings], dismiss: dismiss),
+            ArgusDrawerView.commonToolsSection(openSheet: openSheet)
         ]
     }
 }

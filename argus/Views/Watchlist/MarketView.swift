@@ -261,73 +261,41 @@ struct MarketView: View {
     // MARK: - Drawer Sections
 
     private func drawerSections(openSheet: @escaping (ArgusDrawerView.DrawerSheet) -> Void) -> [ArgusDrawerView.DrawerSection] {
-        var sections: [ArgusDrawerView.DrawerSection] = []
+        let dismiss = ArgusDrawerView.dismissClosure($showDrawer)
 
-        sections.append(
-            ArgusDrawerView.DrawerSection(
-                title: "Ekranlar",
-                items: [
-                    ArgusDrawerView.DrawerItem(title: "Ana Sayfa", subtitle: "Sinyal akisi", icon: "waveform.path.ecg") {
-                        deepLinkManager.navigate(to: .home)
-                        showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Terminal", subtitle: "Trader terminal", icon: "square.grid.2x2") {
-                        deepLinkManager.navigate(to: .kokpit)
-                        showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Alkindus Merkez", subtitle: "Yapay zeka merkezi", icon: "AlkindusIcon") {
-                        NavigationRouter.shared.navigate(to: .alkindusDashboard)
-                        showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Portfoy", subtitle: "Pozisyonlar", icon: "briefcase.fill") {
-                        deepLinkManager.navigate(to: .portfolio)
-                        showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Ayarlar", subtitle: "Tercihler", icon: "gearshape") {
-                        deepLinkManager.navigate(to: .settings)
-                        showDrawer = false
-                    }
-                ]
-            )
-        )
-
-        sections.append(
+        return [
+            ArgusDrawerView.commonScreensSection(dismiss: dismiss),
             ArgusDrawerView.DrawerSection(
                 title: "Piyasa",
                 items: [
                     ArgusDrawerView.DrawerItem(title: "Hisse Ekle", subtitle: "Listeye sembol ekle", icon: "plus.circle") {
                         showSearch = true
-                        showDrawer = false
+                        dismiss()
                     },
-                    ArgusDrawerView.DrawerItem(title: "Kesfet", subtitle: "Piyasa taramasi", icon: "globe") {
+                    ArgusDrawerView.DrawerItem(title: "Keşfet", subtitle: "Piyasa taraması", icon: "globe") {
                         showDiscover = true
-                        showDrawer = false
+                        dismiss()
                     },
-                    ArgusDrawerView.DrawerItem(title: "Bildirimler", subtitle: "Son uyarilar", icon: "bell") {
+                    ArgusDrawerView.DrawerItem(title: "Bildirimler", subtitle: "Son uyarılar", icon: "bell") {
                         showNotifications = true
-                        showDrawer = false
+                        dismiss()
                     },
                     ArgusDrawerView.DrawerItem(title: "Aether Detay", subtitle: "Makro rejim", icon: "sparkles") {
                         showAetherDetail = true
-                        showDrawer = false
+                        dismiss()
                     },
-                    ArgusDrawerView.DrawerItem(title: "Egitim", subtitle: "Argus akademi", icon: "book") {
-                        openSheet(.academyHub)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Global Piyasa", subtitle: "Market degistir", icon: "globe.asia.australia") {
+                    ArgusDrawerView.DrawerItem(title: "Global Piyasa", subtitle: "Market değiştir", icon: "globe.asia.australia") {
                         selectedMarket = .global
-                        showDrawer = false
+                        dismiss()
                     },
-                    ArgusDrawerView.DrawerItem(title: "BIST Piyasa", subtitle: "Market degistir", icon: "chart.bar") {
+                    ArgusDrawerView.DrawerItem(title: "BIST Piyasa", subtitle: "Market değiştir", icon: "chart.bar") {
                         selectedMarket = .bist
-                        showDrawer = false
+                        dismiss()
                     }
                 ]
-            )
-        )
-
-        sections.append(ArgusDrawerView.commonToolsSection(openSheet: openSheet))
-        return sections
+            ),
+            ArgusDrawerView.commonToolsSection(openSheet: openSheet)
+        ]
     }
 }
 

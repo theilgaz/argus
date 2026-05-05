@@ -137,51 +137,21 @@ struct DiscoverView: View {
     }
 
     private func drawerSections(openSheet: @escaping (ArgusDrawerView.DrawerSheet) -> Void) -> [ArgusDrawerView.DrawerSection] {
-        var sections: [ArgusDrawerView.DrawerSection] = []
-        
-        sections.append(
-            ArgusDrawerView.DrawerSection(
-                title: "Ekranlar",
-                items: [
-                    ArgusDrawerView.DrawerItem(title: "Ana Sayfa", subtitle: "Sinyal akisi", icon: "waveform.path.ecg") {
-                        deepLinkManager.navigate(to: .home)
-                        showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Piyasalar", subtitle: "Market ekranı", icon: "chart.line.uptrend.xyaxis") {
-                        deepLinkManager.navigate(to: .kokpit)
-                        showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Alkindus Merkez", subtitle: "Yapay zeka merkezi", icon: "AlkindusIcon") {
-                        NavigationRouter.shared.navigate(to: .alkindusDashboard)
-                        showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Portfoy", subtitle: "Pozisyonlar", icon: "briefcase.fill") {
-                        deepLinkManager.navigate(to: .portfolio)
-                        showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Ayarlar", subtitle: "Tercihler", icon: "gearshape") {
-                        deepLinkManager.navigate(to: .settings)
-                        showDrawer = false
-                    }
-                ]
-            )
-        )
-        
-        sections.append(
+        let dismiss = ArgusDrawerView.dismissClosure($showDrawer)
+
+        return [
+            ArgusDrawerView.commonScreensSection(dismiss: dismiss),
             ArgusDrawerView.DrawerSection(
                 title: "Keşfet",
                 items: [
-                    ArgusDrawerView.DrawerItem(title: "Yenile", subtitle: "Listeyi guncelle", icon: "arrow.clockwise") {
+                    ArgusDrawerView.DrawerItem(title: "Yenile", subtitle: "Listeyi güncelle", icon: "arrow.clockwise") {
                         viewModel.loadDiscoverData()
-                        showDrawer = false
+                        dismiss()
                     }
                 ]
-            )
-        )
-        
-        sections.append(ArgusDrawerView.commonToolsSection(openSheet: openSheet))
-
-        return sections
+            ),
+            ArgusDrawerView.commonToolsSection(openSheet: openSheet)
+        ]
     }
 }
 

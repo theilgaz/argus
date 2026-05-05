@@ -55,6 +55,7 @@ struct EntrySnapshot: Codable {
         grandDecision: ArgusGrandDecision,
         orionScore: Double,
         atlasScore: Double? = nil,
+        hermesScore: Double? = nil,
         technicalData: TechnicalSnapshotData? = nil,
         macroData: MacroSnapshotData? = nil,
         fundamentalData: FundamentalSnapshotData? = nil
@@ -63,17 +64,24 @@ struct EntrySnapshot: Codable {
         self.tradeId = tradeId
         self.symbol = symbol
         self.capturedAt = Date()
-        
+
         // Grand Council
         self.councilAction = grandDecision.action
         self.councilConfidence = grandDecision.confidence
         self.councilReasoning = grandDecision.reasoning
-        
-        // Modül Skorları
+
+        // 2026-05-04: hermesScore nil hardcode'u kaldırıldı. Caller
+        // (PositionPlanStore) artık decision.hermesScore (MotorReasoning
+        // computed) ile besliyor. Atlas için de hardcoded 50 yerine
+        // decision.atlasScore kullanılıyor.
+
+        // Modül Skorları — caller'dan gelen değerler. Ek olarak grandDecision
+        // içinde MotorReasoning computed property'leri (atlasScore, hermesScore,
+        // aetherScore) varsa fallback olarak kullanılıyor.
         self.orionScore = orionScore
-        self.atlasScore = atlasScore
+        self.atlasScore = atlasScore ?? grandDecision.atlasScore
         self.aetherStance = grandDecision.aetherDecision.stance
-        self.hermesScore = nil // Hermes skorunu ayrı tutmuyoruz şimdilik
+        self.hermesScore = hermesScore ?? grandDecision.hermesScore
         
         // Teknik
         self.entryPrice = entryPrice
@@ -239,9 +247,19 @@ class EntrySnapshotStore {
     func getSnapshot(for tradeId: UUID) -> EntrySnapshot? {
         return snapshots[tradeId]
     }
-    
+
     func hasSnapshot(for tradeId: UUID) -> Bool {
         return snapshots[tradeId] != nil
+    }
+
+    /// 2026-05-04: PositionPlanStore.createPlan zaten EntrySnapshot inşa
+    /// ediyor — bu API onu doğrudan store'a yazmasına izin veriyor.
+    /// captureSnapshot() ayrıca dahili olarak EntrySnapshot inşa eden, daha
+    /// kapsamlı bir convenience API. saveSnapshot ise hazır snapshot'ı
+    /// kaydeder, çift inşa olmuyor.
+    func saveSnapshot(_ snapshot: EntrySnapshot) {
+        snapshots[snapshot.tradeId] = snapshot
+        saveSnapshots()
     }
     
     @discardableResult

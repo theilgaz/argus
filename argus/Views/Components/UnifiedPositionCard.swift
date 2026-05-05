@@ -134,11 +134,13 @@ struct UnifiedPositionCard: View {
     @ViewBuilder
     private var councilBadge: some View {
         if let decision {
-            badge(text: "Konsey: \(humanAction(decision.action)) · \(Int(decision.confidence * 100))",
+            // 2026-05-04: "Konsey:" prefix'i + "78" çıplak rakam yerine
+            // sentence "Güçlü al · güven %78" — caption okunaklı, dolu chip.
+            badge(text: "\(humanAction(decision.action)) · güven %\(Int(decision.confidence * 100))",
                   color: actionColor(decision.action),
                   filled: true)
         } else {
-            badge(text: "Konsey: bekleme",
+            badge(text: "Karar bekleniyor",
                   color: InstitutionalTheme.Colors.textSecondary,
                   filled: false)
         }
@@ -149,11 +151,18 @@ struct UnifiedPositionCard: View {
         if let plan {
             let stop = stopPrice(from: plan)
             let executed = plan.executedSteps.count
-            let stopText = stop.map { "SL \(formatPrice($0))" } ?? "SL —"
-            let prefix = executed > 0 ? "Adım \(executed)/\(plan.totalStepCount) · " : ""
-            badge(text: "\(prefix)\(stopText)",
-                  color: InstitutionalTheme.Colors.textSecondary,
-                  filled: false)
+            // "SL" caps kısaltma yerine "Stop"; "—" sentence "yok".
+            let stopText = stop.map { "Stop \(formatPrice($0))" } ?? "Stop yok"
+            if executed == 0 && stop == nil {
+                badge(text: "Plan başlamadı",
+                      color: InstitutionalTheme.Colors.textSecondary,
+                      filled: false)
+            } else {
+                let prefix = executed > 0 ? "Adım \(executed)/\(plan.totalStepCount) · " : ""
+                badge(text: "\(prefix)\(stopText)",
+                      color: InstitutionalTheme.Colors.textSecondary,
+                      filled: false)
+            }
         } else {
             badge(text: "Plan yok",
                   color: InstitutionalTheme.Colors.textSecondary,
@@ -163,14 +172,14 @@ struct UnifiedPositionCard: View {
 
     private func badge(text: String, color: Color, filled: Bool) -> some View {
         Text(text)
-            .font(.system(size: 10))
+            .font(.system(size: 11))
             .foregroundColor(color)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
             .background(filled
                         ? color.opacity(0.14)
                         : InstitutionalTheme.Colors.surface2)
-            .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
     }
 
     // MARK: - Inline alert satırı

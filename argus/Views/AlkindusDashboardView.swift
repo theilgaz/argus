@@ -535,35 +535,12 @@ struct AlkindusDashboardView: View {
     // MARK: - Drawer
 
     private func drawerSections(openSheet: @escaping (ArgusDrawerView.DrawerSheet) -> Void) -> [ArgusDrawerView.DrawerSection] {
-        var sections: [ArgusDrawerView.DrawerSection] = []
+        let dismiss = ArgusDrawerView.dismissClosure($showDrawer)
 
-        sections.append(
-            ArgusDrawerView.DrawerSection(
-                title: "Ekranlar",
-                items: [
-                    ArgusDrawerView.DrawerItem(title: "Ana sayfa", subtitle: "Sinyal akışı", icon: "waveform.path.ecg") {
-                        showDrawer = false
-                        deepLinkManager.navigate(to: .home)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Piyasalar", subtitle: "Market ekranı", icon: "chart.line.uptrend.xyaxis") {
-                        showDrawer = false
-                        deepLinkManager.navigate(to: .kokpit)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Portföy", subtitle: "Pozisyonlar", icon: "briefcase.fill") {
-                        showDrawer = false
-                        deepLinkManager.navigate(to: .portfolio)
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Ayarlar", subtitle: "Tercihler", icon: "gearshape") {
-                        showDrawer = false
-                        deepLinkManager.navigate(to: .settings)
-                    }
-                ]
-            )
-        )
-
-        sections.append(ArgusDrawerView.commonToolsSection(openSheet: openSheet))
-
-        return sections
+        return [
+            ArgusDrawerView.commonScreensSection(excluding: [.alkindus], dismiss: dismiss),
+            ArgusDrawerView.commonToolsSection(openSheet: openSheet)
+        ]
     }
 
     // MARK: - Data loading

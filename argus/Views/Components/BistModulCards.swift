@@ -1,7 +1,14 @@
 import SwiftUI
 
-// MARK: - HEIMDALL ENLIGHTENMENT CARDS
-// "Project Enlightenment": Data-First, Educational, Insightful
+// MARK: - BIST modül kartları
+// 2026-05-04 H-62 sade refactor:
+//   • caps başlıklar ("TEMEL ANALİZ & FAKTÖRLER", "SEKTÖR ROTASYONU",
+//     "PARA AKIŞI & HACİM", "NEDEN BU HAREKET VAR?", "DETAYLI ANALİZ
+//     RAPORU", "VERİ YOK") → sentence case
+//   • factor.name.uppercased() → sentence case
+//   • mono .heavy/.black → medium
+//   • BistSektorCard'daki raw Color.white/hex → InstitutionalTheme tokenları
+//   • shadow kaldırıldı (sade dilde flat surface)
 
 // ═══════════════════════════════════════════════════════════════════
 // MARK: - SHARED: INSIGHT ROW
@@ -90,35 +97,32 @@ struct BistFaktorCard: View {
             // Header: Total Score
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("TEMEL ANALİZ & FAKTÖRLER")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                    Text("Temel analiz")
+                        .font(.system(size: 12))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     Text(symbol)
-                        .font(.title3)
-                        .bold()
+                        .font(.system(size: 17, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 }
-                
+
                 Spacer()
-                
+
                 if let r = result {
-                    HStack(spacing: 4) {
+                    HStack(alignment: .firstTextBaseline, spacing: 4) {
                         Text("\(Int(r.totalScore))")
-                            .font(.system(size: 24, weight: .black, design: .monospaced))
+                            .font(.system(size: 24, weight: .medium))
                             .foregroundColor(scoreColor(r.totalScore))
                             .monospacedDigit()
-                        Text("/100")
-                            .font(.caption)
-                            .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                            .offset(y: 6)
+                        Text("/ 100")
+                            .font(.system(size: 12))
+                            .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     }
                 } else if isLoading {
                     ProgressView()
-                        .tint(InstitutionalTheme.Colors.primary)
                 } else {
-                    Text("VERİ YOK")
-                        .font(.caption2.weight(.semibold))
-                        .foregroundColor(InstitutionalTheme.Colors.warning)
+                    Text("Veri yok")
+                        .font(.system(size: 12))
+                        .foregroundColor(InstitutionalTheme.Colors.titan)
                 }
             }
             .padding(16)
@@ -136,17 +140,17 @@ struct BistFaktorCard: View {
                 
                 // Detailed Metrics List
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("DETAYLI ANALİZ RAPORU")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                    Text("Detaylı analiz")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .padding(.top, 8)
-                    
+
                     ForEach(r.factors) { factor in
                         if !factor.metrics.isEmpty {
                             VStack(alignment: .leading, spacing: 0) {
-                                Text(factor.name.uppercased())
-                                    .font(.system(size: 9, weight: .bold))
-                                    .foregroundColor(factorColor(factor.color).opacity(0.8))
+                                Text(factor.name)
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(factorColor(factor.color))
                                     .padding(.bottom, 4)
                                 
                                 ForEach(factor.metrics) { metric in
@@ -178,13 +182,12 @@ struct BistFaktorCard: View {
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 1)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .shadow(color: InstitutionalTheme.Colors.background.opacity(0.35), radius: 8, x: 0, y: 4)
         .onAppear { loadData() }
     }
-    
+
     private func loadData() {
         Task {
             await MainActor.run {
@@ -240,23 +243,21 @@ struct FactorSummaryCell: View {
             Image(systemName: factor.icon)
                 .font(.system(size: 14))
                 .foregroundColor(factorColor(factor.color))
-            
+
             Text(factor.name.components(separatedBy: " ").first ?? "")
-                .font(.system(size: 10, weight: .medium))
+                .font(.system(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-            
+                .lineLimit(1)
+
             Text("\(Int(factor.score))")
-                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                .font(.system(size: 14, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .monospacedDigit()
         }
-        .padding(8)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 8)
         .frame(maxWidth: .infinity)
         .background(InstitutionalTheme.Colors.surface2)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 1)
-        )
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
     
@@ -287,64 +288,70 @@ struct BistSektorCard: View {
             // Header
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("SEKTÖR ROTASYONU")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.gray)
+                    Text("Sektör rotasyonu")
+                        .font(.system(size: 12))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     if let r = result {
                         Text(r.rotation.rawValue)
-                            .font(.headline)
-                            .bold()
+                            .font(.system(size: 17, weight: .medium))
                             .foregroundColor(rotationColor(r.rotation))
                     } else {
-                        Text("Yükleniyor...")
-                            .foregroundColor(.white)
+                        Text("Yükleniyor")
+                            .font(.system(size: 14))
+                            .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     }
                 }
                 Spacer()
-                Image(systemName: "arrow.triangle.2.circlepath")
-                    .foregroundColor(.orange)
             }
             .padding(16)
-            
-            Divider().background(Color.white.opacity(0.1))
-            
+
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
+
             if let r = result {
                 // Top Sectors (Visual)
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
+                    HStack(spacing: 8) {
                         ForEach(r.sectors.prefix(5)) { sector in
                             VStack(alignment: .leading, spacing: 4) {
-                                HStack {
+                                HStack(spacing: 5) {
                                     Image(systemName: sector.icon)
-                                        .font(.caption)
+                                        .font(.system(size: 11))
+                                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                                     Text(sector.name)
-                                        .font(.caption)
-                                        .bold()
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                                        .lineLimit(1)
                                 }
-                                .foregroundColor(.white)
-                                
+
                                 Text("\(sector.dailyChange >= 0 ? "+" : "")\(String(format: "%.1f", sector.dailyChange))%")
-                                    .font(.subheadline)
-                                    .bold()
-                                    .foregroundColor(sector.dailyChange >= 0 ? .green : .red)
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundColor(sector.dailyChange >= 0
+                                                     ? InstitutionalTheme.Colors.aurora
+                                                     : InstitutionalTheme.Colors.crimson)
+                                    .monospacedDigit()
                             }
-                            .padding(8)
-                            .background(Color.white.opacity(0.05))
-                            .cornerRadius(8)
+                            .padding(10)
+                            .background(InstitutionalTheme.Colors.surface2)
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                         }
                     }
-                    .padding(16)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
                 }
-                
-                Divider().background(Color.white.opacity(0.1))
-                
+
+                Rectangle()
+                    .fill(InstitutionalTheme.Colors.borderSubtle)
+                    .frame(height: 0.5)
+
                 // Educational Insights
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("NEDEN BU HAREKET VAR?")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.gray)
+                    Text("Neden bu hareket")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .padding(.vertical, 8)
-                    
+
                     ForEach(r.rotationMetrics) { metric in
                         MetricInsightRow(metric: metric)
                     }
@@ -352,15 +359,15 @@ struct BistSektorCard: View {
                 .padding(16)
             }
         }
-        .background(Color(hex: "08080A"))
-        .cornerRadius(12)
+        .background(InstitutionalTheme.Colors.surface1)
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .onAppear { loadData() }
     }
-    
+
     private func loadData() {
         Task {
             if let data = try? await BistSektorEngine.shared.analyze() {
@@ -368,14 +375,14 @@ struct BistSektorCard: View {
             }
         }
     }
-    
+
     private func rotationColor(_ rotation: SektorRotasyon) -> Color {
         switch rotation {
-        case .riskOn, .buyume: return .green
-        case .teknoloji: return .cyan
-        case .defansif: return .yellow
-        case .riskOff, .belirsiz: return .red
-        case .karisik: return .orange
+        case .riskOn, .buyume:    return InstitutionalTheme.Colors.aurora
+        case .teknoloji:          return InstitutionalTheme.Colors.holo
+        case .defansif:           return InstitutionalTheme.Colors.titan
+        case .riskOff, .belirsiz: return InstitutionalTheme.Colors.crimson
+        case .karisik:            return InstitutionalTheme.Colors.titan
         }
     }
 }
@@ -394,54 +401,54 @@ struct BistMoneyFlowCard: View {
             // Header
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("PARA AKIŞI & HACİM")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.gray)
+                    Text("Para akışı")
+                        .font(.system(size: 12))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     if let r = result {
                         Text(r.flowStatus.rawValue)
-                            .font(.headline)
-                            .bold()
+                            .font(.system(size: 17, weight: .medium))
                             .foregroundColor(flowColor(r.flowStatus))
                     } else {
-                        Text("Analiz ediliyor...")
-                            .foregroundColor(.white)
+                        Text("Analiz ediliyor")
+                            .font(.system(size: 14))
+                            .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     }
                 }
                 Spacer()
-                Image(systemName: "chart.bar.doc.horizontal.fill")
-                    .foregroundColor(.blue)
             }
             .padding(16)
-            
-            Divider().background(Color.white.opacity(0.1))
-            
+
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
+
             if let r = result {
-                // Visual Flow Meter
+                // Visual Flow Meter — sade, shadow yok
                 HStack(spacing: 0) {
                     Rectangle()
-                        .fill(Color.red.opacity(0.3))
-                        .frame(height: 4)
+                        .fill(InstitutionalTheme.Colors.crimson.opacity(0.25))
+                        .frame(height: 3)
                         .frame(maxWidth: .infinity)
-                    
+
                     Circle()
                         .fill(flowColor(r.flowStatus))
-                        .frame(width: 12, height: 12)
-                        .shadow(color: flowColor(r.flowStatus), radius: 5)
-                    
+                        .frame(width: 10, height: 10)
+
                     Rectangle()
-                        .fill(Color.green.opacity(0.3))
-                        .frame(height: 4)
+                        .fill(InstitutionalTheme.Colors.aurora.opacity(0.25))
+                        .frame(height: 3)
                         .frame(maxWidth: .infinity)
                 }
-                .padding(16)
-                
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+
                 // Deep Dive Metrics
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("AKILLI PARA ANALİZİ")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.gray)
+                    Text("Akıllı para")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .padding(.vertical, 8)
-                    
+
                     ForEach(r.metrics) { metric in
                         MetricInsightRow(metric: metric)
                     }
@@ -450,15 +457,15 @@ struct BistMoneyFlowCard: View {
                 .padding(.bottom, 16)
             }
         }
-        .background(Color(hex: "08080A"))
-        .cornerRadius(12)
+        .background(InstitutionalTheme.Colors.surface1)
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .onAppear { loadData() }
     }
-    
+
     private func loadData() {
         Task {
             if let data = try? await BistMoneyFlowEngine.shared.analyze(symbol: symbol) {
@@ -466,12 +473,12 @@ struct BistMoneyFlowCard: View {
             }
         }
     }
-    
+
     private func flowColor(_ status: FlowStatus) -> Color {
         switch status {
-        case .strongInflow, .inflow: return .green
-        case .neutral: return .yellow
-        case .outflow, .strongOutflow: return .red
+        case .strongInflow, .inflow:    return InstitutionalTheme.Colors.aurora
+        case .neutral:                  return InstitutionalTheme.Colors.titan
+        case .outflow, .strongOutflow:  return InstitutionalTheme.Colors.crimson
         }
     }
 }

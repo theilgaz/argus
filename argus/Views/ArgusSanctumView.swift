@@ -238,42 +238,11 @@ struct ArgusSanctumView: View {
     }
     
     private func drawerSections(openSheet: @escaping (ArgusDrawerView.DrawerSheet) -> Void) -> [ArgusDrawerView.DrawerSection] {
+        let dismiss = ArgusDrawerView.dismissClosure($showDrawer)
         var sections: [ArgusDrawerView.DrawerSection] = []
-        
-        // 1) ANA EKRANLAR — router üstünden proper destinasyonlara
-        // "Ana Sayfa" = Alkindus Merkez; duplicate "Alkindus/NotificationCenter"
-        // kalemi 2026-04-22 V5 sprintinde temizlendi.
-        sections.append(
-            ArgusDrawerView.DrawerSection(
-                title: "Ekranlar",
-                items: [
-                    ArgusDrawerView.DrawerItem(title: "Alkindus Merkez",
-                                               subtitle: "Yapay zeka merkezi",
-                                               icon: "AlkindusIcon") {
-                        router.navigate(to: .alkindusDashboard)
-                        showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Piyasalar",
-                                               subtitle: "Kokpit ekranı",
-                                               icon: "chart.line.uptrend.xyaxis") {
-                        deepLinkManager.navigate(to: .kokpit)
-                        showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Portföy",
-                                               subtitle: "Pozisyonlar",
-                                               icon: "briefcase.fill") {
-                        deepLinkManager.navigate(to: .portfolio)
-                        showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Ayarlar",
-                                               subtitle: "Tercihler",
-                                               icon: "gearshape") {
-                        deepLinkManager.navigate(to: .settings)
-                        showDrawer = false
-                    }
-                ]
-            )
-        )
+
+        // 1) EKRANLAR — merkezi tanım
+        sections.append(ArgusDrawerView.commonScreensSection(dismiss: dismiss))
 
         // 2) MERKEZLER — global motor dashboard'ları (V5 views).
         // Buradaki linkler symbol-context değil; Chiron/Aether/Phoenix'in
@@ -286,24 +255,24 @@ struct ArgusSanctumView: View {
                                                subtitle: "Ağırlıklar ve performans",
                                                icon: "ChironIcon") {
                         router.navigate(to: .chiron)
-                        showDrawer = false
+                        dismiss()
                     },
                     ArgusDrawerView.DrawerItem(title: "Aether Makro",
                                                subtitle: "3 katman rejim analizi",
                                                icon: "AetherIcon") {
                         router.navigate(to: .aetherDashboard)
-                        showDrawer = false
+                        dismiss()
                     },
                     ArgusDrawerView.DrawerItem(title: "Phoenix Anka",
                                                subtitle: "Geri dönüş adayları",
                                                icon: "flame.fill") {
                         router.navigate(to: .phoenix)
-                        showDrawer = false
+                        dismiss()
                     }
                 ]
             )
         )
-        
+
         // 3) HISSE İŞLEMLERI — mevcut sembole özgü aksiyonlar
         sections.append(
             ArgusDrawerView.DrawerSection(
@@ -314,26 +283,26 @@ struct ArgusSanctumView: View {
                                                icon: "arrow.up.circle.fill") {
                         tradeAction = .buy
                         showTradeSheet = true
-                        showDrawer = false
+                        dismiss()
                     },
                     ArgusDrawerView.DrawerItem(title: "Satış İşlemi",
                                                subtitle: "Pozisyon kapat",
                                                icon: "arrow.down.circle.fill") {
                         tradeAction = .sell
                         showTradeSheet = true
-                        showDrawer = false
+                        dismiss()
                     },
                     ArgusDrawerView.DrawerItem(title: "Analist Raporu",
                                                subtitle: "\(symbol) detaylı rapor",
                                                icon: "AnalystIcon") {
                         router.navigate(to: .analystReport(symbol: symbol))
-                        showDrawer = false
+                        dismiss()
                     },
                     ArgusDrawerView.DrawerItem(title: "Konsey Tartışması",
                                                subtitle: "Motor görüşleri",
                                                icon: "bubble.left.and.bubble.right.fill") {
                         router.navigate(to: .symbolDebate(symbol: symbol))
-                        showDrawer = false
+                        dismiss()
                     }
                 ]
             )
@@ -346,37 +315,37 @@ struct ArgusSanctumView: View {
                                        subtitle: "Teknik momentum",
                                        icon: "OrionIcon") {
                 selectedModule = .orion
-                showDrawer = false
+                dismiss()
             },
             ArgusDrawerView.DrawerItem(title: "Atlas",
                                        subtitle: "Temel analiz",
                                        icon: "AtlasIcon") {
                 selectedModule = .atlas
-                showDrawer = false
+                dismiss()
             },
             ArgusDrawerView.DrawerItem(title: "Hermes",
                                        subtitle: "Haber etkisi",
                                        icon: "HermesIcon") {
                 selectedModule = .hermes
-                showDrawer = false
+                dismiss()
             },
             ArgusDrawerView.DrawerItem(title: "Chiron",
                                        subtitle: "Öğrenme · bu sembol",
                                        icon: "ChironIcon") {
                 selectedModule = .chiron
-                showDrawer = false
+                dismiss()
             },
             ArgusDrawerView.DrawerItem(title: "Aether",
                                        subtitle: "Makro rejim",
                                        icon: "AetherIcon") {
                 selectedModule = .aether
-                showDrawer = false
+                dismiss()
             },
             ArgusDrawerView.DrawerItem(title: "Prometheus",
                                        subtitle: "Fiyat projeksiyonu",
                                        icon: "PrometheusIcon") {
                 selectedModule = .prometheus
-                showDrawer = false
+                dismiss()
             }
         ]
 
@@ -386,13 +355,13 @@ struct ArgusSanctumView: View {
                                            subtitle: "Smart Beta faktörleri",
                                            icon: "AthenaIcon") {
                     selectedModule = .athena
-                    showDrawer = false
+                    dismiss()
                 },
                 ArgusDrawerView.DrawerItem(title: "Demeter",
                                            subtitle: "Sektör momentum",
                                            icon: "DemeterIcon") {
                     selectedModule = .demeter
-                    showDrawer = false
+                    dismiss()
                 }
             ])
         }
@@ -400,7 +369,7 @@ struct ArgusSanctumView: View {
         sections.append(
             ArgusDrawerView.DrawerSection(title: "Modüller", items: moduleItems)
         )
-        
+
         sections.append(ArgusDrawerView.commonToolsSection(openSheet: openSheet))
 
         return sections

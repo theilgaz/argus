@@ -382,6 +382,91 @@ struct ArgusDrawerView: View {
         return normalizedTitle.contains("egitim") || normalizedTitle.contains("rehber") || normalizedTitle.contains("akademi")
     }
 
+    /// Drawer'da yer alan ana ekran kısayolları.
+    /// 2026-05-04: Önceden 8 view'da aynı 5 item kopyalanıyordu;
+    /// item isimleri (Kokpit/Piyasalar/Terminal), büyük-küçük harf
+    /// ("Ana Sayfa" / "Ana sayfa") ve dismiss sırası tutarsızdı.
+    /// Tek source-of-truth burada — `excluding` ile bulunduğu ekranı
+    /// menüden çıkarmak için kullanılır (örn. SettingsView .settings'i çıkarır).
+    enum Screen: Hashable, CaseIterable {
+        case home
+        case kokpit
+        case alkindus
+        case portfolio
+        case settings
+    }
+
+    static func commonScreensSection(
+        excluding excluded: Set<Screen> = [],
+        dismiss: @escaping () -> Void
+    ) -> DrawerSection {
+        var items: [DrawerItem] = []
+
+        if !excluded.contains(.home) {
+            items.append(
+                DrawerItem(title: "Ana Sayfa", subtitle: "Sinyal akışı", icon: "waveform.path.ecg") {
+                    DeepLinkManager.shared.navigate(to: .home)
+                    dismiss()
+                }
+            )
+        }
+
+        if !excluded.contains(.kokpit) {
+            items.append(
+                DrawerItem(title: "Piyasalar", subtitle: "Market ekranı", icon: "chart.line.uptrend.xyaxis") {
+                    DeepLinkManager.shared.navigate(to: .kokpit)
+                    dismiss()
+                }
+            )
+        }
+
+        if !excluded.contains(.alkindus) {
+            items.append(
+                DrawerItem(title: "Alkindus Merkez", subtitle: "Yapay zeka merkezi", icon: "AlkindusIcon") {
+                    NavigationRouter.shared.navigate(to: .alkindusDashboard)
+                    dismiss()
+                }
+            )
+        }
+
+        if !excluded.contains(.portfolio) {
+            items.append(
+                DrawerItem(title: "Portföy", subtitle: "Pozisyonlar", icon: "briefcase.fill") {
+                    DeepLinkManager.shared.navigate(to: .portfolio)
+                    dismiss()
+                }
+            )
+        }
+
+        if !excluded.contains(.settings) {
+            items.append(
+                DrawerItem(title: "Ayarlar", subtitle: "Tercihler", icon: "gearshape") {
+                    DeepLinkManager.shared.navigate(to: .settings)
+                    dismiss()
+                }
+            )
+        }
+
+        return DrawerSection(title: "Ekranlar", items: items)
+    }
+
+    /// Parent view drawer item'larından drawer'ı kapatmak için helper.
+    ///
+    /// 2026-05-04 H-61: `withAnimation(toggleAnimation) { binding = false }`
+    /// kalıbı navigation eşliğinde donma yaratıyordu (Alkindus push +
+    /// drawer transition + parent re-render aynı turn'de SwiftUI'i takıyor).
+    /// Animasyonu KASITLI olarak kaldırdım — drawer item'a basıldığında
+    /// drawer anlık kapanır, sonrasında push/tab değişimi animasyonu
+    /// NavigationStack/ContentView tarafından doğal yapılır.
+    ///
+    /// Backdrop tap ve close button (ArgusDrawerView'ın içinde) hala
+    /// `withAnimation` ile animasyonlu — orada navigation yok, güvenli.
+    static func dismissClosure(_ binding: Binding<Bool>) -> () -> Void {
+        return {
+            binding.wrappedValue = false
+        }
+    }
+
     /// Tüm parent view'ların kullandığı ortak "Araçlar" bölümü.
     /// Önceden 5 farklı parent view'da aynı kod kopyalanıyordu —
     /// tek source-of-truth burada.

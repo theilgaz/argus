@@ -69,11 +69,10 @@ struct HoloPanelView: View {
             )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(SanctumTheme.bg.opacity(0.95)) // Deep Navy High Opacity
-        .cornerRadius(0) // Full screen usually stays 0, but content inside might be card.
-        // Let's keep HoloPanel as the "Base" layer for the module, effectively a new page.
-        // User requested "Containers" to be cards. HoloPanel content is the container.
-
+        .background(InstitutionalTheme.Colors.background)
+        // 2026-05-04 H-43 — Sanctum eski koyu navy arkaplanı InstitutionalTheme'a
+        // hizalandı. Modül içi panel artık ana ekranla aynı zeminde; yamalı koyu
+        // overlay kalktı.
     }
 
     // MARK: - Top nav (2026-04-30 H-42 sade)
@@ -794,86 +793,12 @@ struct HoloPanelView: View {
     }
     
     // MARK: - Helper Views
-    
-    @ViewBuilder
-    func ratioRow(_ label: String, value: Double?, isPercentage: Bool = false) -> some View {
-        if let v = value {
-            HStack {
-                Text(label)
-                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                Spacer()
-                if isPercentage {
-                    Text(String(format: "%.1f%%", v * 100))
-                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                } else {
-                    Text(String(format: "%.2f", v))
-                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                }
-            }
-            .font(.caption)
-        }
-    }
-    
-    @ViewBuilder
-    func scoreBreakdownRow(_ label: String, score: Double, max: Double) -> some View {
-        HStack {
-            Text(label)
-                .font(.caption2)
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                .frame(width: 70, alignment: .leading)
-            
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(InstitutionalTheme.Colors.borderSubtle)
-                        .frame(height: 8)
-                    
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(
-                            score / max > 0.6 ? InstitutionalTheme.Colors.positive :
-                            (score / max > 0.4 ? InstitutionalTheme.Colors.warning : InstitutionalTheme.Colors.negative)
-                        )
-                        .frame(width: geometry.size.width * CGFloat(min(score / max, 1.0)), height: 8)
-                }
-            }
-            .frame(height: 8)
-            
-            Text("\(Int(score))/\(Int(max))")
-                .font(.caption2)
-                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                .frame(width: 40, alignment: .trailing)
-        }
-    }
-    
-    @ViewBuilder
-    func componentProgressRow(_ label: String, score: Double, max: Double, color: Color) -> some View {
-        HStack {
-            Text(label)
-                .font(.caption2)
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                .frame(width: 100, alignment: .leading)
-            
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(InstitutionalTheme.Colors.borderSubtle)
-                        .frame(height: 10)
-                    
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(color)
-                        .frame(width: geometry.size.width * CGFloat(min(score / max, 1.0)), height: 10)
-                }
-            }
-            .frame(height: 10)
-            
-            Text("\(Int(score))/\(Int(max))")
-                .font(.caption2)
-                .bold()
-                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                .frame(width: 45, alignment: .trailing)
-        }
-    }
-    
+    //
+    // 2026-05-04 H-43 — Eski V5 ölü helper'ları (ratioRow, scoreBreakdownRow,
+    // componentProgressRow) silindi. Atlas/Orion case'leri tam sub-view'lara
+    // delege oldu, athena/demeter `v5FactorRow` kullanıyor, chiron ağırlıkları
+    // `chironWeightRow`'dan geçiyor — geriye sadece aktif sade helper'lar kaldı.
+
     @ViewBuilder
     func chironWeightProgressRows(weights: ChironModuleWeights) -> some View {
         VStack(alignment: .leading, spacing: 8) {

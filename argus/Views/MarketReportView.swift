@@ -97,47 +97,21 @@ struct MarketReportView: View {
 
     // MARK: - Drawer
     private func drawerSections(openSheet: @escaping (ArgusDrawerView.DrawerSheet) -> Void) -> [ArgusDrawerView.DrawerSection] {
-        var sections: [ArgusDrawerView.DrawerSection] = []
+        let closeDrawer = ArgusDrawerView.dismissClosure($showDrawer)
 
-        sections.append(
-            ArgusDrawerView.DrawerSection(
-                title: "Ekranlar",
-                items: [
-                    ArgusDrawerView.DrawerItem(title: "Alkindus Merkez", subtitle: "Yapay zeka merkezi", icon: "AlkindusIcon") {
-                        NavigationRouter.shared.navigate(to: .alkindusDashboard)
-                        showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Piyasalar", subtitle: "Kokpit ekranı", icon: "chart.line.uptrend.xyaxis") {
-                        deepLinkManager.navigate(to: .kokpit)
-                        showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Portföy", subtitle: "Pozisyonlar", icon: "briefcase.fill") {
-                        deepLinkManager.navigate(to: .portfolio)
-                        showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Ayarlar", subtitle: "Tercihler", icon: "gearshape") {
-                        deepLinkManager.navigate(to: .settings)
-                        showDrawer = false
-                    }
-                ]
-            )
-        )
-
-        sections.append(
+        return [
+            ArgusDrawerView.commonScreensSection(dismiss: closeDrawer),
             ArgusDrawerView.DrawerSection(
                 title: "Rapor",
                 items: [
                     ArgusDrawerView.DrawerItem(title: "Kapat", subtitle: "Raporu kapat", icon: "xmark.circle") {
-                        showDrawer = false
+                        closeDrawer()
                         dismiss()
                     }
                 ]
-            )
-        )
-
-        sections.append(ArgusDrawerView.commonToolsSection(openSheet: openSheet))
-
-        return sections
+            ),
+            ArgusDrawerView.commonToolsSection(openSheet: openSheet)
+        ]
     }
 }
 

@@ -128,7 +128,7 @@ struct TradeBrainView: View {
                 ArgusDrawerView(isPresented: $showDrawer) { openSheet in
                     drawerSections(openSheet: openSheet)
                 }
-                .zIndex(120)
+                .zIndex(200)
             }
         }
         .navigationBarHidden(true)
@@ -844,58 +844,28 @@ struct TradeBrainView: View {
     }
 
     private func drawerSections(openSheet: @escaping (ArgusDrawerView.DrawerSheet) -> Void) -> [ArgusDrawerView.DrawerSection] {
-        var sections: [ArgusDrawerView.DrawerSection] = []
+        let dismiss = ArgusDrawerView.dismissClosure($showDrawer)
 
-        sections.append(
-            ArgusDrawerView.DrawerSection(
-                title: "Ekranlar",
-                items: [
-                    ArgusDrawerView.DrawerItem(title: "Ana Sayfa", subtitle: "Sinyal akışı", icon: "waveform.path.ecg") {
-                        deepLinkManager.navigate(to: .home)
-                        showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Piyasalar", subtitle: "Market ekranı", icon: "chart.line.uptrend.xyaxis") {
-                        deepLinkManager.navigate(to: .kokpit)
-                        showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Alkindus Merkez", subtitle: "Yapay zeka merkezi", icon: "AlkindusIcon") {
-                        NavigationRouter.shared.navigate(to: .alkindusDashboard)
-                        showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Portföy", subtitle: "Pozisyonlar", icon: "briefcase.fill") {
-                        deepLinkManager.navigate(to: .portfolio)
-                        showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Ayarlar", subtitle: "Tercihler", icon: "gearshape") {
-                        deepLinkManager.navigate(to: .settings)
-                        showDrawer = false
-                    }
-                ]
-            )
-        )
-
-        sections.append(
+        return [
+            ArgusDrawerView.commonScreensSection(dismiss: dismiss),
             ArgusDrawerView.DrawerSection(
                 title: "Trade Brain",
                 items: [
                     ArgusDrawerView.DrawerItem(title: "Pazar: Tümü", subtitle: "Bütün portföy", icon: "circle.grid.2x2") {
                         marketMode = .all
-                        showDrawer = false
+                        dismiss()
                     },
                     ArgusDrawerView.DrawerItem(title: "Pazar: Global", subtitle: "ABD/Global", icon: "globe") {
                         marketMode = .global
-                        showDrawer = false
+                        dismiss()
                     },
                     ArgusDrawerView.DrawerItem(title: "Pazar: BIST", subtitle: "Türkiye", icon: "chart.bar") {
                         marketMode = .bist
-                        showDrawer = false
+                        dismiss()
                     }
                 ]
-            )
-        )
-
-        sections.append(ArgusDrawerView.commonToolsSection(openSheet: openSheet))
-
-        return sections
+            ),
+            ArgusDrawerView.commonToolsSection(openSheet: openSheet)
+        ]
     }
 }

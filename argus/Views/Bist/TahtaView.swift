@@ -82,20 +82,25 @@ struct TahtaView: View {
 
     private func mainSignalCard(_ r: TahtaResult) -> some View {
         VStack(spacing: 16) {
-            // V5 Section Header — Orion motor · teknik analiz
-            HStack(spacing: 10) {
-                MotorLogo(.orion, size: 14)
+            // 2026-05-04 H-62 sade. MotorLogo + caps "TAHTA"/"TEKNİK ANALİZ"
+            // + ArgusPill kalktı; sade başlık + sentence verdict.
+            HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    ArgusSectionCaption("TAHTA")
-                    Text("TEKNİK ANALİZ · \(symbol.uppercased())")
-                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                        .tracking(0.6)
+                    Text("Teknik analiz")
+                        .font(.system(size: 12))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                    Text(symbol.uppercased())
+                        .font(.system(size: 17, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 }
                 Spacer()
-                ArgusPill(r.signal.rawValue.uppercased(), tone: signalTone(r.signal))
+                Text(r.signal.rawValue)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(signalColor(r.signal))
             }
-            ArgusHair()
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
 
             // Orta: Ana Sinyal
             HStack(spacing: 20) {
@@ -231,19 +236,21 @@ struct TahtaView: View {
 
     private func relativePerformanceCard(_ r: TahtaResult) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            // V5 Section Header — Orion motor · göreli güç (XU100)
-            HStack(spacing: 10) {
-                MotorLogo(.orion, size: 12)
+            // 2026-05-04 H-62 sade. MotorLogo + caps + ArgusPill kalktı.
+            HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    ArgusSectionCaption("RÖLATİF GÜÇ")
-                    Text("ENDEKSE GÖRE · XU100")
-                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                        .tracking(0.6)
-                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    Text("Rölatif güç")
+                        .font(.system(size: 12))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                    Text("Endekse göre · XU100")
+                        .font(.system(size: 11))
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
                 Spacer()
                 if let rs = r.rsResult {
-                    ArgusPill(rs.statusText.uppercased(), tone: rsStatusTone(rs.status))
+                    Text(rs.statusText)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(rsStatusTone(rs.status).foreground)
                 }
             }
 

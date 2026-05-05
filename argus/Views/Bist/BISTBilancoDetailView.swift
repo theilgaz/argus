@@ -130,21 +130,25 @@ struct BISTBilancoDetailView: View {
     
     private func baslikKarti(_ sonuc: BISTBilancoSonuc) -> some View {
         VStack(spacing: 16) {
-            // MARK: - V5 Section Header (Atlas motor)
-            HStack(spacing: 10) {
-                MotorLogo(.atlas, size: 14)
+            // 2026-05-04 H-62 sade. MotorLogo + caps başlıklar + ArgusPill kalktı.
+            HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    ArgusSectionCaption("KASA · BİLANÇO")
-                    Text("TEMEL ANALİZ · \(sonuc.sembol.replacingOccurrences(of: ".IS", with: "").uppercased())")
-                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                        .tracking(0.6)
+                    Text("Bilanço analizi")
+                        .font(.system(size: 12))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                    Text(sonuc.sembol.replacingOccurrences(of: ".IS", with: "").uppercased())
+                        .font(.system(size: 17, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 }
                 Spacer()
-                ArgusPill(sonuc.kaliteBandi.rawValue.uppercased(), tone: kaliteTone(sonuc.toplamSkor))
+                Text(sonuc.kaliteBandi.rawValue)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(kaliteTone(sonuc.toplamSkor).foreground)
             }
 
-            ArgusHair()
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
 
             // Şirket İsmi ve Sembol
             HStack {
@@ -489,11 +493,12 @@ struct BISTBilancoDetailView: View {
     
     private func ozetKarti(_ sonuc: BISTBilancoSonuc) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
-                MotorLogo(.atlas, size: 14)
-                ArgusSectionCaption("YATIRIMCI İÇİN ÖZET")
+            // 2026-05-04 H-62 sade.
+            HStack {
+                Text("Yatırımcı için özet")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Spacer()
-                ArgusChip("KASA · ÖZET", tone: .motor(.atlas))
             }
 
             Text(sonuc.ozet)
@@ -667,12 +672,12 @@ struct BISTBilancoDetailView: View {
         if !etkiler.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("NEDEN BÖYLE?")
-                        .font(.caption.weight(.bold))
+                    Text("Skoru ne belirledi")
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     Spacer()
-                    Text("İlk \(min(3, etkiler.count)) etken")
-                        .font(.caption2.weight(.semibold))
+                    Text("ilk \(min(3, etkiler.count)) etken")
+                        .font(.system(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
 
@@ -707,8 +712,8 @@ struct BISTBilancoDetailView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("KATKI DAĞILIMI")
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        Text("Katkı dağılımı")
+                            .font(.system(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         ForEach(Array(etkiler.prefix(3))) { etki in
                             HStack(spacing: 6) {

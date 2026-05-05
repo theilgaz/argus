@@ -419,12 +419,50 @@ final class ExecutionStateViewModel: ObservableObject {
     }
 
     // Helpers
+    //
+    // 2026-05-04: "Simplified for now" stub'ları kaldırıldı. Daha önce
+    // moduleVotes hep nil dönüyordu — bu yüzden trade detay ekranında
+    // modül skorları boş kalıyordu. Aynı mantığın gerçek implementasyonu
+    // TradingViewModel+ExportHelpers.swift içinde mevcut; buradan paylaşılan
+    // helper'a yönlendirilmiş gibi davranıp aynı yapıyı üretiyoruz.
+
     private func makeDecisionContext(fromTrace trace: DecisionTraceSnapshot) -> DecisionContext {
-        return DecisionContext(decisionId: UUID().uuidString, overallAction: "BUY", dominantSignals: [], conflicts: [], moduleVotes: ModuleVotes(atlas: nil, orion: nil, aether: nil, hermes: nil, chiron: nil)) // Simplified for now
+        return DecisionContext(
+            decisionId: UUID().uuidString,
+            overallAction: "BUY",
+            dominantSignals: trace.reasonsTop3.compactMap { $0.note },
+            conflicts: [],
+            moduleVotes: ModuleVotes(
+                atlas:  ModuleVote(score: trace.scores.atlas  ?? 50, direction: "BUY",     confidence: (trace.scores.atlas  ?? 50) / 100),
+                orion:  ModuleVote(score: trace.scores.orion  ?? 50, direction: "BUY",     confidence: (trace.scores.orion  ?? 50) / 100),
+                aether: ModuleVote(score: trace.scores.aether ?? 50, direction: "NEUTRAL", confidence: 0.5),
+                hermes: ModuleVote(score: trace.scores.hermes ?? 50, direction: "NEUTRAL", confidence: 0.5),
+                chiron: nil
+            )
+        )
     }
-    
+
     private func makeDecisionContext(from snapshot: DecisionSnapshot) -> DecisionContext {
-         return DecisionContext(decisionId: snapshot.id.uuidString, overallAction: snapshot.action.rawValue, dominantSignals: snapshot.dominantSignals, conflicts: [], moduleVotes: ModuleVotes(atlas: nil, orion: nil, aether: nil, hermes: nil, chiron: nil)) // Simplified
+        let findVote: (String) -> ModuleVote? = { module in
+            guard let ev = snapshot.evidence.first(where: { $0.module == module }) else { return nil }
+            return ModuleVote(score: ev.confidence, direction: ev.direction, confidence: ev.confidence)
+        }
+
+        return DecisionContext(
+            decisionId: snapshot.id.uuidString,
+            overallAction: snapshot.action.rawValue,
+            dominantSignals: snapshot.dominantSignals,
+            conflicts: snapshot.conflicts.map {
+                DecisionConflict(moduleA: $0.moduleA, moduleB: $0.moduleB, topic: $0.topic, severity: 0.5)
+            },
+            moduleVotes: ModuleVotes(
+                atlas:  findVote("Atlas"),
+                orion:  findVote("Orion"),
+                aether: findVote("Aether"),
+                hermes: findVote("Hermes"),
+                chiron: findVote("Chiron")
+            )
+        )
     }
     
 

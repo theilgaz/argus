@@ -6,9 +6,11 @@ import SwiftUI
 // Veri: viewModel.terminalItems (TerminalItem pre-calculated), ChironDataLakeService (loadLearningEvents).
 // Korunur:
 //   • ScoutStoriesBar, ChironCockpitWidget, ChironTerminalFeed, FundListView, ModuleHoloSheet
-//   • TerminalControlBar / TerminalStockRow / TerminalScoreBadge alt bileşen imzaları
+//   • TerminalControlBar / TerminalStockRow alt bileşen imzaları
 //   • MarketTab enum (dışarıdan referans edilebilir)
 //   • Drawer tüm item'ları ile aynı
+// 2026-05-04 H-55: TerminalScoreBadge ve education* helper'ları silindi (ölü
+// kod, V5 izi taşıyordu — MotorLogo + caps mono).
 // Demo veri yok — boş liste ArgusEmptyState ile ifade edilir.
 
 // Global Scope Enum (dışarıdan referans ediliyor)
@@ -216,70 +218,53 @@ struct ArgusCockpitView: View {
     // MARK: - Drawer
 
     private func drawerSections(openSheet: @escaping (ArgusDrawerView.DrawerSheet) -> Void) -> [ArgusDrawerView.DrawerSection] {
-        var sections: [ArgusDrawerView.DrawerSection] = []
+        let dismiss = ArgusDrawerView.dismissClosure($showDrawer)
 
-        sections.append(
-            ArgusDrawerView.DrawerSection(
-                title: "Ekranlar",
-                items: [
-                    ArgusDrawerView.DrawerItem(title: "Ana Sayfa", subtitle: "Sinyal akisi", icon: "waveform.path.ecg") {
-                        deepLinkManager.navigate(to: .home); showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Piyasalar", subtitle: "Market ekranı", icon: "chart.line.uptrend.xyaxis") {
-                        deepLinkManager.navigate(to: .kokpit); showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Alkindus Merkez", subtitle: "Yapay zeka merkezi", icon: "AlkindusIcon") {
-                        NavigationRouter.shared.navigate(to: .alkindusDashboard)
-                        showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Portfoy", subtitle: "Pozisyonlar", icon: "briefcase.fill") {
-                        deepLinkManager.navigate(to: .portfolio); showDrawer = false
-                    },
-                    ArgusDrawerView.DrawerItem(title: "Ayarlar", subtitle: "Tercihler", icon: "gearshape") {
-                        deepLinkManager.navigate(to: .settings); showDrawer = false
-                    }
-                ]
-            )
-        )
-
-        sections.append(
+        return [
+            ArgusDrawerView.commonScreensSection(dismiss: dismiss),
             ArgusDrawerView.DrawerSection(
                 title: "Terminal",
                 items: [
                     ArgusDrawerView.DrawerItem(title: "Pazar: Global", subtitle: "Global liste", icon: "globe.asia.australia") {
-                        selectedMarket = .global; showDrawer = false
+                        selectedMarket = .global
+                        dismiss()
                     },
                     ArgusDrawerView.DrawerItem(title: "Pazar: BIST", subtitle: "Sirkiye liste", icon: "chart.bar") {
-                        selectedMarket = .bist; showDrawer = false
+                        selectedMarket = .bist
+                        dismiss()
                     },
                     ArgusDrawerView.DrawerItem(title: "Pazar: Fonlar", subtitle: "Fon listesi", icon: "rectangle.stack") {
-                        selectedMarket = .fonlar; showDrawer = false
+                        selectedMarket = .fonlar
+                        dismiss()
                     },
-                    ArgusDrawerView.DrawerItem(title: "Siralama: Konsey", subtitle: "Konsey skoru", icon: "crown") {
-                        sortOption = .councilScore; showDrawer = false
+                    ArgusDrawerView.DrawerItem(title: "Sıralama: Konsey", subtitle: "Konsey skoru", icon: "crown") {
+                        sortOption = .councilScore
+                        dismiss()
                     },
-                    ArgusDrawerView.DrawerItem(title: "Siralama: Orion", subtitle: "Teknik skor", icon: "waveform.path.ecg") {
-                        sortOption = .orion; showDrawer = false
+                    ArgusDrawerView.DrawerItem(title: "Sıralama: Orion", subtitle: "Teknik skor", icon: "waveform.path.ecg") {
+                        sortOption = .orion
+                        dismiss()
                     },
-                    ArgusDrawerView.DrawerItem(title: "Siralama: Atlas", subtitle: "Temel skor", icon: "chart.bar") {
-                        sortOption = .atlas; showDrawer = false
+                    ArgusDrawerView.DrawerItem(title: "Sıralama: Atlas", subtitle: "Temel skor", icon: "chart.bar") {
+                        sortOption = .atlas
+                        dismiss()
                     },
-                    ArgusDrawerView.DrawerItem(title: "Siralama: Potansiyel", subtitle: "Sembol bazli", icon: "sparkles") {
-                        sortOption = .potential; showDrawer = false
+                    ArgusDrawerView.DrawerItem(title: "Sıralama: Potansiyel", subtitle: "Sembol bazlı", icon: "sparkles") {
+                        sortOption = .potential
+                        dismiss()
                     },
                     ArgusDrawerView.DrawerItem(
                         title: "Kalite Filtresi",
-                        subtitle: hideLowQualityData ? "Acik" : "Kapali",
+                        subtitle: hideLowQualityData ? "Açık" : "Kapalı",
                         icon: "line.3.horizontal.decrease.circle"
                     ) {
-                        hideLowQualityData.toggle(); showDrawer = false
+                        hideLowQualityData.toggle()
+                        dismiss()
                     }
                 ]
-            )
-        )
-
-        sections.append(ArgusDrawerView.commonToolsSection(openSheet: openSheet))
-        return sections
+            ),
+            ArgusDrawerView.commonToolsSection(openSheet: openSheet)
+        ]
     }
 
     // MARK: - Market Tab Bar
@@ -637,82 +622,14 @@ struct TerminalStockRow: View {
         }
     }
 
-    // Legacy helpers (başka yerde kullanılıyor olabilir — korunuyor)
-    func educationLevel(_ item: TerminalItem) -> Int {
-        let confidence = max(0, min(item.councilScore ?? 0, 1))
-        var level: Int
-        switch confidence {
-        case ..<0.20: level = 1
-        case ..<0.40: level = 2
-        case ..<0.60: level = 3
-        case ..<0.80: level = 4
-        default:      level = 5
-        }
-        if item.action == .neutral {
-            level = min(level, 3)
-        }
-        return level
-    }
-
-    func educationTitle(_ level: Int) -> String {
-        switch level {
-        case 1: return "VERI ZAYIF"
-        case 2: return "ERKEN SINYAL"
-        case 3: return "KARISIK"
-        case 4: return "GUCLU"
-        default: return "TEYITLI"
-        }
-    }
-
-    func educationColor(_ level: Int) -> Color {
-        switch level {
-        case 1: return InstitutionalTheme.Colors.negative
-        case 2: return InstitutionalTheme.Colors.neutral
-        case 3: return InstitutionalTheme.Colors.textSecondary
-        case 4: return InstitutionalTheme.Colors.primary
-        default: return InstitutionalTheme.Colors.positive
-        }
-    }
+    // 2026-05-04 H-55 — ölü helper'lar (educationLevel / educationTitle /
+    // educationColor) silindi. "VERI ZAYIF / ERKEN SINYAL / KARISIK / GUCLU /
+    // TEYITLI" caps mono etiketleri TerminalStockRow'da çağrılmıyordu;
+    // aksiyon (Hücum / Topla / Gözle / Azalt / Çık) + güven% sentence case
+    // dilinde aynı işi zaten yapıyor.
 }
 
-// MARK: - TerminalScoreBadge
-
-struct TerminalScoreBadge: View {
-    let label: String
-    let score: Double
-    let color: Color
-    var motor: MotorEngine? = nil
-
-    var body: some View {
-        // V5: label/motor üstte, skor alt orb'da. Motor verilirse logo,
-        // yoksa label text (legacy çağrılar için geri uyumluluk).
-        VStack(spacing: 2) {
-            if let motor {
-                MotorLogo(motor, size: 12)
-            } else {
-                Text(label)
-                    .font(.system(.caption2, design: .monospaced))
-                    .fontWeight(.bold)
-                    .tracking(0.6)
-                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-            }
-
-            ZStack {
-                Circle()
-                    .stroke(color.opacity(0.35), lineWidth: 1.5)
-                    .frame(width: 28, height: 28)
-
-                Text(score > 0 ? "\(Int(score))" : "—")
-                    .font(.system(.caption2, design: .monospaced))
-                    .fontWeight(.bold)
-                    .monospacedDigit()
-                    .foregroundColor(
-                        score > 0
-                            ? InstitutionalTheme.Colors.textPrimary
-                            : InstitutionalTheme.Colors.textTertiary
-                    )
-            }
-        }
-        .accessibilityLabel(Text("\(label) skoru \(score > 0 ? "\(Int(score))" : "yok")"))
-    }
-}
+// 2026-05-04 H-55 — TerminalScoreBadge silindi. Hiçbir yerden çağrılmıyordu
+// (BistMarketView'daki referans yorum satırıydı, gerçek call yok). MotorLogo
+// + caption2 mono + tracking 0.6 ile V5 izi taşıyordu; yerine
+// TerminalStockRow.inlineScore (T/B sade prefix + sayı) kullanılıyor.
