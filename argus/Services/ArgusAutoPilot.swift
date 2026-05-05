@@ -55,7 +55,8 @@ final class ArgusAutoPilot {
             phoenixAdvice: nil,
             demeterScore: nil, 
             marketData: nil,
-            traceContext: (price: quote.currentPrice, freshness: 100, source: "Heimdall/AutoPilot")
+            traceContext: (price: quote.currentPrice, freshness: 100, source: "Heimdall/AutoPilot"),
+            priceChange24h: quote.percentChange  // Faz 3.5: Hermes divergence tespiti için
         ).1 // Take Decision Result (Ignore Trace)
         
         let score = decision.finalScoreCore

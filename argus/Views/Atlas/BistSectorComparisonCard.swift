@@ -1,5 +1,14 @@
 import SwiftUI
 
+struct BistSectorAverage {
+    let profitabilityAvg: Double
+    let valuationAvg: Double
+    let growthAvg: Double
+    let healthAvg: Double
+    let cashAvg: Double
+    let dividendAvg: Double
+}
+
 struct BistSectorComparisonCard: View {
     let symbol: String
     let result: AtlasV2Result

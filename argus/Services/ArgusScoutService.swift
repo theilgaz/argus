@@ -176,7 +176,8 @@ final class ArgusScoutService: Sendable {
             phoenixAdvice: nil,
             demeterScore: nil,
             marketData: nil,
-            traceContext: (price: quote.currentPrice, freshness: 100, source: "Heimdall/Scout")
+            traceContext: (price: quote.currentPrice, freshness: 100, source: "Heimdall/Scout"),
+            priceChange24h: quote.percentChange  // Faz 3.5: Hermes divergence tespiti için
         ).1
         
         let coreScore = decision.finalScoreCore

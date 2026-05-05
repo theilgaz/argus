@@ -157,13 +157,17 @@ final class HermesLLMService: Sendable {
         var results: [HermesSummary] = []
         var articlesToProcess: [NewsArticle] = []
         
-        // 1. Check Cache
+        // 1. Check Cache (6 saat TTL — HermesCacheStore ile aynı)
+        let cacheTTL: TimeInterval = 6 * 60 * 60 // 21600 saniye
         for article in articles {
-            if let cached = cache[article.id] {
-                // Check if cache entry is fresh (e.g. within 24 hours)? 
-                // Currently indefinite cache for immutable news analysis.
+            if let cached = cache[article.id],
+               Date().timeIntervalSince(cached.createdAt) < cacheTTL {
                 results.append(cached)
             } else {
+                // Süresi dolmuş entry'yi temizle
+                if cache[article.id] != nil {
+                    cache.removeValue(forKey: article.id)
+                }
                 articlesToProcess.append(article)
             }
         }
@@ -228,7 +232,14 @@ final class HermesLLMService: Sendable {
         } catch {
             print("❌ Hermes Analysis Failed: \(error)")
             // Return whatever we have from cache if API fails
-            if !results.isEmpty { return results }
+            if !results.isEmpty {
+                let avgAgeHours = results.compactMap { r in Date().timeIntervalSince(r.createdAt) / 3600 }
+                    .reduce(0, +) / max(1, Double(results.count))
+                if avgAgeHours > 1 {
+                    print("⚠️ Hermes: LLM hatası — \(results.count) stale cache kullanılıyor (ort. yaş: \(String(format: "%.1f", avgAgeHours))h)")
+                }
+                return results
+            }
             
             let nsError = error as NSError
             if nsError.code == 429 {

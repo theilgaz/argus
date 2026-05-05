@@ -16,26 +16,32 @@ actor SirkiyeEngine {
         let newsSnapshot: HermesNewsSnapshot? // For Political Cortex
         
         // V2 Fields
-        // V2 Fields
         var currentInflation: Double? = nil
         var policyRate: Double? = nil
         var xu100Change: Double? = nil
         var xu100Value: Double? = nil
         var goldPrice: Double? = nil
-        
+
+        // V3 Field (Round 4): yabancı yatırımcı net akış skoru (0-100).
+        // ForeignInvestorFlowService.getMarketForeignSentiment() çıktısı.
+        // Eski sürümde bu skor service tarafından hesaplanıyor ama SirkiyeEngine'e
+        // hiç bağlanmıyordu — yabancı çıkış/giriş baskısı analizine girmiyordu.
+        var foreignFlowScore: Double? = nil
+
         // Custom Init for Backward Compatibility
         init(
-            usdTry: Double, 
-            usdTryPrevious: Double, 
-            dxy: Double?, 
-            brentOil: Double?, 
-            globalVix: Double?, 
-            newsSnapshot: HermesNewsSnapshot?, 
-            currentInflation: Double? = nil, 
-            policyRate: Double? = nil, 
-            xu100Change: Double? = nil, 
-            xu100Value: Double? = nil, 
-            goldPrice: Double? = nil
+            usdTry: Double,
+            usdTryPrevious: Double,
+            dxy: Double?,
+            brentOil: Double?,
+            globalVix: Double?,
+            newsSnapshot: HermesNewsSnapshot?,
+            currentInflation: Double? = nil,
+            policyRate: Double? = nil,
+            xu100Change: Double? = nil,
+            xu100Value: Double? = nil,
+            goldPrice: Double? = nil,
+            foreignFlowScore: Double? = nil
         ) {
             self.usdTry = usdTry
             self.usdTryPrevious = usdTryPrevious
@@ -48,6 +54,7 @@ actor SirkiyeEngine {
             self.xu100Change = xu100Change
             self.xu100Value = xu100Value
             self.goldPrice = goldPrice
+            self.foreignFlowScore = foreignFlowScore
         }
     }
     
@@ -122,29 +129,56 @@ actor SirkiyeEngine {
         
         // 4. Synthesis
         // Weights: Political (Hidden hand) > FX (50%) > Global (20%) > News Sentiment (30%)
-        
+
         var newsSentimentScore = 50.0
         if let snapshot = input.newsSnapshot, let sentiment = snapshot.aggregatedSentiment {
             newsSentimentScore = ((sentiment + 1.0) / 2.0) * 100.0
         }
-        
+
         // Apply "Sirkiye" weighting
         // If Political Cortex is uneasy (but not panic), it drags score down.
         var finalScore = (localStressScore * 0.5) + (globalScore * 0.2) + (newsSentimentScore * 0.3)
-        
-        // Political Penalty
-        if politicalMode == .fear {
-            finalScore -= 20.0
-            finalScore = max(0, finalScore)
+
+        // Faz 3.2: Kademeli politik stress baskısı (panic dışı durumlar için).
+        // Eski sistem sadece fear için -20 sabit penalty uyguluyordu — high stress
+        // ile elevated stress aynı görünüyordu. Şimdi politicalScore'a göre
+        // 4 seviyeli çarpan: politicalScore yüksekse stress düşük (bonus),
+        // düşükse yüksek (baskı).
+        //   politicalScore ≥ 70 → calm     (×1.05, hafif bonus)
+        //   politicalScore 50-70 → elevated (×0.95)
+        //   politicalScore 30-50 → high     (×0.80)
+        //   politicalScore < 30  → crisis   (×0.55, panic'ten önceki son seviye)
+        let politicalStressMultiplier: Double
+        switch politicalScore {
+        case 70...:    politicalStressMultiplier = 1.05
+        case 50..<70:  politicalStressMultiplier = 0.95
+        case 30..<50:  politicalStressMultiplier = 0.80
+        default:       politicalStressMultiplier = 0.55
         }
-        
+        finalScore *= politicalStressMultiplier
+        finalScore = max(0, min(100, finalScore))
+
+        // V3 (Round 4): Yabancı yatırımcı akış lite-weight bonus/penalty.
+        // Eski sürümde ForeignInvestorFlowService skor üretiyor ama SirkiyeEngine'e
+        // hiç ulaşmıyordu. Şimdi: yabancı net giriş güçlüyse (>=70) +5, sert çıkış
+        // varsa (<=30) -5 puan. Lite weight — primary sinyal değil, modülatör.
+        if let flow = input.foreignFlowScore {
+            if flow >= 70 { finalScore += 5.0 }
+            else if flow <= 30 { finalScore -= 5.0 }
+            finalScore = min(100, max(0, finalScore))
+        }
+
         let finalStance: MacroStance
         if finalScore < 30 { finalStance = .riskOff }
         else if finalScore < 50 { finalStance = .defensive }
         else if finalScore < 75 { finalStance = .cautious }
         else { finalStance = .riskOn }
-        
-        let reason = "Kur: %\(String(format: "%.2f", fxChange)) | \(politicalReason) | Global: \(Int(globalScore))"
+
+        let foreignTrace = input.foreignFlowScore.map { "Yabancı: \(Int($0))" } ?? "Yabancı: ?"
+        let reason = "Kur: %\(String(format: "%.2f", fxChange)) | \(politicalReason) | Global: \(Int(globalScore)) | \(foreignTrace)"
+
+        // P3-6: Score trace
+        print("[SirkiyeEngine] fxChange=\(String(format: "%.2f%%", fxChange)) localStress=\(Int(localStressScore)) global=\(Int(globalScore)) news=\(Int(newsSentimentScore)) political=\(politicalMode) foreign=\(input.foreignFlowScore.map { String(Int($0)) } ?? "nil") → final=\(Int(finalScore)) stance=\(finalStance)")
         
         let proposal = MacroProposal(
             proposer: "Sirkiye",

@@ -41,8 +41,9 @@ struct ModuleWeights: Codable, Sendable {
         
         let sum = atlas + orion + aether + d + p + h + ath
         guard sum > 0 else {
-            // Fallback: Safe Fundamentals + Macro Dominance
-            return ModuleWeights(atlas: 0.3, orion: 0.2, aether: 0.2, demeter: 0.1, phoenix: 0.1, hermes: 0.05, athena: 0.05)
+            // Fallback: Safe Fundamentals + Macro Dominance + Realistic News
+            // Hermes %5 → %15 (gerçek piyasa etkisiyle orantılı), atlas/phoenix azaltıldı
+            return ModuleWeights(atlas: 0.25, orion: 0.20, aether: 0.20, demeter: 0.10, phoenix: 0.05, hermes: 0.15, athena: 0.05)
         }
         
         return ModuleWeights(
@@ -94,7 +95,14 @@ final class ChironRegimeEngine: ObservableObject, @unchecked Sendable {
     
     private var _dynamicConfig: ChironOptimizationOutput?
     private let lock = NSLock()
-    
+
+    // 2026-05-05 H-66: Hysteresis state. Aether/Orion/chop'taki küçük dalgalanmalar
+    // rejim flip-flop'una neden oluyordu (ADX 24→26 → trend, 26→24 → chop).
+    // Çözüm: son rejimden çıkmak için daha geniş margin gerekiyor.
+    // Ayrıca: rejim değişiminde ağırlıklar aniden değil, blending ile geçer.
+    private var _lastDetectedRegime: MarketRegime = .neutral
+    private var _lastBlendedWeights: (core: ModuleWeights, pulse: ModuleWeights)?
+
     private var dynamicConfig: ChironOptimizationOutput? {
         get {
             lock.lock()
@@ -106,6 +114,29 @@ final class ChironRegimeEngine: ObservableObject, @unchecked Sendable {
             defer { lock.unlock() }
             _dynamicConfig = newValue
         }
+    }
+
+    private var lastDetectedRegime: MarketRegime {
+        get {
+            lock.lock()
+            defer { lock.unlock() }
+            return _lastDetectedRegime
+        }
+    }
+
+    private var lastBlendedWeights: (core: ModuleWeights, pulse: ModuleWeights)? {
+        get {
+            lock.lock()
+            defer { lock.unlock() }
+            return _lastBlendedWeights
+        }
+    }
+
+    private func updateLastRegime(_ regime: MarketRegime, weights: (core: ModuleWeights, pulse: ModuleWeights)) {
+        lock.lock()
+        defer { lock.unlock() }
+        _lastDetectedRegime = regime
+        _lastBlendedWeights = weights
     }
 
     private let persistenceKey = "ChironLearnedWeights"
@@ -128,19 +159,26 @@ final class ChironRegimeEngine: ObservableObject, @unchecked Sendable {
 
     /// ChironLearningSystem'in RL ağırlıklarını karar motoruna aktarır.
     /// recordTrade ve bootstrapFromHistory sonrası çağrılır — öğrenilen her şey artık gerçek kararlara yansır.
+    /// Faz 2.2: Güvenlik sınırı — her ağırlık [%3, %45] aralığında tutulur.
+    /// Aşırı uçarı öğrenme (örn. tek bir motor %80 ağırlığa ulaşması) engellenir.
     func applyLearningWeights(_ weights: ChironLearningSystem.OrionWeights) {
         let w = weights.normalized
+        let clampedTrend = max(0.03, min(0.45, w.trend))
+        let clampedMom = max(0.03, min(0.45, w.momentum))
+        let clampedRS = max(0.03, min(0.45, w.relativeStrength))
+        let clampedVol = max(0.03, min(0.45, w.volatility))
         let newOrion = ChironOptimizationInput.OrionWeights(
-            trend:       w.trend,
-            momentum:    w.momentum,
-            relStrength: w.relativeStrength,
-            volatility:  w.volatility,
+            trend:       clampedTrend,
+            momentum:    clampedMom,
+            relStrength: clampedRS,
+            volatility:  clampedVol,
             pullback:    max(0.03, w.structure * 0.15),
             riskReward:  max(0.03, w.pattern * 0.15)
         )
         let existingArgus = dynamicConfig?.newArgusWeights ?? ChironOptimizationInput.ArgusWeights(
-            core:  ModuleWeights(atlas: 0.30, orion: 0.20, aether: 0.20, demeter: 0.10, phoenix: 0.10, hermes: 0.05, athena: 0.05),
-            pulse: ModuleWeights(atlas: 0.25, orion: 0.25, aether: 0.20, demeter: 0.10, phoenix: 0.10, hermes: 0.05, athena: 0.05)
+            // Hermes %5 → %15 (core), %25 (pulse) — haber etkisi gerçekçi seviyeye çıkarıldı
+            core:  ModuleWeights(atlas: 0.25, orion: 0.20, aether: 0.20, demeter: 0.10, phoenix: 0.05, hermes: 0.15, athena: 0.05),
+            pulse: ModuleWeights(atlas: 0.15, orion: 0.20, aether: 0.15, demeter: 0.10, phoenix: 0.10, hermes: 0.25, athena: 0.05)
         )
         let updated = ChironOptimizationOutput(
             newArgusWeights:    existingArgus,
@@ -207,8 +245,9 @@ final class ChironRegimeEngine: ObservableObject, @unchecked Sendable {
     // UI için Global Piyasa Durumu (Neural Link buna bağlanacak)
     private var _lastGlobalResult: ChironResult = ChironResult(
         regime: .neutral,
-        coreWeights: ModuleWeights(atlas: 0.3, orion: 0.2, aether: 0.2, demeter: 0.1, phoenix: 0.1, hermes: 0.05, athena: 0.05),
-        pulseWeights: ModuleWeights(atlas: 0.1, orion: 0.3, aether: 0.1, demeter: 0.1, phoenix: 0.2, hermes: 0.15, athena: 0.05),
+        // Initial weights — Hermes %5/%15 → %15/%25 (haber etkisi gerçekçi)
+        coreWeights: ModuleWeights(atlas: 0.25, orion: 0.20, aether: 0.20, demeter: 0.10, phoenix: 0.05, hermes: 0.15, athena: 0.05),
+        pulseWeights: ModuleWeights(atlas: 0.10, orion: 0.25, aether: 0.10, demeter: 0.10, phoenix: 0.15, hermes: 0.25, athena: 0.05),
         explanationTitle: "SİSTEM BAŞLATILIYOR",
         explanationBody: "Global analiz motoru veri akışını bekliyor...",
         learningNotes: []
@@ -254,29 +293,41 @@ final class ChironRegimeEngine: ObservableObject, @unchecked Sendable {
     }
     
     private func internalEvaluate(context: ChironContext) -> ChironResult {
-        // 1. Detect Regime (Local or Global based on context)
+        // 1. Detect Regime (Local or Global based on context, with hysteresis)
+        let previousRegime = lastDetectedRegime
         let regime = detectRegime(context: context)
-        
+
         // 2. Select Base Weights
         var baseWeights = getBaseWeights(for: regime)
-        
+
         // 2.1 Apply Dynamic Logic
         if let dynamic = determineDynamicWeights() {
             baseWeights.core = blend(w1: baseWeights.core, w2: dynamic.core, factor: 0.6)
             baseWeights.pulse = blend(w1: baseWeights.pulse, w2: dynamic.pulse, factor: 0.6)
         }
-        
+
+        // 2.2 Smooth transition: rejim yeni değiştiyse, eski ağırlıklarla %30/%70 blend
+        // Bu, ani ağırlık zıplamasını engeller — Chiron'un öğrendiği nuance'ları korur
+        if previousRegime != regime, let previous = lastBlendedWeights {
+            baseWeights.core = blend(w1: previous.core, w2: baseWeights.core, factor: 0.7)
+            baseWeights.pulse = blend(w1: previous.pulse, w2: baseWeights.pulse, factor: 0.7)
+            print("🔄 Chiron rejim geçişi: \(previousRegime.rawValue) → \(regime.rawValue) (yumuşak geçiş)")
+        }
+
         // 3. Adjust for Availability
         let adjCore = adjustWeights(baseWeights.core, context: context)
         let adjPulse = adjustWeights(baseWeights.pulse, context: context)
-        
+
         // 4. Normalize
         let finalCore = adjCore.normalized
         let finalPulse = adjPulse.normalized
-        
+
+        // 4.1 State'i güncelle (sonraki çağrıda hysteresis için)
+        updateLastRegime(regime, weights: (finalCore, finalPulse))
+
         // 5. Generate Explanation
         let (title, body) = generateExplanation(regime: regime, context: context, finalCore: finalCore)
-        
+
         return ChironResult(
             regime: regime,
             coreWeights: finalCore,
@@ -296,22 +347,45 @@ final class ChironRegimeEngine: ObservableObject, @unchecked Sendable {
         let hermes = context.hermesScore ?? 50
         let chop = context.chopIndex ?? 50
         let vol = context.volatilityHint ?? 0
-        
-        // 1. Risk-Off
-        // Check Macro (Aether) and Volatility (Orion-based Vol or VIX)
-        // Aether 30'un altındaysa (Kötü Makro) veya Volatilite 25'in üstündeyse (Yüksek Volatilite) Risk-Off
-        if aether < 30 || vol > 25.0 { return .riskOff }
-        
+
+        // Hysteresis: son rejimden çıkmak için daha sıkı koşul gerekir
+        // (örn. trend'e girmek için orion>=60, ama trend'de kalmak için orion>=55).
+        // Bu, sınır değerlerde rejim flip-flop'unu engeller.
+        let last = lastDetectedRegime
+
+        // 1. Risk-Off — kritik durum, çıkışı zor
+        if last == .riskOff {
+            // Stay in riskOff unless clearly improved
+            if aether > 35 && vol < 22.0 {
+                // exit allowed, fall through
+            } else {
+                return .riskOff
+            }
+        } else {
+            if aether < 30 || vol > 25.0 { return .riskOff }
+        }
+
         // 2. News Shock
-        if context.isHermesAvailable && hermes >= 75 { return .newsShock }
-        
+        if last == .newsShock {
+            if context.isHermesAvailable && hermes >= 65 { return .newsShock }
+        } else {
+            if context.isHermesAvailable && hermes >= 75 { return .newsShock }
+        }
+
         // 3. Trend
-        // Tuned: Lowered threshold to 60 to catch trends earlier
-        if orion >= 60 && chop < 45 { return .trend }
-        
+        if last == .trend {
+            if orion >= 55 && chop < 50 { return .trend }
+        } else {
+            if orion >= 60 && chop < 45 { return .trend }
+        }
+
         // 4. Chop
-        if chop > 60 || (orion > 40 && orion < 60) { return .chop }
-        
+        if last == .chop {
+            if chop > 55 || (orion > 38 && orion < 62) { return .chop }
+        } else {
+            if chop > 60 || (orion > 40 && orion < 60) { return .chop }
+        }
+
         return .neutral
     }
     
@@ -323,9 +397,10 @@ final class ChironRegimeEngine: ObservableObject, @unchecked Sendable {
         
         switch regime {
         case .neutral:
+            // Hermes core 0.05→0.15, pulse 0.20→0.25 (haber etkisi gerçekçi seviyeye)
             return (
-                core: ModuleWeights(atlas: 0.25, orion: 0.15, aether: 0.20, demeter: 0.15, phoenix: 0.05, hermes: 0.05, athena: 0.15),
-                pulse: ModuleWeights(atlas: 0.05, orion: 0.25, aether: 0.10, demeter: 0.10, phoenix: 0.15, hermes: 0.20, athena: 0.05)
+                core: ModuleWeights(atlas: 0.20, orion: 0.15, aether: 0.20, demeter: 0.10, phoenix: 0.05, hermes: 0.15, athena: 0.15),
+                pulse: ModuleWeights(atlas: 0.05, orion: 0.20, aether: 0.10, demeter: 0.10, phoenix: 0.15, hermes: 0.25, athena: 0.05)
             )
         case .trend:
             return (

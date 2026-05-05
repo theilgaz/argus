@@ -21,7 +21,7 @@ struct ArgusDecisionEngine {
         athena: Double?,
         phoenixAdvice: PhoenixAdvice?,
         demeterScore: Double?,
-        marketData: (price: Double, equity: Double, currentRiskR: Double)?, 
+        marketData: (price: Double, equity: Double, currentRiskR: Double)?,
         traceContext: (price: Double, freshness: Double, source: String)? = nil,
         portfolioContext: (
             isInPosition: Bool,
@@ -31,8 +31,9 @@ struct ArgusDecisionEngine {
             lastManualActionType: SignalAction?
         )? = nil,
         config: ArgusConfig = .defaults,
-        candidateSource: CandidateSource = .watchlist // Added for Traceability
-    ) -> (AgoraTrace, ArgusDecisionResult) { 
+        candidateSource: CandidateSource = .watchlist, // Added for Traceability
+        priceChange24h: Double? = nil // Faz 3.5: Hermes sentiment-fiyat divergence tespiti için
+    ) -> (AgoraTrace, ArgusDecisionResult) {
         
         let now = Date()
         // --- KERNEL CONFIGURATION (Dynamically Loaded) ---
@@ -81,15 +82,36 @@ struct ArgusDecisionEngine {
         // Authority is applied once — in Phase 4 voting power, not here.
         let orionOp = opinion(from: .orion, score: orion, role: "Trend Hunter")
         let atlasOp = opinion(from: .atlas, score: atlas, role: "Value Sentinel")
-        let hermesOp = opinion(from: .hermes, score: hermes, role: "News Catalyst")
+        // Faz 3.5: Hermes sentiment-fiyat divergence tespiti.
+        // Pozitif haber + düşen fiyat = bir şey ters (örn. piyasa zaten haberi
+        // satın almış, ya da arka planda bilinmeyen negatif faktör var).
+        // Bu durumda Hermes skorunu nötre yaklaştır → yanlış öğrenmeyi azalt.
+        let adjustedHermes: Double? = {
+            guard let h = hermes, let pct = priceChange24h else { return hermes }
+            let bullishSentiment = h > 60
+            let bearishSentiment = h < 40
+            let bearishPrice = pct < -2.0
+            let bullishPrice = pct > 2.0
+            let divergent = (bullishSentiment && bearishPrice) || (bearishSentiment && bullishPrice)
+            if divergent {
+                // %70 nötre yaklaştır: 80 → 50 + (80-50)*0.3 = 59
+                let pulled = 50.0 + (h - 50.0) * 0.3
+                print("⚠️ Hermes divergence: \(symbol) sentiment=\(Int(h)) priceΔ24h=\(String(format: "%.1f%%", pct)) → adjusted=\(Int(pulled))")
+                return pulled
+            }
+            return h
+        }()
+        let hermesOp = opinion(from: .hermes, score: adjustedHermes, role: "News Catalyst")
         let aetherOp = opinion(from: .aether, score: aether, role: "Macro Guard")
         
-        // Phoenix Logic
+        // Phoenix Logic — confidence zaten 0-100 ölçeğinde (PhoenixLogic scoring).
+        // Slope yönü sinyali ters çevirmemeli (mean reversion düşen kanalda da geçerli),
+        // sadece hafif modülasyon yapmalı.
         let phoenixOp: ModuleOpinion
         if let ph = phoenixAdvice, ph.status == .active, let slope = ph.regressionSlope {
-             let direction = slope > 0 ? 1.0 : -1.0
-             let score = 50.0 + (direction * (ph.confidence / 2.0))
-             
+             let slopeBonus = slope > 0 ? 5.0 : -5.0  // Yükselen kanal hafif bonus, düşen hafif ceza
+             let score = max(0, min(100, ph.confidence + slopeBonus))
+
              phoenixOp = opinion(from: .phoenix, score: score, role: "Deep Scanner")
              dataSources["Phoenix"] = "Yahoo/Screener (\(ph.timeframe.rawValue))"
         } else {
@@ -523,11 +545,14 @@ struct ArgusDecisionEngine {
             // SignalAction (HeimdallTypes) zaten İngilizce rawValue dönüyor — "BUY"/"SELL"/"HOLD".
             // ArgusAction enum'u (Türkçe rawValue) ArgusGrandCouncil'in kendi obs path'inde
             // kullanılıyor. Burada finalAction tipi SignalAction.
+            // Faz 2.3: HOLD da observe edilir → kaçırılan fırsat öğrenmesi.
+            // SKIP/WAIT veri eksikliği veya geçici durum, gözlem değeri yok.
             let alkindusAction: String? = {
                 switch finalAction {
                 case .buy:  return "BUY"
                 case .sell: return "SELL"
-                case .hold, .skip, .wait: return nil
+                case .hold: return "HOLD"
+                case .skip, .wait: return nil
                 }
             }()
             // priceAtDecision = 0 olursa evaluateOutcome'da division-by-zero → wasCorrect
@@ -548,6 +573,10 @@ struct ArgusDecisionEngine {
                     currentPrice: price,
                     reasoning: rationale
                 )
+            } else if let action = alkindusAction {
+                // Görünürlük: actionable karar var ama fiyat yok → observation kayboluyor.
+                // Eski sürümde bu durum tamamen sessizdi, "neden öğrenmiyor" sorgusunda iz kalmıyordu.
+                print("⚠️ Alkindus observe SKIP (Engine) — \(symbol) action=\(action) price=\(marketData?.price ?? -1)")
             }
         }
         

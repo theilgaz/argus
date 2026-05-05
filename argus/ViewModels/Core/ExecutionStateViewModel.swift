@@ -166,8 +166,12 @@ final class ExecutionStateViewModel: ObservableObject {
         }
 
         let rationale = userInfo["rationale"] as? String ?? "Trade Brain Execution"
+        // ATR-bazlı SL/TP referansı (Faz 2.1): Alkindus'un R-multiple
+        // outcome grading'i için zorunlu. Eski sürüm nil geçiyordu.
+        let stopLossRef = userInfo["stopLoss"] as? Double
+        let takeProfitRef = userInfo["takeProfit"] as? Double
 
-        ArgusLogger.info("📥 BUY notification ALINDI: \(symbol) qty=\(String(format: "%.4f", quantity)) @ \(String(format: "%.2f", price)) — buy() çağrılıyor", category: "EXECUTION")
+        ArgusLogger.info("📥 BUY notification ALINDI: \(symbol) qty=\(String(format: "%.4f", quantity)) @ \(String(format: "%.2f", price)) SL=\(stopLossRef.map { String(format: "%.2f", $0) } ?? "—") TP=\(takeProfitRef.map { String(format: "%.2f", $0) } ?? "—") — buy() çağrılıyor", category: "EXECUTION")
 
         Task { @MainActor in
             guard let trade = self.buy(
@@ -175,8 +179,8 @@ final class ExecutionStateViewModel: ObservableObject {
                 quantity: quantity,
                 source: .autoPilot,
                 engine: .pulse,
-                stopLoss: nil,
-                takeProfit: nil,
+                stopLoss: stopLossRef,
+                takeProfit: takeProfitRef,
                 rationale: rationale,
                 referencePrice: price
             ) else {

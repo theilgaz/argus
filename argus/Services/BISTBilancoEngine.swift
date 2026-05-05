@@ -52,17 +52,30 @@ actor BISTBilancoEngine {
             quote = try? await quoteTask
             
             finansallar = convertBistToFinancials(bist: bistFin, quote: quote)
-            
-            print("✅ BIST Bilanço: \(sembol) veri alındı (BorsaPy). F/K: \(finansallar.peRatio ?? -1)")
+
+            // 2026-05-05 (Round 10) FIX: Eski sürüm `peRatio ?? -1` yazıyordu — F/K
+            // gerçekten yokken log'da "F/K: -1" sahte değer görünüyordu, kullanıcı
+            // "veri var ama eksi mi" sanıyordu. Şimdi: nil ise "N/A" yaz.
+            let fkLog = finansallar.peRatio.map { String(format: "%.1f", $0) } ?? "N/A"
+            print("✅ BIST Bilanço: \(sembol) veri alındı (BorsaPy). F/K: \(fkLog)")
         } catch {
             print("⚠️ BIST Bilanço: İş Yatırım API hatası: \(error)")
             print("📡 BIST Bilanço: Yahoo/FMP fallback deneniyor...")
-            
+
             // FALLBACK: HeimdallOrchestrator üzerinden Yahoo/FMP'den veri çek
             do {
                 quote = try? await HeimdallOrchestrator.shared.requestQuote(symbol: sembol)
                 finansallar = try await HeimdallOrchestrator.shared.requestFundamentals(symbol: sembol)
-                print("✅ BIST Bilanço: \(sembol) Yahoo/FMP fallback başarılı. F/K: \(finansallar.peRatio ?? -1)")
+                let fkLog = finansallar.peRatio.map { String(format: "%.1f", $0) } ?? "N/A"
+                let coverage: String = {
+                    var fields: [String] = []
+                    if finansallar.peRatio != nil { fields.append("P/E") }
+                    if finansallar.priceToBook != nil { fields.append("P/B") }
+                    if finansallar.returnOnEquity != nil { fields.append("ROE") }
+                    if finansallar.profitMargin != nil { fields.append("Net Margin") }
+                    return fields.isEmpty ? "boş veri" : "\(fields.count) alan: \(fields.joined(separator: ", "))"
+                }()
+                print("✅ BIST Bilanço: \(sembol) Yahoo/FMP fallback başarılı. F/K: \(fkLog) (\(coverage))")
             } catch let fallbackError {
                 print("❌ BIST Bilanço: Fallback da başarısız: \(fallbackError)")
                 throw BISTBilancoError.veriCekilemedi(

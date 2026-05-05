@@ -61,9 +61,25 @@ struct PhoenixLogic {
         let t2 = isDowntrend ? mid + (upper - mid) * 0.5 : upper
         
         // 4.5. R-SQUARED CHECK (Statistical Validity)
-        // SOFTENED: 0.5 was too strict, lowered to 0.25
+        // Faz 3.1: Kademeli güven modeli — sabit eşik yerine R²'ye göre derecelendirme.
+        //   R² ≥ 0.60: tam güvenilir kanal (penalty yok)
+        //   R² 0.45–0.60: iyi kanal (15% penalty)
+        //   R² 0.30–0.45: orta kanal (35% penalty)
+        //   R² 0.20–0.30: zayıf kanal (60% penalty, ama hâlâ sinyal taşır)
+        //   R² < 0.20: kanal yok sayılır → erken çıkış
         let rSquared = calculateRSquared(closes: analysisSlice.map { $0.close }, slope: slope, intercept: intercept)
-        let channelReliable = rSquared > 0.25  // Was 0.5 - too strict
+
+        let channelReliabilityMultiplier: Double
+        switch rSquared {
+        case 0.60...:    channelReliabilityMultiplier = 1.00
+        case 0.45..<0.60: channelReliabilityMultiplier = 0.85
+        case 0.30..<0.45: channelReliabilityMultiplier = 0.65
+        case 0.20..<0.30: channelReliabilityMultiplier = 0.40
+        default:
+            // R² < 0.20: kanal istatistiksel olarak anlamsız, sinyal üretme
+            return PhoenixAdvice.insufficient(symbol: symbol, timeframe: timeframe)
+        }
+        let channelReliable = rSquared >= 0.45 // UI/log için legacy flag
         
         // 5. Triggers
         guard let latest = analysisSlice.last else {
@@ -106,10 +122,8 @@ struct PhoenixLogic {
             score = 40 + (slope > 0 ? 10 : 0)  // Base 40-50 for uptrend
         }
         
-        // Channel reliability penalty
-        if !channelReliable {
-            score *= 0.7  // 30% penalty for unreliable channel
-        }
+        // Faz 3.1: Channel reliability — kademeli çarpan
+        score *= channelReliabilityMultiplier
         
         // Volume Spike (confirmation)
         let vol = latest.volume

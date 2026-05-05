@@ -14,6 +14,9 @@ actor AlkindusCalibrationEngine {
     // MARK: - Observe Decision (Called by ArgusDecisionEngine)
     
     /// Called when a new decision is made. Records it for future evaluation.
+    /// Faz 2.3: Artık HOLD ve VETOED kararları da kaydedilir (kaçırılan fırsat tespiti için).
+    /// Tek taraflı öğrenme (sadece BUY/SELL'den) önyargılıdır — HOLD'da fiyat patladıysa
+    /// bu bilgi de Chiron'un "ne zaman tetik çekmiyorum" pattern'ini öğrenmesine yardım eder.
     func observe(
         symbol: String,
         action: String,
@@ -22,8 +25,10 @@ actor AlkindusCalibrationEngine {
         currentPrice: Double,
         reasoning: String = ""
     ) async {
-        // Skip HOLD/ABSTAIN - only track actionable decisions
-        guard action == "BUY" || action == "SELL" else { return }
+        // Skip ancak gerçekten actionable olmayan veya snapshot yapılmaması gereken
+        // durumlar için. BUY/SELL/HOLD/VETOED kabul; SKIP/WAIT geçilir.
+        let acceptedActions: Set<String> = ["BUY", "SELL", "HOLD", "VETOED"]
+        guard acceptedActions.contains(action) else { return }
 
         let observation = PendingObservation(
             symbol: symbol,
@@ -54,25 +59,47 @@ actor AlkindusCalibrationEngine {
             return
         }
 
-        // Güncel fiyatları al (MainActor context'inde)
-        let currentPrices: [String: Double] = await MainActor.run {
+        // Olgunlaşmış horizon'u olan sembolleri derle — sadece bunların fiyatına ihtiyaç var.
+        // Henüz olgunlaşmamış observation'lar için API çağrısı israf olur.
+        let maturedSymbols: Set<String> = Set(pending.compactMap { obs in
+            let hasMature = obs.horizons.contains { obs.isHorizonMature($0) }
+            return hasMature ? obs.symbol : nil
+        })
+
+        // 1. Cache'den fiyat topla (MainActor context'inde)
+        var currentPrices: [String: Double] = await MainActor.run {
             let store = MarketDataStore.shared
             var prices: [String: Double] = [:]
-
-            for observation in pending {
-                if let quote = store.quotes[observation.symbol]?.value {
-                    prices[observation.symbol] = quote.currentPrice
+            for symbol in maturedSymbols {
+                if let quote = store.quotes[symbol]?.value, quote.currentPrice > 0 {
+                    prices[symbol] = quote.currentPrice
                 }
             }
-
             return prices
         }
 
+        // 2. Cache'de olmayan olgun semboller için API'dan çek (ensureQuote SWR pattern'i kullanır).
+        // Eski sürümde bu fallback yoktu → uzun süre quote'u sorgulanmamış semboller (örn. detay
+        // ekranı hiç açılmamışsa) için maturation sonsuza dek pending kalıyordu.
+        let missingSymbols = maturedSymbols.subtracting(currentPrices.keys)
+        if !missingSymbols.isEmpty {
+            print("👁️ Alkindus: \(missingSymbols.count) olgun sembol için fiyat cache'de yok, API'dan çekiliyor...")
+            for symbol in missingSymbols {
+                let dataValue = await MarketDataStore.shared.ensureQuote(symbol: symbol)
+                if let price = dataValue.value?.currentPrice, price > 0 {
+                    currentPrices[symbol] = price
+                    print("👁️ Alkindus: \(symbol) fiyat API'dan alındı: \(price)")
+                } else {
+                    print("⚠️ Alkindus: \(symbol) için fiyat alınamadı, karar sonraki turda değerlendirilecek")
+                }
+            }
+        }
+
         // Fiyatı olan kararlar değerlendirilir, olmayanlar atlanır — processMaturedDecisions her
-        // sembol için ayrı kontrol yapıyor (line 96: guard let currentPrice). Eski guard burada
-        // HİÇBİR kararın değerlendirilmesini engelliyordu; kaldırıldı.
-        if currentPrices.isEmpty {
-            print("⚠️ Alkindus: Fiyat verisi henüz yok — olgun kararlar sonraki turda değerlendirilecek")
+        // sembol için ayrı kontrol yapıyor. Eski guard burada HİÇBİR kararın değerlendirilmesini
+        // engelliyordu; kaldırıldı.
+        if currentPrices.isEmpty && !maturedSymbols.isEmpty {
+            print("⚠️ Alkindus: Olgun semboller var (\(maturedSymbols.count)) ama hiçbiri için fiyat alınamadı")
         }
 
         let evaluatedCount = await processMaturedDecisions(currentPrices: currentPrices)
@@ -98,12 +125,16 @@ actor AlkindusCalibrationEngine {
                 // Get current price
                 guard let currentPrice = currentPrices[observation.symbol] else { continue }
                 
-                // Evaluate outcome
-                let wasCorrect = evaluateOutcome(
+                // Evaluate outcome — R-multiple grade ile (Faz 2.1)
+                let outcome = evaluateOutcomeDetailed(
                     action: observation.action,
                     entryPrice: observation.priceAtDecision,
                     currentPrice: currentPrice
                 )
+                let wasCorrect = outcome.wasCorrect
+                if outcome.grade == .excellent || outcome.grade == .stopped {
+                    print("📊 Alkindus: \(observation.symbol) \(observation.action) horizon=\(horizon)d → \(outcome.grade.rawValue.uppercased()) (entry=\(String(format: "%.2f", observation.priceAtDecision)), now=\(String(format: "%.2f", currentPrice)))")
+                }
                 
                 // Update calibration for each module that voted (with weighted brackets)
                 for (module, score) in observation.moduleScores {
@@ -158,6 +189,33 @@ actor AlkindusCalibrationEngine {
 
                 let result = wasCorrect ? "✅ DOĞRU" : "❌ YANLIŞ"
                 print("👁️ Alkindus: T+\(horizon) değerlendirme - \(observation.symbol) \(result)")
+
+                // Faz 2.2: Alkindus → Chiron köprüsü.
+                // Sadece BUY observation'ları + non-breakeven sonuçlar için anlamlı.
+                // Trade kapatma çok seyrek; horizon eval daha hızlı. Bu köprü
+                // olmadan Chiron sadece kapatılan trade'lerden öğreniyordu — şimdi
+                // 7-15 günlük horizon outcome'lar da öğrenmeye katkı sağlıyor.
+                if observation.action == "BUY" && outcome.grade != .breakeven {
+                    let chironOutcome: ChironLearningSystem.TradeExperience.TradeOutcome
+                    switch outcome.grade {
+                    case .excellent, .good: chironOutcome = .winner
+                    case .loss, .stopped:   chironOutcome = .loser
+                    case .breakeven:        chironOutcome = .scratch
+                    }
+                    let symbol = observation.symbol
+                    let priceChangePct = ((currentPrice - observation.priceAtDecision) / max(observation.priceAtDecision, 0.0001)) * 100
+                    let durationSec = TimeInterval(horizon * 86400)
+                    Task.detached(priority: .background) {
+                        let weights = await ChironLearningSystem.shared.getCurrentState().weights
+                        await ChironLearningSystem.shared.recordTrade(
+                            symbol: symbol,
+                            weights: weights,
+                            outcome: chironOutcome,
+                            duration: durationSec,
+                            profitPercent: priceChangePct
+                        )
+                    }
+                }
 
                 // Post-mortem: her modülün tezi tutup tutmadığını belirle ve RAG'e kaydet
                 let priceChange = ((currentPrice - observation.priceAtDecision) / max(observation.priceAtDecision, 0.0001)) * 100
@@ -235,20 +293,81 @@ actor AlkindusCalibrationEngine {
     }
     
     // MARK: - Outcome Evaluation
-    
+
+    /// Trade outcome derecelendirmesi — R-multiple bazlı (Faz 2.1).
+    /// Eski sistem sadece "fiyat yukarı/aşağı" diye bool döndürüyordu;
+    /// %0.5'lik artış ile %20'lik artış aynı sayılıyordu. Bu, Alkindus'un
+    /// "iyi karar" vs "harika karar"ı ayırt etmesini engelliyordu.
+    enum TradeOutcomeGrade: String, Codable {
+        case excellent  // 2R+ kazanç (sinyal mükemmel)
+        case good       // 1-2R kazanç (sinyal iyi)
+        case breakeven  // 0-1R hareket (nötr)
+        case loss       // 0-1R kayıp (sinyal zayıf)
+        case stopped    // 1R+ kayıp (sinyal kötü)
+
+        var isPositive: Bool { self == .excellent || self == .good }
+    }
+
     private func evaluateOutcome(action: String, entryPrice: Double, currentPrice: Double) -> Bool {
+        evaluateOutcomeDetailed(action: action, entryPrice: entryPrice, currentPrice: currentPrice).wasCorrect
+    }
+
+    /// Detaylı sonuç değerlendirmesi: hem boolean (geriye uyumlu) hem grade.
+    /// 1R = %3 standart risk birimi (ATR-tipi varsayım).
+    /// Faz 2.3: HOLD/VETOED için kaçırılan fırsat tespiti.
+    private func evaluateOutcomeDetailed(action: String, entryPrice: Double, currentPrice: Double)
+        -> (wasCorrect: Bool, grade: TradeOutcomeGrade) {
         let change = (currentPrice - entryPrice) / entryPrice
-        
+        let assumedRiskUnit = 0.03
+
+        let basicCorrect: Bool
+        let directionalChange: Double
+
         switch action {
         case "BUY":
-            // BUY is correct if price went up
-            return change > 0
+            basicCorrect = change > 0
+            directionalChange = change
         case "SELL":
-            // SELL is correct if price went down (or we avoided loss)
-            return change < 0
+            basicCorrect = change < 0
+            directionalChange = -change
+        case "HOLD":
+            // HOLD doğru karardır eğer fiyat 1R'den fazla SAPMAMIŞSA (sakin kalmak iyi).
+            // Yanlış karardır eğer 2R+ kaçırılan fırsat varsa.
+            basicCorrect = abs(change) < assumedRiskUnit
+            // HOLD'da grade tersine: az hareket = good, büyük hareket = stopped (kaçırıldı)
+            let absChange = abs(change) / assumedRiskUnit
+            let grade: TradeOutcomeGrade
+            switch absChange {
+            case 0..<0.5:  grade = .excellent  // %1.5 altı: HOLD mükemmel
+            case 0.5..<1:  grade = .good       // %1.5-3: HOLD iyi
+            case 1..<2:    grade = .breakeven  // %3-6: ortalama
+            case 2..<3:    grade = .loss       // %6-9: kaçırılan fırsat
+            default:       grade = .stopped    // %9+: ciddi kaçırılan fırsat
+            }
+            return (basicCorrect, grade)
+        case "VETOED":
+            // VETO doğru karardır eğer veto edilen yönde fiyat KÖTÜ gitseydi.
+            // Şu anki bilgiyle veto'nun yönünü bilmiyoruz (BUY veto mu, SELL veto mu).
+            // Pragmatik: VETO sonrası fiyat sakin kaldıysa veya düştüyse veto doğru.
+            basicCorrect = change <= assumedRiskUnit
+            let absChange = abs(change) / assumedRiskUnit
+            let grade: TradeOutcomeGrade = absChange < 1 ? .good : .loss
+            return (basicCorrect, grade)
         default:
-            return false
+            return (false, .breakeven)
         }
+
+        // BUY/SELL için R-multiple grade — 1R = %3 (standart risk birimi varsayımı)
+        let rMultiple = directionalChange / assumedRiskUnit
+        let grade: TradeOutcomeGrade
+        switch rMultiple {
+        case 2...:        grade = .excellent
+        case 1..<2:       grade = .good
+        case 0..<1:       grade = .breakeven
+        case -1..<0:      grade = .loss
+        default:          grade = .stopped
+        }
+        return (basicCorrect, grade)
     }
     
     // MARK: - Score to Bracket Mapping

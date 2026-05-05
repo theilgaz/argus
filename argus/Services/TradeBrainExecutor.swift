@@ -296,7 +296,37 @@ class TradeBrainExecutor: ObservableObject {
                         continue
                     }
 
-                    if decision.confidence < profile.minDecisionConfidence {
+                    // Faz 3.3: BorsaPy circuit açıkken BIST sinyallerinin confidence'ı %30 düşürülür.
+                    // Yahoo fallback aktif ama veri 5+ dakika gecikmeli olabilir → karar kalitesi düşük.
+                    let isBistSymForConf = SymbolResolver.shared.isBistSymbol(symbol)
+                    let dataQualityPenalty: Double = (isBistSymForConf && BorsaPyProvider.shared.isCircuitOpen()) ? 0.70 : 1.0
+
+                    // Faz 3.4: Horizon çakışma çözümü. Core (uzun) ve Pulse (kısa) skorlar
+                    // aynı yönü gösteriyorsa teyit bonusu; çelişiyorlarsa ceza.
+                    //   her ikisi de >=50 veya her ikisi <50 → uyum (1.10× — teyit)
+                    //   biri >60 diğer <40 (büyük çelişki) → 0.65× (ciddi ceza)
+                    //   küçük çelişki (uyumsuz ama uçlarda değil) → 0.85×
+                    let coreScore = decision.finalScoreCore
+                    let pulseScore = decision.finalScorePulse
+                    let bothBullish = coreScore >= 50 && pulseScore >= 50
+                    let bothBearish = coreScore < 50 && pulseScore < 50
+                    let conflictBig = (coreScore >= 60 && pulseScore < 40) || (pulseScore >= 60 && coreScore < 40)
+                    let horizonAgreementMultiplier: Double
+                    if bothBullish || bothBearish { horizonAgreementMultiplier = 1.10 }
+                    else if conflictBig { horizonAgreementMultiplier = 0.65 }
+                    else { horizonAgreementMultiplier = 0.85 }
+
+                    let effectiveConfidence = min(0.99, decision.confidence * dataQualityPenalty * horizonAgreementMultiplier)
+                    if dataQualityPenalty < 1.0 {
+                        debugSkip(symbol: symbol, reason: "BorsaPy circuit açık → BIST confidence %30 düşürüldü")
+                    }
+                    if horizonAgreementMultiplier != 1.10 && horizonAgreementMultiplier != 1.0 {
+                        ArgusLogger.info("TradeBrainExecutor: \(symbol) horizon \(horizonAgreementMultiplier < 0.85 ? "ÇELİŞKİ" : "uyumsuzluk") (Core=\(Int(coreScore)) Pulse=\(Int(pulseScore)) → ×\(String(format: "%.2f", horizonAgreementMultiplier)))", category: "TRADEBRAIN")
+                    } else if horizonAgreementMultiplier == 1.10 {
+                        ArgusLogger.info("TradeBrainExecutor: \(symbol) horizon teyidi (Core=\(Int(coreScore)) Pulse=\(Int(pulseScore)) → ×1.10)", category: "TRADEBRAIN")
+                    }
+
+                    if effectiveConfidence < profile.minDecisionConfidence {
                         skippedLowConfidence += 1
                         await OpportunityCostTracker.shared.recordSkip(
                             symbol: symbol, price: currentPrice,
@@ -304,7 +334,7 @@ class TradeBrainExecutor: ObservableObject {
                         )
                         debugSkip(
                             symbol: symbol,
-                            reason: "güven düşük (\(String(format: "%.2f", decision.confidence)) < \(String(format: "%.2f", profile.minDecisionConfidence)))"
+                            reason: "güven düşük (\(String(format: "%.2f", effectiveConfidence)) < \(String(format: "%.2f", profile.minDecisionConfidence)))"
                         )
                         continue
                     }
@@ -514,20 +544,40 @@ class TradeBrainExecutor: ObservableObject {
             finalMultiplier = 1.0  // profile.allocationMultiplier zaten küçük (0.15-0.40)
             ArgusLogger.info("🎯 CrisisAlpha bypass: rejim bloğu atlandı, profile çarpanı geçerli", category: "TRADEBRAIN")
         } else {
-            finalMultiplier = regimeMultiplier * kellyMultiplier * correlMultiplier
-            ArgusLogger.info("📐 Çarpanlar: Rejim×\(String(format: "%.2f", regimeMultiplier)) Kelly×\(String(format: "%.2f", kellyMultiplier)) Korel×\(String(format: "%.2f", correlMultiplier)) → Final×\(String(format: "%.2f", finalMultiplier))", category: "TRADEBRAIN")
-
-            guard finalMultiplier > 0 else {
+            // 2026-05-05 FIX B (multiplier floor): 5 katmanlı kaskad
+            // (basePercent × profile × regime × kelly × correl) tipik durumda
+            // %0.1–%1 arası toplam üretiyor; allocation eriyor, minTradeAmount altına
+            // düşüyor, sembol "Yetersiz bakiye" RED'i yiyor. Asıl niyet rejim bloğu
+            // değil, sadece kaskad çarpanların çarpılmasından kaynaklanan dip.
+            //
+            // Çözüm: regimeMultiplier == 0 (deep risk-off) durumu hâlâ tam blok;
+            // ama nominal (>0) raw cumulative %20 altına düşse bile floor uygulanır.
+            let rawCumulative = regimeMultiplier * kellyMultiplier * correlMultiplier
+            guard rawCumulative > 0 else {
                 log("🛑 \(symbol): Rejim bloğu — Aether:\(Int(regimeAetherScore)) Rejim:\(currentRegime.rawValue)")
+                await TradeBrainExecutionTracker.shared.recordSkip(
+                    symbol: symbol,
+                    reason: "Rejim bloğu (Aether=\(Int(regimeAetherScore)))"
+                )
                 return
             }
+            finalMultiplier = max(0.20, rawCumulative)
+            ArgusLogger.info(
+                "📐 Çarpanlar: Rejim×\(String(format: "%.2f", regimeMultiplier)) Kelly×\(String(format: "%.2f", kellyMultiplier)) Korel×\(String(format: "%.2f", correlMultiplier)) → Raw×\(String(format: "%.3f", rawCumulative)) → Final×\(String(format: "%.2f", finalMultiplier)) [floor 0.20]",
+                category: "TRADEBRAIN"
+            )
         }
 
         let allocation: Double
         let minTradeAmount: Double
 
         if isBist {
-            let basePercent = 0.05
+            // 2026-05-05 FIX D: BIST basePercent 0.05 → 0.08. Eski sürümde Global %10 / BIST %5
+            // ayrımı için kod'da gerekçe yoktu; FIX B (multiplier floor 0.20) ve FIX C+E
+            // (notional + whole-share guard) ile alt sınır artık güvenle korunduğu için BIST'i
+            // Global'e yakınsadık. Bu, BIST aksiyonlarının "yetersiz allocation" RED'inden
+            // kurtulup gerçek pozisyon açmasını mümkün kılar.
+            let basePercent = 0.08
             let adjustedPercent = basePercent * profile.allocationMultiplier * finalMultiplier
             allocation = availableBalance * adjustedPercent
             minTradeAmount = 1000.0
@@ -549,14 +599,51 @@ class TradeBrainExecutor: ObservableObject {
                 category: "TRADEBRAIN"
             )
         }
-        
+
         guard allocation >= minTradeAmount else {
             log("⚠️ \(symbol): Yetersiz bakiye (gereken: \(minTradeAmount), mevcut: \(allocation))")
             ArgusLogger.error("executeBuy: Yetersiz bakiye - Gereken: \(minTradeAmount), Mevcut: \(allocation)", category: "TRADEBRAIN")
+            await TradeBrainExecutionTracker.shared.recordSkip(
+                symbol: symbol,
+                reason: "Yetersiz allocation (\(isBist ? "₺" : "$")\(Int(allocation)) < min \(Int(minTradeAmount)))"
+            )
             return
         }
 
+        // 2026-05-05 FIX C+E (notional + whole-share guard):
+        // allocation kontrolü tek başına yetmiyor — BIST'te round-down sonrası kesirli paylar
+        // 0'a yuvarlanabiliyor (örn. ₺1.500 / ₺2.000 = 0.75 pay). Bazı brokerlar kesirli kabul
+        // etmiyor; round-down'dan sonra nominal trade boyutunu (quantity × price) doğrula.
         var proposedQuantity = allocation / currentPrice
+        if isBist {
+            // BIST: tam pay zorunlu — kesirli pay invalid (broker tarafında reject riski)
+            proposedQuantity = floor(proposedQuantity)
+            guard proposedQuantity >= 1 else {
+                log("⚠️ \(symbol): Round-down 0 — fiyat ₺\(currentPrice) çok yüksek, allocation ₺\(Int(allocation)) tek pay alamıyor")
+                ArgusLogger.error(
+                    "executeBuy: Round-down 0 - Fiyat: \(currentPrice), Allocation: \(allocation)",
+                    category: "TRADEBRAIN"
+                )
+                await TradeBrainExecutionTracker.shared.recordSkip(
+                    symbol: symbol,
+                    reason: "Round-down 0 (fiyat ₺\(Int(currentPrice)) çok yüksek)"
+                )
+                return
+            }
+        }
+        let effectiveNotional = proposedQuantity * currentPrice
+        guard effectiveNotional >= minTradeAmount else {
+            log("⚠️ \(symbol): Notional yetersiz — \(proposedQuantity) pay × \(isBist ? "₺" : "$")\(currentPrice) = \(isBist ? "₺" : "$")\(Int(effectiveNotional)) < min \(Int(minTradeAmount))")
+            ArgusLogger.error(
+                "executeBuy: Notional yetersiz - \(effectiveNotional) < \(minTradeAmount)",
+                category: "TRADEBRAIN"
+            )
+            await TradeBrainExecutionTracker.shared.recordSkip(
+                symbol: symbol,
+                reason: "Notional yetersiz (\(isBist ? "₺" : "$")\(Int(effectiveNotional)) < \(Int(minTradeAmount)))"
+            )
+            return
+        }
 
         // 2. RİSK KONTROLÜ
         // FIX: portfolioValue sadece aynı pazar trade'lerini içermeli (BIST veya Global ayrı)
@@ -574,6 +661,10 @@ class TradeBrainExecutor: ObservableObject {
         guard heatMultiplier > 0 else {
             log("🔥 \(symbol): Portföy ısı limiti (\(heatLevel.rawValue)) — yeni alım durduruldu")
             print("🔥 executeBuy: Portföy ısı bloğu (\(heatLevel.rawValue)) — alım iptal")
+            await TradeBrainExecutionTracker.shared.recordSkip(
+                symbol: symbol,
+                reason: "Portföy ısı limiti (\(heatLevel.rawValue))"
+            )
             return
         }
         if heatMultiplier < 1.0 {
@@ -597,6 +688,11 @@ class TradeBrainExecutor: ObservableObject {
         if !riskCheck.canTrade {
             log("🛑 \(symbol): Risk engeli - \(riskCheck.blockers.joined(separator: ", "))")
             ArgusLogger.error("executeBuy: Risk engeli - \(riskCheck.blockers.joined(separator: ", "))", category: "TRADEBRAIN")
+            let firstBlocker = riskCheck.blockers.first ?? "bilinmeyen"
+            await TradeBrainExecutionTracker.shared.recordSkip(
+                symbol: symbol,
+                reason: "Risk gate: \(firstBlocker)"
+            )
             return
         }
         
@@ -638,6 +734,10 @@ class TradeBrainExecutor: ObservableObject {
                 if snapshot.action != .buy {
                     log("🇹🇷 BIST Vali VETO: \(symbol) -> \(snapshot.reason)")
                     ArgusLogger.error("executeBuy: BIST Vali VETO - \(snapshot.reason)", category: "TRADEBRAIN")
+                    await TradeBrainExecutionTracker.shared.recordSkip(
+                        symbol: symbol,
+                        reason: "BIST Vali: \(snapshot.reason)"
+                    )
                     return // İŞLEM İPTAL
                 } else {
                     log("🇹🇷 BIST Vali ONAY: \(symbol)")
@@ -662,6 +762,10 @@ class TradeBrainExecutor: ObservableObject {
                 log("   ⚠️ \(warning)")
                 ArgusLogger.warn("executeBuy: \(warning)", category: "TRADEBRAIN")
             }
+            await TradeBrainExecutionTracker.shared.recordSkip(
+                symbol: symbol,
+                reason: "Takvim engeli (kritik olay)"
+            )
             return
         }
         
@@ -681,12 +785,20 @@ class TradeBrainExecutor: ObservableObject {
             hermes: nil as Double?
         )
         
+        // ATR-bazlı SL/TP referans seviyeleri.
+        // Bu seviyeler execution'da KULLANILMIYOR — Alkindus'un trade outcome'larını
+        // R-multiple olarak değerlendirmesi için referans noktalar (Faz 2.1).
+        // ATR yoksa fiyatın %3'ü fallback (volatil hisseler için makul ortalama).
+        let atr = decision.phoenixAdvice?.atr ?? (currentPrice * 0.03)
+        let computedStopLoss = currentPrice - (atr * 1.5)
+        let computedTakeProfit = currentPrice + (atr * 2.5) // 1:1.67 R:R
+
         let signal = AutoPilotSignal(
             action: .buy,
             quantity: proposedQuantity,
             reason: decision.reasoning,
-            stopLoss: nil,
-            takeProfit: nil,
+            stopLoss: computedStopLoss,
+            takeProfit: computedTakeProfit,
             strategy: .pulse,
             trimPercentage: nil
         )
@@ -712,6 +824,10 @@ class TradeBrainExecutor: ObservableObject {
         case .rejected(let reason):
             log("🛡️ \(symbol): Governor VETO - \(reason)")
             ArgusLogger.error("executeBuy: ExecutionGovernor VETO - \(reason)", category: "TRADEBRAIN")
+            await TradeBrainExecutionTracker.shared.recordSkip(
+                symbol: symbol,
+                reason: "Governor VETO: \(reason)"
+            )
             return
         }
         
@@ -732,7 +848,9 @@ class TradeBrainExecutor: ObservableObject {
                 "symbol": symbol,
                 "quantity": proposedQuantity,
                 "price": currentPrice,
-                "rationale": rationale
+                "rationale": rationale,
+                "stopLoss": computedStopLoss,
+                "takeProfit": computedTakeProfit
             ]
         )
 

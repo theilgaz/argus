@@ -207,6 +207,11 @@ extension ArgusGrandDecision {
     /// köprü silinir, gerçek skor alanı kullanılır.
     var finalScoreCore: Double { confidence }
 
+    /// Pulse skoru: Orion ağırlıklı (teknik-önce) formülü mirror'lar.
+    /// ArgusDecisionEngine finalScorePulse = orion*0.60 + demeter*0.20 + aether*0.20
+    /// `demeterScore` henüz 0 döndüğü için bu köprü aether ile tamamlar.
+    var finalScorePulse: Double { orionScore * 0.60 + demeterScore * 0.20 + aetherScore * 0.20 }
+
     /// `ArgusAction` (5'li koleksiyon) → `SignalAction` (UI'nın beklediği 5'li
     /// koleksiyon). `neutral` ekrana "Bekle" kelimesiyle düştüğü için `.hold`
     /// olarak eşliyoruz. Tüm `ArgusAction` case'leri kapsandığı için non-optional;

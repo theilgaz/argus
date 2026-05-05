@@ -9,7 +9,7 @@ class FundamentalScoreEngine {
     
     private init() {}
     
-    func calculate(data: FinancialsData, riskScore: Double? = nil) -> FundamentalScoreResult? {
+    func calculate(data: FinancialsData, riskScore: Double? = nil, sector: String? = nil) -> FundamentalScoreResult? {
         
         // SPECIAL HANDLING: ETF
         if data.isETF {
@@ -33,15 +33,15 @@ class FundamentalScoreEngine {
         // --- 1. Karlılık (Profitability) ---
         var profitScores: [Double] = []
         
-        // Net Marj
+        // Net Marj (sektör-adjusted eşikler)
         let netMargin = (netIncome / revenue) * 100
-        profitScores.append(scoreMetric(value: netMargin, thresholds: [0, 5, 15, 25]))
+        profitScores.append(scoreMetric(value: netMargin, thresholds: marginThresholds(for: sector)))
         metricsUsed += 1
-        
-        // ROE
+
+        // ROE (sektör-adjusted eşikler)
         if equity > 0 {
             let roe = (netIncome / equity) * 100
-            profitScores.append(scoreMetric(value: roe, thresholds: [0, 10, 15, 25]))
+            profitScores.append(scoreMetric(value: roe, thresholds: roeThresholds(for: sector)))
             metricsUsed += 1
         }
         
@@ -201,6 +201,54 @@ class FundamentalScoreEngine {
         "Utilities": 18.0
     ]
     
+    // Sektör bazlı net marj eşikleri — her sektörün yapısal kâr marjı farklı.
+    // Bankacılık düşük marjlı ama büyük hacimli, teknoloji yüksek marjlı.
+    private let sectorMarginThresholds: [String: [Double]] = [
+        "Financials": [0, 1, 3, 8],
+        "Energy": [0, 3, 8, 15],
+        "Consumer Staples": [0, 2, 5, 12],
+        "Consumer Discretionary": [0, 3, 8, 18],
+        "Technology": [0, 8, 18, 30],
+        "Communication Services": [0, 5, 12, 22],
+        "Industrials": [0, 4, 10, 20],
+        "Healthcare": [0, 5, 12, 25],
+        "Materials": [0, 3, 8, 16],
+        "Real Estate": [0, 5, 15, 30],
+        "Utilities": [0, 3, 8, 15],
+        // BIST sektör isimleri (Türkçe olabilir)
+        "Bankacılık": [0, 1, 3, 8],
+        "Holding": [0, 2, 5, 12],
+        "Enerji": [0, 3, 8, 15],
+        "Perakende": [0, 1, 4, 10],
+        "Teknoloji": [0, 8, 18, 30],
+        "Savunma": [0, 5, 12, 22],
+        "Sanayi": [0, 4, 10, 20],
+        "Telekom": [0, 5, 12, 22],
+    ]
+
+    private let sectorROEThresholds: [String: [Double]] = [
+        "Financials": [0, 8, 12, 18],
+        "Energy": [0, 5, 10, 18],
+        "Technology": [0, 12, 20, 30],
+        "Healthcare": [0, 8, 15, 25],
+        "Consumer Staples": [0, 8, 12, 18],
+        "Industrials": [0, 6, 12, 20],
+        "Bankacılık": [0, 8, 12, 18],
+        "Teknoloji": [0, 12, 20, 30],
+        "Savunma": [0, 8, 15, 25],
+        "Sanayi": [0, 6, 12, 20],
+    ]
+
+    private func marginThresholds(for sector: String?) -> [Double] {
+        guard let sector else { return [0, 5, 15, 25] }
+        return sectorMarginThresholds[sector] ?? [0, 5, 15, 25]
+    }
+
+    private func roeThresholds(for sector: String?) -> [Double] {
+        guard let sector else { return [0, 10, 15, 25] }
+        return sectorROEThresholds[sector] ?? [0, 10, 15, 25]
+    }
+
     private func calculateValuationGrade(data: FinancialsData) -> String? {
         guard let pe = data.peRatio, pe > 0 else {
             // Fallback to P/B if no P/E
