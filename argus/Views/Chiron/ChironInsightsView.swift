@@ -18,51 +18,101 @@ struct ChironInsightsView: View {
     @State private var learnedWeights: OrionWeightSnapshot?
     @State private var learningStatus: (hasLearning: Bool, confidence: Double, note: String)?
 
+    // 2026-05-04 H-62: Chiron öğrenme tetikleyicisi state'i.
+    // Eski sürümde manuel buton yoktu — yalnızca arka planda zamanlanmış
+    // job çalışıyordu, kullanıcı "şimdi öğren" diyemiyordu.
+    @State private var isLearning = false
+    @State private var actionFlash: String? = nil
+    @State private var lastLearningAt: Date? = nil
+
+    // 2026-05-04 H-61: Settings → Motor kalibrasyonu → ChironInsightsView
+    // push'unda parent'ın `.navigationBarHidden(true)` ayarı sistem geri
+    // butonunu gizliyordu. Çözüm: kendi inline top nav'ını koy, dismiss
+    // ile pop et. router.navigationStack boş olsa bile (NavigationLink
+    // path'i değiştirmiyor) `\.dismiss` push'u doğru pop'lar.
+    @Environment(\.dismiss) private var dismiss
+
     init(symbol: String? = nil) {
         self.symbol = symbol
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                headerSection
+        VStack(spacing: 0) {
+            inlineTopNav
 
-                if let status = learningStatus {
-                    learningStatusCard(status)
+            ScrollView {
+                VStack(spacing: 16) {
+                    headerSection
+
+                    if let status = learningStatus {
+                        learningStatusCard(status)
+                    }
+
+                    if let weights = learnedWeights {
+                        learnedWeightsCard(weights)
+                    }
+
+                    if !symbolStats.isEmpty || !globalStats.isEmpty {
+                        componentPerformanceSection
+                    }
+
+                    actionsCard
+
+                    Color.clear.frame(height: 24)
                 }
-
-                if let weights = learnedWeights {
-                    learnedWeightsCard(weights)
-                }
-
-                if !symbolStats.isEmpty || !globalStats.isEmpty {
-                    componentPerformanceSection
-                }
-
-                Color.clear.frame(height: 24)
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
         }
-        .background(InstitutionalTheme.Colors.background)
-        .navigationTitle("Rejim öğrenme")
-        .navigationBarTitleDisplayMode(.inline)
+        .background(InstitutionalTheme.Colors.background.ignoresSafeArea())
+        .navigationBarHidden(true)
         .onAppear { loadData() }
     }
 
-    // MARK: - Header
+    // MARK: - Inline top nav (2026-05-04 H-61)
+    //
+    // Sade üst nav: chevron geri + "Rejim öğrenme" başlık. Parent'ın
+    // SettingsSubPage'i `.navigationBarHidden(true)` yaptığı için sistem
+    // bar'ına güvenemiyoruz; her durumda kendi geri butonumuzu çiziyoruz.
+    private var inlineTopNav: some View {
+        HStack(spacing: 8) {
+            Button(action: { dismiss() }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .frame(width: 36, height: 36)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Geri")
 
-    private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 4) {
             Text("Rejim öğrenme")
-                .font(.system(size: 22, weight: .medium))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-            Text(symbol != nil ? "Sembol: \(symbol!)" : "Tüm portföy")
-                .font(.system(size: 13))
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                .accessibilityAddTraits(.isHeader)
+
+            Spacer()
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.bottom, 4)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(InstitutionalTheme.Colors.surface1)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
+        }
+    }
+
+    // MARK: - Header
+    //
+    // 2026-05-04 H-61: H1 başlık inline top nav'a taşındığından buradan
+    // kaldırıldı; sadece bağlam altyazısı kalıyor (sembol / tüm portföy).
+    private var headerSection: some View {
+        Text(symbol != nil ? "Sembol: \(symbol!)" : "Tüm portföy")
+            .font(.system(size: 13))
+            .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.bottom, 4)
     }
 
     // MARK: - Öğrenme Durumu Card
@@ -257,6 +307,125 @@ struct ChironInsightsView: View {
         case "volatility": return "Volatilite"
         default: return component.capitalized
         }
+    }
+
+    // MARK: - Aksiyonlar
+    //
+    // 2026-05-04 H-62: "Şimdi öğren" tetikleyicisi.
+    // Buton, sembol verilmişse `analyzeSymbol(symbol)`, yoksa
+    // `runFullAnalysis()` çağırır. ChironLearningJob:
+    //   1) ChironDataLakeService'ten trade history yükler (en az 5 trade)
+    //   2) %95 güven aralığı kontrolü yapar (>15% ise erteler)
+    //   3) Pulse + Corse motorlarını ayrı analiz eder
+    //   4) 5+ trade varsa LLM ile, yoksa deterministic ağırlık önerir
+    //   5) ChironWeightStore.updateWeights ile yazar
+    //   6) ChironDataLakeService.logLearningEvent ile loglar
+    private var actionsCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Aksiyon")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                Spacer()
+                if let flash = actionFlash {
+                    Text(flash)
+                        .font(.system(size: 11))
+                        .foregroundColor(InstitutionalTheme.Colors.aurora)
+                        .transition(.opacity)
+                } else if let last = lastLearningAt {
+                    Text("son · \(timeAgo(last))")
+                        .font(.system(size: 11))
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                }
+            }
+
+            Button(action: runLearning) {
+                HStack(spacing: 10) {
+                    if isLearning {
+                        ProgressView()
+                            .scaleEffect(0.7)
+                            .frame(width: 16, height: 16)
+                    } else {
+                        Image(systemName: "brain.head.profile")
+                            .font(.system(size: 13))
+                            .frame(width: 16)
+                    }
+                    Text(learningButtonTitle)
+                        .font(.system(size: 13, weight: .medium))
+                    Spacer()
+                    Text(symbol != nil ? "Sembol" : "Tüm portföy")
+                        .font(.system(size: 11))
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                }
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 11)
+                .background(InstitutionalTheme.Colors.surface2)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .opacity(isLearning ? 0.6 : 1)
+            }
+            .buttonStyle(.plain)
+            .disabled(isLearning)
+
+            Text(learningHint)
+                .font(.system(size: 11))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(InstitutionalTheme.Colors.surface1)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private var learningButtonTitle: String {
+        if isLearning {
+            return symbol != nil ? "Bu sembol öğreniyor" : "Tüm portföy öğreniyor"
+        }
+        return symbol != nil ? "Bu sembolü öğren" : "Şimdi öğren"
+    }
+
+    private var learningHint: String {
+        if symbol != nil {
+            return "Bu sembol için trade geçmişi (≥5 işlem) analiz edilir, yeterli güven aralığı varsa Pulse / Corse ağırlıkları güncellenir."
+        }
+        return "Trade geçmişi olan tüm sembolleri tek tek analiz eder. Her birinde en az 5 işlem ve dar güven aralığı gerekir."
+    }
+
+    /// Chiron öğrenmeyi tetikle. `symbol` varsa onu, yoksa tüm portföyü.
+    private func runLearning() {
+        isLearning = true
+        actionFlash = nil
+        Task {
+            if let sym = symbol {
+                await ChironLearningJob.shared.analyzeSymbol(sym)
+            } else {
+                await ChironLearningJob.shared.runFullAnalysis()
+            }
+            await MainActor.run {
+                self.lastLearningAt = Date()
+                self.isLearning = false
+                withAnimation { self.actionFlash = "Öğrenme tamam" }
+                // Yeni ağırlıklar ve istatistikler için yeniden yükle.
+                self.loadData()
+            }
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            await MainActor.run {
+                withAnimation { self.actionFlash = nil }
+            }
+        }
+    }
+
+    private func timeAgo(_ date: Date) -> String {
+        let elapsed = Date().timeIntervalSince(date)
+        if elapsed < 60 { return "şimdi" }
+        if elapsed < 3600 { return "\(Int(elapsed / 60)) dk" }
+        if elapsed < 86400 { return "\(Int(elapsed / 3600)) sa" }
+        return "\(Int(elapsed / 86400)) gün"
     }
 
     // MARK: - Helpers

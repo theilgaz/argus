@@ -1,87 +1,31 @@
 import SwiftUI
 
-// MARK: - Chiron Performance View (Argus 3.0 Refactor)
-/// Displays scientific performance metrics from Argus Ledger (SQLite)
-/// Replaces legacy RAM-based ChironDecisionLog
+// MARK: - ChironPerformanceView
+//
+// 2026-05-04 H-61 — sade refactor + back butonu düzeltildi.
+// Eski: caps mono "CHIRON PERFORMANS" + bars3 menü ikonu (back yok!) +
+// MotorLogo + tracking 0.6 caps section caption'lar.
+// Yeni: chevron geri + sentence case "Performans" başlık + sade kart
+// hiyerarşisi. Argus Ledger (SQLite) verisini çeker.
 struct ChironPerformanceView: View {
     @State private var tradeHistory: [TradeRecord] = []
     @State private var learningEvents: [LearningEvent] = []
     @State private var isLoading = true
-    
+
+    @Environment(\.dismiss) private var dismiss
+
     var body: some View {
         VStack(spacing: 0) {
-            ArgusNavHeader(
-                title: "CHIRON PERFORMANS",
-                subtitle: "ÖĞRENME · İŞLEM · LEDGER",
-                leadingDeco: .bars3([.holo, .text, .text])
-            )
+            inlineTopNav
+
             ScrollView {
-                VStack(spacing: 20) {
-                    // 1. Learning Events (Weight Updates)
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack(spacing: 10) {
-                            MotorLogo(.chiron, size: 14)
-                            VStack(alignment: .leading, spacing: 2) {
-                                ArgusSectionCaption("ÖĞRENME GÜNLÜĞÜ")
-                                Text("OBSERVATORY · AĞIRLIK GÜNCELLEMELERİ")
-                                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                                    .tracking(0.6)
-                                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                            }
-                            Spacer()
-                            ArgusChip("\(learningEvents.count)", tone: .motor(.chiron))
-                        }
-                        ArgusHair()
-                        if learningEvents.isEmpty {
-                            Text("Henüz kaydedilmiş ağırlık değişimi yok.")
-                                .font(.caption)
-                                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                                .padding(.vertical, 8)
-                        } else {
-                            ForEach(learningEvents.prefix(3)) { event in
-                                PerformanceLearningCard(event: event)
-                            }
-                        }
-                    }
-                    .padding()
-                    .background(InstitutionalTheme.Colors.surface1)
-                    .cornerRadius(InstitutionalTheme.Radius.lg)
-
-                    // 2. Trade History (Ledger)
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack(spacing: 10) {
-                            MotorLogo(.chiron, size: 12)
-                            VStack(alignment: .leading, spacing: 2) {
-                                ArgusSectionCaption("İŞLEM GEÇMİŞİ")
-                                Text("ARGUS LEDGER · KAPALI POZİSYON")
-                                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                                    .tracking(0.6)
-                                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                            }
-                            Spacer()
-                            if !tradeHistory.isEmpty {
-                                ArgusChip("\(tradeHistory.count)", tone: .neutral)
-                            }
-                        }
-                        .padding(.horizontal)
-                        ArgusHair().padding(.horizontal)
-
-                        if isLoading {
-                            ProgressView().tint(SanctumTheme.hologramBlue)
-                                .padding()
-                        } else if tradeHistory.isEmpty {
-                            Text("Henüz kapanmış işlem kaydı yok.")
-                                .font(.caption)
-                                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                                .padding()
-                        } else {
-                            ForEach(tradeHistory) { trade in
-                                TradeHistoryCard(trade: trade, lesson: nil)
-                            }
-                        }
-                    }
+                VStack(spacing: 16) {
+                    learningCard
+                    tradeHistoryCard
+                    Color.clear.frame(height: 24)
                 }
-                .padding()
+                .padding(.horizontal, 16)
+                .padding(.top, 14)
             }
         }
         .background(InstitutionalTheme.Colors.background.ignoresSafeArea())
@@ -89,6 +33,136 @@ struct ChironPerformanceView: View {
         .task {
             await loadData()
         }
+    }
+
+    // MARK: - Inline top nav
+
+    private var inlineTopNav: some View {
+        HStack(spacing: 8) {
+            Button(action: { dismiss() }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .frame(width: 36, height: 36)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Geri")
+
+            Text("Performans")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                .accessibilityAddTraits(.isHeader)
+
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(InstitutionalTheme.Colors.surface1)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
+        }
+    }
+
+    // MARK: - Öğrenme kartı
+
+    private var learningCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Öğrenme günlüğü")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                Spacer()
+                Text("\(learningEvents.count)")
+                    .font(.system(size: 12))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                    .monospacedDigit()
+            }
+
+            Text("Modül ağırlıklarındaki son değişimler.")
+                .font(.system(size: 12))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
+
+            if learningEvents.isEmpty {
+                Text("Henüz kaydedilmiş ağırlık değişimi yok.")
+                    .font(.system(size: 13))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                    .padding(.vertical, 6)
+            } else {
+                ForEach(learningEvents.prefix(3)) { event in
+                    PerformanceLearningCard(event: event)
+                }
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(InstitutionalTheme.Colors.surface1)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    // MARK: - İşlem geçmişi kartı
+
+    private var tradeHistoryCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("İşlem geçmişi")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                Spacer()
+                if !tradeHistory.isEmpty {
+                    Text("\(tradeHistory.count)")
+                        .font(.system(size: 12))
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                        .monospacedDigit()
+                }
+            }
+
+            Text("Argus Ledger · kapanmış pozisyonlar.")
+                .font(.system(size: 12))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
+
+            if isLoading {
+                HStack(spacing: 10) {
+                    ProgressView().scaleEffect(0.7)
+                    Text("Yükleniyor…")
+                        .font(.system(size: 13))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                    Spacer()
+                }
+                .padding(.vertical, 6)
+            } else if tradeHistory.isEmpty {
+                Text("Henüz kapanmış işlem kaydı yok.")
+                    .font(.system(size: 13))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                    .padding(.vertical, 6)
+            } else {
+                ForEach(tradeHistory) { trade in
+                    TradeHistoryCard(trade: trade, lesson: nil)
+                }
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(InstitutionalTheme.Colors.surface1)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
     
     private func loadData() async {

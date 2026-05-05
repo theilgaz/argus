@@ -31,14 +31,30 @@ struct AlkindusDashboardView: View {
     @State private var symbolInsight: SymbolInsight?
     @State private var isLoading = true
     @State private var isMaturing = false
+    @State private var isAnalyzing = false
+    @State private var isCleaningUp = false
+    @State private var analysisProgress: (done: Int, total: Int)? = nil
     @State private var lastMatureRun: Date?
+    @State private var lastProcessingResult: ProcessingResult?
+    @State private var dbSizeMB: Double = 0
+    @State private var actionFlash: String?
     @State private var showDrawer = false
 
     @StateObject private var deepLinkManager = DeepLinkManager.shared
     @EnvironmentObject private var router: NavigationRouter
     @Environment(\.dismiss) private var dismiss
 
-    private var isPushed: Bool { !router.navigationStack.isEmpty }
+    // 2026-05-04 H-61: isPushed detection genişletildi.
+    // Eski: sadece `!router.navigationStack.isEmpty` — Settings →
+    // NavigationLink ile push'ta router yolunu değiştirmediği için
+    // false dönüyor, geri butonu gözükmüyordu.
+    // Yeni: `\.isPresented` push/sheet/cover'da true; router'a paralel
+    // olarak NavigationLink push'unu da yakalıyor.
+    @Environment(\.isPresented) private var isPresented
+
+    private var isPushed: Bool {
+        !router.navigationStack.isEmpty || isPresented
+    }
 
     // MARK: - Body
 
@@ -410,40 +426,55 @@ struct AlkindusDashboardView: View {
     }
 
     // MARK: - 4. Aksiyonlar
-
+    //
+    // 2026-05-04 H-61: 3 aksiyon (önceden sadece "Şimdi olgunlaştır" vardı):
+    //   • Şimdi olgunlaştır — bekleyen gözlemleri 7g/15g pencerelerine göre
+    //     fiyat değişimiyle karşılaştır, modül skor tablolarına yaz.
+    //   • Verileri analiz et — Component performance + symbol learner taze
+    //     hesaplama tetikler. Sonuç KPI'lara yansır.
+    //   • Eski kayıtları temizle — 7+ gün önce senkronlanmış data lake
+    //     kayıtlarını ve işlenmiş ledger eventlerini siler. Disk geri kazanır.
     private var actionsCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Aksiyon")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-
-            Button(action: runMaturation) {
-                HStack(spacing: 10) {
-                    if isMaturing {
-                        ProgressView()
-                            .scaleEffect(0.7)
-                            .frame(width: 16, height: 16)
-                    } else {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 13))
-                    }
-                    Text(isMaturing ? "Olgunlaştırma çalışıyor" : "Şimdi olgunlaştır")
-                        .font(.system(size: 13, weight: .medium))
-                    Spacer()
-                    Text("\(pendingCount) bekliyor")
+            HStack {
+                Text("Aksiyon")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                Spacer()
+                if let flash = actionFlash {
+                    Text(flash)
                         .font(.system(size: 11))
-                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                        .monospacedDigit()
+                        .foregroundColor(InstitutionalTheme.Colors.aurora)
+                        .transition(.opacity)
                 }
-                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 11)
-                .background(InstitutionalTheme.Colors.surface2)
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                .opacity(isMaturing ? 0.6 : 1)
             }
-            .buttonStyle(.plain)
-            .disabled(isMaturing)
+
+            actionRow(
+                icon: "arrow.triangle.2.circlepath",
+                title: isMaturing ? "Olgunlaştırma çalışıyor" : "Şimdi olgunlaştır",
+                trailing: "\(pendingCount) bekliyor",
+                isRunning: isMaturing,
+                disabled: isMaturing || isAnalyzing || isCleaningUp,
+                action: runMaturation
+            )
+
+            actionRow(
+                icon: "chart.bar.doc.horizontal",
+                title: analysisTitle,
+                trailing: analysisTrailing,
+                isRunning: isAnalyzing,
+                disabled: isMaturing || isAnalyzing || isCleaningUp,
+                action: runAnalysis
+            )
+
+            actionRow(
+                icon: "trash",
+                title: isCleaningUp ? "Veritabanı temizleniyor" : "Eski kayıtları temizle",
+                trailing: dbSizeMB > 0 ? String(format: "%.1f MB", dbSizeMB) : nil,
+                isRunning: isCleaningUp,
+                disabled: isMaturing || isAnalyzing || isCleaningUp,
+                action: runCleanup
+            )
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -453,6 +484,65 @@ struct AlkindusDashboardView: View {
                 .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    /// Analiz butonunun başlık metni — çalışırken ilerleme göstergesi.
+    private var analysisTitle: String {
+        if isAnalyzing {
+            if let p = analysisProgress, p.total > 0 {
+                return "Analiz · \(p.done)/\(p.total)"
+            }
+            return "Analiz çalışıyor"
+        }
+        return "Verileri analiz et"
+    }
+
+    /// Analiz butonu sağ trailing — son analiz sonucu özet.
+    private var analysisTrailing: String? {
+        guard !isAnalyzing else { return nil }
+        if let r = lastProcessingResult, r.eventsProcessed > 0 {
+            return "son \(r.eventsProcessed) event"
+        }
+        return nil
+    }
+
+    /// Sade aksiyon satırı — ikon + title + opsiyonel trailing + ProgressView.
+    private func actionRow(icon: String,
+                           title: String,
+                           trailing: String?,
+                           isRunning: Bool,
+                           disabled: Bool,
+                           action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                if isRunning {
+                    ProgressView()
+                        .scaleEffect(0.7)
+                        .frame(width: 16, height: 16)
+                } else {
+                    Image(systemName: icon)
+                        .font(.system(size: 13))
+                        .frame(width: 16)
+                }
+                Text(title)
+                    .font(.system(size: 13, weight: .medium))
+                Spacer()
+                if let trailing {
+                    Text(trailing)
+                        .font(.system(size: 11))
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                        .monospacedDigit()
+                }
+            }
+            .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 11)
+            .background(InstitutionalTheme.Colors.surface2)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .opacity(disabled ? 0.6 : 1)
+        }
+        .buttonStyle(.plain)
+        .disabled(disabled)
     }
 
     // MARK: - Nasıl çalışıyor (kısa açıklama)
@@ -553,14 +643,21 @@ struct AlkindusDashboardView: View {
 
         let (stats, verdicts, pending) = await (s, v, p)
 
+        var freshInsight: SymbolInsight? = nil
         if let sym = symbol {
-            self.symbolInsight = await AlkindusSymbolLearner.shared.getSymbolInsights(for: sym)
+            freshInsight = await AlkindusSymbolLearner.shared.getSymbolInsights(for: sym)
         }
+
+        // Aksiyon kartının "Eski kayıtları temizle" satırında gösterilecek
+        // DB boyutu bilgisi.
+        let size = AlkindusEventProcessor.shared.getDatabaseSizeMB()
 
         await MainActor.run {
             self.stats = stats
             self.verdicts = verdicts
             self.pendingCount = pending.count
+            self.symbolInsight = freshInsight
+            self.dbSizeMB = size
             self.isLoading = false
         }
     }
@@ -574,13 +671,115 @@ struct AlkindusDashboardView: View {
     /// yerine gerçek öğrenme tetikleyicisi.
     private func runMaturation() {
         isMaturing = true
+        actionFlash = nil
         Task {
             await AlkindusCalibrationEngine.shared.periodicMatureCheck()
             await MainActor.run {
                 self.lastMatureRun = Date()
                 self.isMaturing = false
+                withAnimation { self.actionFlash = "Güncellendi" }
             }
             await loadAll()
+            await clearFlashAfterDelay()
+        }
+    }
+
+    /// Verileri analiz et — `AlkindusEventProcessor.processHistoricalEvents`
+    /// SQLite'deki işlenmemiş eventleri (decision'ları) batch-batch okur,
+    /// modül × skor × aksiyon paternlerini çıkartır, calibration'a yazar.
+    /// Sonuç: kaç event işlendi, kaç patern çıktı, hangi modüller öğrendi.
+    /// Component performance cache'i de yenilenir ki KPI'lar tazelensin.
+    private func runAnalysis() {
+        isAnalyzing = true
+        actionFlash = nil
+        analysisProgress = (0, 0)
+        Task {
+            // 1) Gerçek event analizi — DB'deki tüm processed=0 eventler.
+            let result = await AlkindusEventProcessor.shared.processHistoricalEvents { done, total in
+                Task { @MainActor in
+                    self.analysisProgress = (done, total)
+                }
+            }
+
+            // 2) Component performance cache → taze hesap.
+            ComponentPerformanceService.shared.clearCache()
+
+            // 3) Sembol özelinde içgörü.
+            var freshInsight: SymbolInsight? = nil
+            if let sym = symbol {
+                freshInsight = await AlkindusSymbolLearner.shared.getSymbolInsights(for: sym)
+            }
+
+            // 4) DB boyutu — temizleme sonrası karşılaştırma için.
+            let size = AlkindusEventProcessor.shared.getDatabaseSizeMB()
+
+            await MainActor.run {
+                self.symbolInsight = freshInsight
+                self.lastProcessingResult = result
+                self.dbSizeMB = size
+                self.analysisProgress = nil
+                self.isAnalyzing = false
+
+                let msg: String
+                if result.eventsProcessed == 0 {
+                    msg = "İşlenecek event yok"
+                } else {
+                    msg = "\(result.eventsProcessed) event · \(result.patternsExtracted) patern"
+                }
+                withAnimation { self.actionFlash = msg }
+            }
+            await loadAll()
+            await clearFlashAfterDelay()
+        }
+    }
+
+    /// Eski kayıtları temizle — `deleteProcessedBlobs` blobs tablosunu
+    /// siler ve VACUUM ile diski geri kazanır. Calibration ve verdict
+    /// verisi etkilenmez (ayrı dosya/store'larda). DataLake ve ledger
+    /// processed event'leri de süpürülür.
+    private func runCleanup() {
+        isCleaningUp = true
+        actionFlash = nil
+        Task {
+            // Önce/sonra DB boyutu — kullanıcı geri kazanılan alanı görsün.
+            let beforeMB = AlkindusEventProcessor.shared.getDatabaseSizeMB()
+
+            // 1) Alkindus event blob'ları — DELETE FROM blobs + VACUUM.
+            AlkindusEventProcessor.shared.deleteProcessedBlobs()
+            // İşlenmiş eventleri de processed=1 işaretle (yeniden tetiklenmesin).
+            AlkindusEventProcessor.shared.markEventsAsProcessed()
+
+            // 2) DataLake — 7+ gün öncesi senkronlanmış kayıtlar.
+            let lakeDeleted = await ChironDataLakeService.shared.cleanupSyncedRecords(olderThanDays: 7)
+
+            // 3) Ledger — işlenmiş eventler.
+            await ArgusLedger.shared.cleanupProcessedEvents()
+
+            let afterMB = AlkindusEventProcessor.shared.getDatabaseSizeMB()
+            let reclaimed = max(0, beforeMB - afterMB)
+
+            await MainActor.run {
+                self.dbSizeMB = afterMB
+                self.isCleaningUp = false
+                let msg: String
+                if reclaimed >= 0.1 {
+                    msg = String(format: "%.1f MB geri kazanıldı", reclaimed)
+                } else if lakeDeleted > 0 {
+                    msg = "\(lakeDeleted) lake kaydı silindi"
+                } else {
+                    msg = "Temiz"
+                }
+                withAnimation { self.actionFlash = msg }
+            }
+            await clearFlashAfterDelay()
+        }
+    }
+
+    /// Aksiyon flash mesajını 2 sn sonra temizler.
+    private func clearFlashAfterDelay() async {
+        try? await Task.sleep(nanoseconds: 2_000_000_000)
+        await MainActor.run {
+            withAnimation { self.actionFlash = nil }
         }
     }
 }
