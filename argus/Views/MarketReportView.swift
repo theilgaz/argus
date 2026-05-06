@@ -110,7 +110,7 @@ struct MarketReportView: View {
                     }
                 ]
             ),
-            ArgusDrawerView.commonToolsSection(openSheet: openSheet)
+            ArgusDrawerView.commonToolsSection(openSheet: openSheet, dismiss: closeDrawer)
         ]
     }
 }

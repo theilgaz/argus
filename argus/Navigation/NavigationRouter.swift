@@ -84,6 +84,7 @@ enum NavigationRoute: Hashable, Identifiable {
     case disclaimer
     case argusSanctum(symbol: String)
     case expectationsEntry
+    case myPredictions  // 2026-05-06: Tahminlerim — drawer'dan doğrudan erişim
     case roadmap
     case immersiveChart(symbol: String)
 

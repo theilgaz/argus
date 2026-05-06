@@ -629,7 +629,7 @@ struct AlkindusDashboardView: View {
 
         return [
             ArgusDrawerView.commonScreensSection(excluding: [.alkindus], dismiss: dismiss),
-            ArgusDrawerView.commonToolsSection(openSheet: openSheet)
+            ArgusDrawerView.commonToolsSection(openSheet: openSheet, dismiss: dismiss)
         ]
     }
 

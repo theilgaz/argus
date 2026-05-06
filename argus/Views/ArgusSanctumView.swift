@@ -370,7 +370,7 @@ struct ArgusSanctumView: View {
             ArgusDrawerView.DrawerSection(title: "Modüller", items: moduleItems)
         )
 
-        sections.append(ArgusDrawerView.commonToolsSection(openSheet: openSheet))
+        sections.append(ArgusDrawerView.commonToolsSection(openSheet: openSheet, dismiss: dismiss))
 
         return sections
     }

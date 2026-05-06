@@ -300,7 +300,7 @@ struct MarketView: View {
                     }
                 ]
             ),
-            ArgusDrawerView.commonToolsSection(openSheet: openSheet)
+            ArgusDrawerView.commonToolsSection(openSheet: openSheet, dismiss: dismiss)
         ]
     }
 }

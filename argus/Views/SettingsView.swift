@@ -847,7 +847,7 @@ extension SettingsView {
 
         return [
             ArgusDrawerView.commonScreensSection(excluding: [.settings], dismiss: dismiss),
-            ArgusDrawerView.commonToolsSection(openSheet: openSheet)
+            ArgusDrawerView.commonToolsSection(openSheet: openSheet, dismiss: dismiss)
         ]
     }
 }

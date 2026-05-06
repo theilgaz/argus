@@ -181,6 +181,9 @@ extension NavigationRouter {
         case .expectationsEntry:
             ExpectationsEntryView()
 
+        case .myPredictions:
+            MyPredictionsView()
+
         case .roadmap:
             RoadmapView()
 

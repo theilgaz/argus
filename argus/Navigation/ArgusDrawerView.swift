@@ -470,12 +470,25 @@ struct ArgusDrawerView: View {
     /// Tüm parent view'ların kullandığı ortak "Araçlar" bölümü.
     /// Önceden 5 farklı parent view'da aynı kod kopyalanıyordu —
     /// tek source-of-truth burada.
-    static func commonToolsSection(openSheet: @escaping (DrawerSheet) -> Void) -> DrawerSection {
+    static func commonToolsSection(
+        openSheet: @escaping (DrawerSheet) -> Void,
+        dismiss: @escaping () -> Void = {}
+    ) -> DrawerSection {
         DrawerSection(
             title: "Araçlar",
             items: [
                 DrawerItem(title: "Ekonomi Takvimi", subtitle: "Gerçek takvim", icon: "calendar") {
                     openSheet(.calendar)
+                },
+                // 2026-05-06: Tahminler ekosistemi drawer'dan doğrudan ulaşılabilir oldu.
+                // Önceden sadece Ana Sayfa → Aether kartı → sheet → liste 3 tıklama gerekiyordu.
+                DrawerItem(title: "Yaklaşan veriler", subtitle: "Tahmin gir", icon: "calendar.badge.clock") {
+                    NavigationRouter.shared.navigate(to: .expectationsEntry)
+                    dismiss()
+                },
+                DrawerItem(title: "Tahminlerim", subtitle: "Geçmiş isabet", icon: "checkmark.seal") {
+                    NavigationRouter.shared.navigate(to: .myPredictions)
+                    dismiss()
                 },
                 DrawerItem(title: "Finans Sözlüğü", subtitle: "Terimler", icon: "character.book.closed") {
                     openSheet(.dictionary)
