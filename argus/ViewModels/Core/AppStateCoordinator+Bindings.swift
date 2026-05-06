@@ -4,15 +4,13 @@ import SwiftUI
 
 /// AppStateCoordinator+Bindings
 /// Sets up proper Combine bindings between AppStateCoordinator and child stores/ViewModels
-/// Uses `.assign(to:)` pattern to create proper data binding without duplication.
+///
+/// 2026-05-06 — Aşama A refactor: typed state struct'lara migration sonrası,
+/// `assign(to: &$X)` pattern'i (publisher → @Published) struct field'larına
+/// doğrudan kullanılamaz. `sink` ile setter pattern'e geçildi.
 extension AppStateCoordinator {
 
     /// Sets up all data bindings from child stores to coordinator properties
-    /// This implements the Single Source of Truth pattern using Combine's assign(to:)
-    ///
-    /// The key principle: Rather than copying data with `.sink { self.property = $0 }`,
-    /// we use `.assign(to: &$property)` which creates a direct binding that doesn't
-    /// duplicate data - it just connects the publisher to the published property.
     func setupDataBindings() {
         setupWatchlistBindings()
         setupMarketBindings()
@@ -55,17 +53,18 @@ extension AppStateCoordinator {
     private func setupExecutionBindings() {
         ExecutionStateViewModel.shared.$planAlerts
             .receive(on: RunLoop.main)
-            .assign(to: &$planAlerts)
+            .sink { [weak self] in self?.executionMirror.planAlerts = $0 }
+            .store(in: &cancellables)
 
         ExecutionStateViewModel.shared.$agoraSnapshots
             .receive(on: RunLoop.main)
-            .assign(to: &$agoraSnapshots)
+            .sink { [weak self] in self?.executionMirror.agoraSnapshots = $0 }
+            .store(in: &cancellables)
 
         ExecutionStateViewModel.shared.$lastTradeTimes
             .receive(on: RunLoop.main)
-            .assign(to: &$lastTradeTimes)
-
-        // lastAction not published by ExecutionStateViewModel; managed locally
+            .sink { [weak self] in self?.executionMirror.lastTradeTimes = $0 }
+            .store(in: &cancellables)
     }
 
     // MARK: - Loading State Aggregation
@@ -74,11 +73,14 @@ extension AppStateCoordinator {
         Publishers.CombineLatest4(
             WatchlistViewModel.shared.$isLoading,
             SignalStateViewModel.shared.$isOrionLoading,
-            $isLoadingEtf,
-            $isLoadingSarTsiBacktest
+            $environment.map(\.isLoadingEtf).removeDuplicates(),
+            $backtest.map(\.isLoadingSarTsi).removeDuplicates()
         )
         .map { $0 || $1 || $2 || $3 }
         .receive(on: RunLoop.main)
-        .assign(to: &$isGlobalLoading)
+        .sink { [weak self] aggregated in
+            self?.environment.isGlobalLoading = aggregated
+        }
+        .store(in: &cancellables)
     }
 }
