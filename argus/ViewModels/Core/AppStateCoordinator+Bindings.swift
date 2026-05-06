@@ -51,17 +51,17 @@ extension AppStateCoordinator {
     // TradingViewModel reads these from coordinator (not directly from ExecutionStateViewModel).
 
     private func setupExecutionBindings() {
-        ExecutionStateViewModel.shared.$planAlerts
+        AlertManager.shared.$planAlerts
             .receive(on: RunLoop.main)
             .sink { [weak self] in self?.executionMirror.planAlerts = $0 }
             .store(in: &cancellables)
 
-        ExecutionStateViewModel.shared.$agoraSnapshots
+        ScanOrchestrator.shared.$agoraSnapshots
             .receive(on: RunLoop.main)
             .sink { [weak self] in self?.executionMirror.agoraSnapshots = $0 }
             .store(in: &cancellables)
 
-        ExecutionStateViewModel.shared.$lastTradeTimes
+        ExecutionLogger.shared.$lastTradeTimes
             .receive(on: RunLoop.main)
             .sink { [weak self] in self?.executionMirror.lastTradeTimes = $0 }
             .store(in: &cancellables)

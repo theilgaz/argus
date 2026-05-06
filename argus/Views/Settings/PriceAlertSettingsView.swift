@@ -1,9 +1,77 @@
 import SwiftUI
+import Combine
+
+// MARK: - Local scan model (PriceAlertSettingsView only)
+
+private struct PriceAlertItem: Identifiable {
+    let id = UUID()
+    let symbol: String
+    let date: Date
+    let message: String
+    let type: AlertType
+    let score: Double
+
+    enum AlertType { case buy, sell, neutral }
+}
+
+@MainActor
+private final class PriceAlertScanService: ObservableObject {
+    @Published var alerts: [PriceAlertItem] = []
+    @Published var isScanning = false
+
+    func scanWatchlist(symbols: [String]) async {
+        isScanning = true
+        alerts = []
+
+        for symbol in symbols {
+            do {
+                let candles = try await HeimdallOrchestrator.shared.requestCandles(symbol: symbol, timeframe: "1D", limit: 365)
+                let config = BacktestConfig(strategy: .orionV2)
+                let result = await ArgusBacktestEngine.shared.runBacktest(
+                    symbol: symbol,
+                    config: config,
+                    candles: candles,
+                    financials: nil
+                )
+                let score = result.winRate
+                if result.totalReturn > 10 && score > 60 {
+                    let item = PriceAlertItem(symbol: symbol, date: Date(),
+                                             message: "Güçlü AL Sinyali (Güven: %\(Int(score)))",
+                                             type: .buy, score: score)
+                    alerts.append(item)
+                } else if result.totalReturn < -10 && score < 40 {
+                    let item = PriceAlertItem(symbol: symbol, date: Date(),
+                                             message: "Güçlü SAT Sinyali (Getiri: %\(Int(result.totalReturn)))",
+                                             type: .sell, score: 100 - score)
+                    alerts.append(item)
+                }
+            } catch {
+                print("PriceAlertScan error for \(symbol): \(error)")
+            }
+        }
+
+        isScanning = false
+        saveToWidget()
+    }
+
+    private func saveToWidget() {
+        let widgetData = alerts.prefix(3).map { alert in
+            ["symbol": alert.symbol, "score": alert.score,
+             "type": alert.type == .buy ? "buy" : "sell",
+             "message": alert.message] as [String: Any]
+        }
+        if let ud = UserDefaults(suiteName: "group.com.argus.Algo-Trading") {
+            ud.set(widgetData, forKey: "widgetSignals")
+        }
+    }
+}
+
+// MARK: - View
 
 struct PriceAlertSettingsView: View {
-    @ObservedObject var alertManager = AlertManager.shared
+    @StateObject private var scanner = PriceAlertScanService()
     @State private var infoMessage: String?
-    
+
     var body: some View {
         VStack(spacing: 0) {
             ArgusNavHeader(
@@ -11,18 +79,16 @@ struct PriceAlertSettingsView: View {
                 subtitle: "WATCHLIST · TARAYICI · SİNYAL",
                 leadingDeco: .bars3([.holo, .text, .text]),
                 actions: [
-                    .custom(sfSymbol: alertManager.isScanning ? "stop.circle" : "arrow.clockwise",
+                    .custom(sfSymbol: scanner.isScanning ? "stop.circle" : "arrow.clockwise",
                             action: {
-                                guard !alertManager.isScanning else { return }
+                                guard !scanner.isScanning else { return }
                                 Task {
                                     let storedWatchlist = ArgusStorage.shared.loadWatchlist()
                                     if storedWatchlist.isEmpty {
-                                        await MainActor.run {
-                                            infoMessage = "İzleme listesi boş. Önce hisse ekleyin."
-                                        }
+                                        infoMessage = "İzleme listesi boş. Önce hisse ekleyin."
                                         return
                                     }
-                                    await alertManager.scanWatchlist(symbols: storedWatchlist)
+                                    await scanner.scanWatchlist(symbols: storedWatchlist)
                                 }
                             })
                 ]
@@ -30,7 +96,7 @@ struct PriceAlertSettingsView: View {
 
             List {
                 Section(header: Text("Durum")) {
-                    if alertManager.isScanning {
+                    if scanner.isScanning {
                         HStack {
                             ProgressView()
                                 .padding(.trailing, 8)
@@ -40,15 +106,12 @@ struct PriceAlertSettingsView: View {
                     } else {
                         Button(action: {
                             Task {
-                                // Fetch real watchlist
                                 let storedWatchlist = ArgusStorage.shared.loadWatchlist()
                                 if storedWatchlist.isEmpty {
-                                    await MainActor.run {
-                                        infoMessage = "Izleme listesi bos. Once hisse ekleyin."
-                                    }
+                                    infoMessage = "İzleme listesi boş. Önce hisse ekleyin."
                                     return
                                 }
-                                await alertManager.scanWatchlist(symbols: storedWatchlist)
+                                await scanner.scanWatchlist(symbols: storedWatchlist)
                             }
                         }) {
                             HStack {
@@ -60,12 +123,12 @@ struct PriceAlertSettingsView: View {
                 }
 
                 Section(header: Text("Son Sinyaller")) {
-                    if alertManager.alerts.isEmpty {
+                    if scanner.alerts.isEmpty {
                         Text("Henüz sinyal yok.")
                             .foregroundColor(.secondary)
                             .italic()
                     } else {
-                        ForEach(alertManager.alerts) { alert in
+                        ForEach(scanner.alerts) { alert in
                             HStack {
                                 VStack(alignment: .leading) {
                                     Text(alert.symbol)

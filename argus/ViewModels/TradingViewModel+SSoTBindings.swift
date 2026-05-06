@@ -17,21 +17,21 @@ extension TradingViewModel {
         // güncellemesinde 2x setter çağrısına yol açardı (setter yine risk.portfolio'ya
         // yazıyor — gereksiz ek iş). Bu yüzden kaldırıldı.
 
-        ExecutionStateViewModel.shared.$planAlerts
+        AlertManager.shared.$planAlerts
             .receive(on: RunLoop.main)
             .sink { [weak self] alerts in
                 self?.planAlerts = alerts
             }
             .store(in: &cancellables)
 
-        ExecutionStateViewModel.shared.$agoraSnapshots
+        ScanOrchestrator.shared.$agoraSnapshots
             .receive(on: RunLoop.main)
             .sink { [weak self] snaps in
                 self?.agoraSnapshots = snaps
             }
             .store(in: &cancellables)
 
-        ExecutionStateViewModel.shared.$lastTradeTimes
+        ExecutionLogger.shared.$lastTradeTimes
             .receive(on: RunLoop.main)
             .sink { [weak self] times in
                 self?.lastTradeTimes = times
