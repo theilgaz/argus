@@ -71,7 +71,7 @@ struct OrionMotherboardView: View {
         }
         .onAppear {
             selectedTimeframe = viewModel.selectedTimeframe
-            viewModel.orionScore = analysis.scoreFor(timeframe: selectedTimeframe)
+            viewModel.analysisBridge.orionScore = analysis.scoreFor(timeframe: selectedTimeframe)
         }
     }
 
