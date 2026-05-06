@@ -20,16 +20,20 @@ actor ArgusBacktestEngine {
         config: BacktestConfig,
         candles: [Candle],
         financials: FinancialsData?
-    ) -> BacktestResult {
-        return runDetailedBacktest(symbol: symbol, candles: candles, config: config, financials: financials)
+    ) async -> BacktestResult {
+        return await runDetailedBacktest(symbol: symbol, candles: candles, config: config, financials: financials)
     }
-    
+
+    /// 2026-05-05 (Round 11): Async refactor — backtest artık V2 motorlarına çağrı yapabilir.
+    /// Eski sürüm sync'di, V1 ArgusDecisionEngine.makeDecision yolunu kullanıyordu;
+    /// V2 motorlar (OrionV2/AtlasV2/AetherV2) backtest'ten BYPASS ediliyordu. Bu artık
+    /// argusStandard + orionV2 stratejilerinde gerçek V2 chain'e bağlandı.
     func runDetailedBacktest(
         symbol: String,
         candles: [Candle],
         config: BacktestConfig = BacktestConfig(),
         financials: FinancialsData? = nil
-    ) -> BacktestResult {
+    ) async -> BacktestResult {
         
         var currentCapital = config.initialCapital
         var shares = 0.0
@@ -92,57 +96,66 @@ actor ArgusBacktestEngine {
             switch config.strategy {
             // ARGUS AI STRATEGIES
             case .argusStandard, .aggressive, .conservative:
-                 // 1. Dynamic Orion
-                guard let orionResult = OrionAnalysisService.shared.calculateOrionScore(symbol: symbol, candles: slice) else { continue }
-                let trendPct = (orionResult.components.trend / 30.0) * 100.0
-                let dailyAether = trendPct
-                
-                // 2. Decision
+                // 2026-05-05 (Round 11) V2 SWAP: Eski OrionAnalysisService (V1) yerine
+                // OrionV2Engine kullanılır. forceRefresh: true ile cache bypass — backtest
+                // aynı sembolü 200+ farklı slice ile çağırır, cache symbol-key olduğundan
+                // ilk slice yapışırdı. Production GrandCouncil'dakı V2 davranışıyla uyumlu.
+                let v2Orion = await OrionV2Engine.shared.analyze(symbol: symbol, candles: slice, forceRefresh: true)
+                let orionScore = v2Orion.totalScore
+                // Trend bölüm skoru daily Aether proxy olarak kullanılır (V1 trendPct davranışı)
+                let dailyAether = v2Orion.trendScore ?? 50
+
+                // V1 OrionAnalysisService hâlâ orionDetails için çağrılır (component-level UI verisi).
+                // Future cleanup: makeDecision'ı orionDetails'sız çağıran overload yazılabilir.
+                let orionResult = OrionAnalysisService.shared.calculateOrionScore(symbol: symbol, candles: slice)
+
+                // 2. Decision (V2 skor ile)
                 let decision = ArgusDecisionEngine.shared.makeDecision(
                     symbol: symbol,
                     assetType: .stock,
                     atlas: nil,
-                    orion: orionResult.score,
+                    orion: orionScore,           // V2 totalScore
                     orionDetails: orionResult,
                     aether: dailyAether,
                     hermes: nil,
-                // cronos: nil, REMOVED
                     athena: nil,
                     phoenixAdvice: nil,
                     demeterScore: nil,
                     marketData: nil
                 ).1 // Take Decision Result
-                
+
                 usedScore = (config.strategy == .conservative) ? decision.finalScoreCore : decision.finalScorePulse
                 let rawAction = (config.strategy == .conservative) ? decision.finalActionCore : decision.finalActionPulse
-                
+
                 // Map SignalAction to BacktestAction
                 switch rawAction {
                 case .buy: action = .buy
                 case .sell: action = .sell(1.0)
                 default: action = .hold
                 }
-                
+
                 // BACKTEST SIMULATION: AUTO-PILOT "MOMENTUM DECAY" Override
-                // Mirrors logic in ArgusAutoPilotEngine.swift
                 if let trade = activeTrade, config.strategy != .conservative {
                     let pnl = ((price - trade.entryPrice) / trade.entryPrice) * 100.0
-                    // If Profit > 2% AND Score drops below 62 (Momentum Fading) -> SELL
                     if pnl > 2.0 && usedScore < 62.0 {
                         action = .sell(1.0)
                         reason = "Pulse Exit (Decay: \(Int(usedScore)))"
                     }
                 }
-                
+
                 if case .sell = action, reason == "" { reason = "Argus Signal" }
                 else if action == .buy && reason == "" { reason = "Argus Signal" }
-                
-                logDetails = "O:\(String(format:"%.0f", orionResult.score)) Aes:\(String(format:"%.0f", dailyAether))"
+
+                logDetails = "OV2:\(String(format:"%.0f", orionScore)) trend:\(String(format:"%.0f", dailyAether))"
 
             case .orionV2:
                 // ORION V2 PURE TECH STRATEGY (Improved Entry/Exit Logic)
-                guard let orionResult = OrionAnalysisService.shared.calculateOrionScore(symbol: symbol, candles: slice) else { continue }
-                usedScore = orionResult.score
+                // 2026-05-05 (Round 11): Strategy adı "orionV2" olmasına rağmen V1 motoru
+                // çağırıyordu (false advertising). Şimdi gerçekten OrionV2Engine kullanılır.
+                let v2Orion = await OrionV2Engine.shared.analyze(symbol: symbol, candles: slice, forceRefresh: true)
+                let orionResult = OrionAnalysisService.shared.calculateOrionScore(symbol: symbol, candles: slice)
+                guard let orionResult = orionResult else { continue }
+                usedScore = v2Orion.totalScore
                 
                 // Calculate simple trend indicators for backup logic
                 let recentSlice = Array(slice.suffix(20))
@@ -589,8 +602,8 @@ actor ArgusBacktestEngine {
         candles: [Candle],
         financials: FinancialsData?,
         trainRatio: Double = 0.7
-    ) -> BacktestResult {
-        let fullResult = runDetailedBacktest(symbol: symbol, candles: candles, config: config, financials: financials)
+    ) async -> BacktestResult {
+        let fullResult = await runDetailedBacktest(symbol: symbol, candles: candles, config: config, financials: financials)
         guard candles.count >= 100, trainRatio > 0.3, trainRatio < 0.9 else {
             return fullResult
         }
@@ -602,8 +615,8 @@ actor ArgusBacktestEngine {
             return fullResult
         }
 
-        let trainResult = runDetailedBacktest(symbol: symbol, candles: trainCandles, config: config, financials: financials)
-        let testResult = runDetailedBacktest(symbol: symbol, candles: testCandles, config: config, financials: financials)
+        let trainResult = await runDetailedBacktest(symbol: symbol, candles: trainCandles, config: config, financials: financials)
+        let testResult = await runDetailedBacktest(symbol: symbol, candles: testCandles, config: config, financials: financials)
         let degradation = trainResult.totalReturn - testResult.totalReturn
 
         return BacktestResult(

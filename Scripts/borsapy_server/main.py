@@ -25,6 +25,12 @@ import borsapy as bp
 import traceback
 from datetime import datetime
 
+try:
+    from borsapy.exceptions import DataNotAvailableError, APIError as BorsapyAPIError
+except ImportError:
+    DataNotAvailableError = Exception
+    BorsapyAPIError = Exception
+
 app = FastAPI(title="Argus Borsapy API", version="1.1.0")
 
 app.add_middleware(
@@ -183,35 +189,75 @@ async def ticker_history(
 
 @app.get("/ticker/{symbol}/financials")
 async def ticker_financials(symbol: str, quarterly: bool = Query(False)):
+    """Bilanço + gelir tablosu + oranlar.
+
+    İş Yatırım detaylı tabloları (balance_sheet / income_stmt) erişilemez olduğunda
+    DataNotAvailableError veya APIError fırlatır. Bu endpoint bu hataları yutar ve
+    boş liste döner — iOS tarafı HTTP 500 yerine geçerli bir JSON alır ve nil-aware
+    engine'ler oranlar bölümündeki verileri değerlendirir.
+    """
+    sym = symbol.upper()
+    t = bp.Ticker(sym)
+
+    # --- Bilanço (XI_29 sanayi önce, UFRS banka fallback) ---
+    bs = []
     try:
-        t = bp.Ticker(symbol.upper())
-
-        if quarterly:
-            bs = t.quarterly_balance_sheet
-            inc = t.quarterly_income_stmt
-        else:
-            bs = t.balance_sheet
-            inc = t.income_stmt
-
-        # Ayrıca info'dan temel oranları alalım
-        info = {}
+        bs_df = t.quarterly_balance_sheet if quarterly else t.balance_sheet
+        bs = df_to_records(bs_df)
+    except (DataNotAvailableError, BorsapyAPIError, Exception):
+        pass
+    if not bs:  # Banka (UFRS grubu) fallback
         try:
-            fi = t.fast_info
-            info = {
-                "pe": safe_val(getattr(fi, "pe_ratio", None)),
-                "marketCap": safe_val(getattr(fi, "market_cap", None)),
-            }
+            bs_df = t.get_balance_sheet(quarterly=quarterly, financial_group="UFRS")
+            bs = df_to_records(bs_df)
         except Exception:
             pass
 
-        return {
-            "symbol": symbol.upper(),
-            "balanceSheet": df_to_records(bs),
-            "incomeStatement": df_to_records(inc),
-            "ratios": info,
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    # --- Gelir Tablosu (aynı fallback mantığı) ---
+    inc = []
+    try:
+        inc_df = t.quarterly_income_stmt if quarterly else t.income_stmt
+        inc = df_to_records(inc_df)
+    except (DataNotAvailableError, BorsapyAPIError, Exception):
+        pass
+    if not inc:  # Banka (UFRS grubu) fallback
+        try:
+            inc_df = t.get_income_stmt(quarterly=quarterly, financial_group="UFRS")
+            inc = df_to_records(inc_df)
+        except Exception:
+            pass
+
+    # --- Oranlar: company_metrics (P/E, P/B, EV/EBITDA) + fast_info fallback ---
+    # company_metrics İş Yatırım şirket kartı HTML'inden kazır; MaliTablo API'sinden
+    # bağımsız çalışır. Başarılı olduğunda pb ve evEbitda da sağlanır.
+    ratios: dict = {}
+    try:
+        from borsapy._providers.isyatirim import get_isyatirim_provider
+        metrics = get_isyatirim_provider().get_company_metrics(sym.replace(".IS", "").replace(".E", ""))
+        ratios["pe"]        = safe_val(metrics.get("pe_ratio"))
+        ratios["pb"]        = safe_val(metrics.get("pb_ratio"))
+        ratios["evEbitda"]  = safe_val(metrics.get("ev_ebitda"))
+        ratios["marketCap"] = safe_val(metrics.get("market_cap"))
+        ratios["netDebt"]   = safe_val(metrics.get("net_debt"))
+    except Exception:
+        pass
+
+    # fast_info fallback: sadece pe/marketCap eksikse doldur
+    try:
+        fi = t.fast_info
+        if not ratios.get("pe"):
+            ratios["pe"]        = safe_val(getattr(fi, "pe_ratio", None))
+        if not ratios.get("marketCap"):
+            ratios["marketCap"] = safe_val(getattr(fi, "market_cap", None))
+    except Exception:
+        pass
+
+    return {
+        "symbol": sym,
+        "balanceSheet": bs,
+        "incomeStatement": inc,
+        "ratios": ratios,
+    }
 
 
 # ---------------------------------------------------------------------------

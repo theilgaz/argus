@@ -22,47 +22,79 @@ actor AlkindusMemoryStore {
     }
     
     // MARK: - Load Calibration Data
+    // Eski sürümde tüm load/save fonksiyonları `try?` ile sessiz hata yutuyordu →
+    // disk dolu, izin hatası, JSON corrupt → her hata görünmez, dosya yazılmıyor,
+    // bir sonraki turda boş veri yükleniyor, "hiçbir şey öğrenmiyor" şikayeti ortaya
+    // çıkıyordu. Şimdi ilk açılış (fileReadNoSuchFile) sessiz, diğer hatalar loglanıyor.
     func loadCalibration() async -> CalibrationData {
-        guard let data = try? Data(contentsOf: calibrationPath),
-              let decoded = try? JSONDecoder().decode(CalibrationData.self, from: data) else {
+        do {
+            let data = try Data(contentsOf: calibrationPath)
+            return try JSONDecoder().decode(CalibrationData.self, from: data)
+        } catch CocoaError.fileReadNoSuchFile {
+            return CalibrationData.empty
+        } catch let error as NSError where error.domain == NSCocoaErrorDomain && error.code == NSFileReadNoSuchFileError {
+            return CalibrationData.empty
+        } catch {
+            print("❌ Alkindus: calibration.json okuma hatası: \(error.localizedDescription)")
             return CalibrationData.empty
         }
-        return decoded
     }
-    
+
     // MARK: - Save Calibration Data
     func saveCalibration(_ data: CalibrationData) async {
         var updated = data
         updated.lastUpdated = Date()
-        
-        if let encoded = try? JSONEncoder().encode(updated) {
-            try? encoded.write(to: calibrationPath)
+
+        do {
+            let encoded = try JSONEncoder().encode(updated)
+            try encoded.write(to: calibrationPath)
+        } catch let encodingError as EncodingError {
+            print("❌ Alkindus: calibration encode hatası: \(encodingError)")
+        } catch {
+            print("❌ Alkindus: calibration.json yazma hatası: \(error.localizedDescription)")
         }
     }
-    
+
     // MARK: - Pending Observations (Awaiting Maturation)
     func loadPendingObservations() async -> [PendingObservation] {
-        guard let data = try? Data(contentsOf: pendingPath),
-              let decoded = try? JSONDecoder().decode([PendingObservation].self, from: data) else {
+        do {
+            let data = try Data(contentsOf: pendingPath)
+            return try JSONDecoder().decode([PendingObservation].self, from: data)
+        } catch CocoaError.fileReadNoSuchFile {
+            return []
+        } catch let error as NSError where error.domain == NSCocoaErrorDomain && error.code == NSFileReadNoSuchFileError {
+            return []
+        } catch {
+            print("❌ Alkindus: pending_observations.json okuma hatası: \(error.localizedDescription)")
             return []
         }
-        return decoded
     }
-    
+
     func savePendingObservations(_ observations: [PendingObservation]) async {
-        if let encoded = try? JSONEncoder().encode(observations) {
-            try? encoded.write(to: pendingPath)
+        do {
+            let encoded = try JSONEncoder().encode(observations)
+            try encoded.write(to: pendingPath)
+        } catch let encodingError as EncodingError {
+            print("❌ Alkindus: pending observations encode hatası: \(encodingError)")
+        } catch {
+            print("❌ Alkindus: pending_observations.json yazma hatası: \(error.localizedDescription)")
         }
     }
 
     // MARK: - Verdicts (Post-Mortem Results)
 
     func loadVerdicts() async -> [AlkindusVerdict] {
-        guard let data = try? Data(contentsOf: verdictsPath),
-              let decoded = try? JSONDecoder().decode([AlkindusVerdict].self, from: data) else {
+        do {
+            let data = try Data(contentsOf: verdictsPath)
+            return try JSONDecoder().decode([AlkindusVerdict].self, from: data)
+        } catch CocoaError.fileReadNoSuchFile {
+            return []
+        } catch let error as NSError where error.domain == NSCocoaErrorDomain && error.code == NSFileReadNoSuchFileError {
+            return []
+        } catch {
+            print("❌ Alkindus: alkindus_verdicts.json okuma hatası: \(error.localizedDescription)")
             return []
         }
-        return decoded
     }
 
     func saveVerdict(_ verdict: AlkindusVerdict) async {
@@ -72,8 +104,13 @@ actor AlkindusMemoryStore {
         if verdicts.count > 200 {
             verdicts = Array(verdicts.suffix(200))
         }
-        if let encoded = try? JSONEncoder().encode(verdicts) {
-            try? encoded.write(to: verdictsPath)
+        do {
+            let encoded = try JSONEncoder().encode(verdicts)
+            try encoded.write(to: verdictsPath)
+        } catch let encodingError as EncodingError {
+            print("❌ Alkindus: verdict encode hatası: \(encodingError)")
+        } catch {
+            print("❌ Alkindus: alkindus_verdicts.json yazma hatası: \(error.localizedDescription)")
         }
     }
 

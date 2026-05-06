@@ -1,7 +1,20 @@
 import Foundation
 
 // MARK: - Atlas Council
-/// The Fundamental Council - evaluates stocks based on financial metrics
+/// The Fundamental Council - evaluates stocks based on financial metrics.
+///
+/// ⚠️ **DEPRECATED — 2026-05-05 (Round 5):** Production karar yolundan çıkarıldı.
+/// `ArgusGrandCouncil` artık `AtlasV2Engine` + `AtlasV2DecisionAdapter` çağırıyor.
+/// Bu sınıf hâlâ derlenir (geriye dönük testler için), 2026-Q3'te kaldırılacak.
+///
+/// Sebep:
+/// - Static thresholds (P/E < 10 = "değer") sektörden bağımsız → tech stock'lar (PYPL) için
+///   yanlış sinyal
+/// - 5 ayrı agent (Değer/Büyüme/Kalite/Temettü/Hendek Ustası) cross-member logic yok
+/// - Veri eksikse `return nil` → silent weight=0 → kullanıcıya "Ağırlık: 0% Veri yok" log'u
+///
+/// Replacement: `AtlasV2Engine` (section-based, sektör-aware, nil-aware via Round 5 fix)
+@available(*, deprecated, message: "AtlasV2Engine kullan. Bu sınıf 2026-Q3'te kaldırılacak.")
 actor AtlasCouncil {
     static let shared = AtlasCouncil()
     

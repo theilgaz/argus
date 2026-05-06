@@ -156,56 +156,66 @@ actor SirkiyeAetherEngine {
 
         let snapshot = await TCMBDataService.shared.getMacroSnapshot(forceRefresh: forceRefresh)
 
-        var components: [ScoreComponent] = []
+        // 2026-05-05 (Round 4) FIX: Eski sürüm 6 component'in hepsini default değerlerle
+        // garanti edip skor üretiyordu (veri yoksa bile sahte ~58 skor). Artık her
+        // component snapshot'taki gerçek field nil ise nil dönüyor; analyze() bunları
+        // filtreleyip ağırlıkları normalize ediyor. Yetersiz component sayısında
+        // (< 3) `TurkeyMacroScore.empty` döndürülüp UI'a "veri yetersiz" sinyali gider.
+
+        // Component listesi (nil = veri yok)
+        let candidateComponents: [(label: String, component: ScoreComponent?)] = [
+            ("Enflasyon", analyzeInflation(snapshot)),
+            ("Kur Stabilitesi", analyzeFXStability(snapshot)),
+            ("Reel Faiz", analyzeInterestRates(snapshot)),
+            ("Büyüme", analyzeGrowth(snapshot)),
+            ("Cari Denge", analyzeExternalBalance(snapshot)),
+            ("MB Rezervleri", analyzeReserves(snapshot))
+        ]
+        let components = candidateComponents.compactMap { $0.component }
+        let missingLabels = candidateComponents.filter { $0.component == nil }.map { $0.label }
+
         var insights: [String] = []
-        var totalWeightedScore: Double = 0
-        var totalWeight: Double = 0
-        
-        // 1. ENFLASYON ANALİZİ (Ağırlık: %25)
-        let inflationComponent = analyzeInflation(snapshot)
-        components.append(inflationComponent)
-        totalWeightedScore += inflationComponent.score * inflationComponent.weight
-        totalWeight += inflationComponent.weight
-        
-        // 2. KUR STABİLİTESİ (Ağırlık: %20)
-        let fxComponent = analyzeFXStability(snapshot)
-        components.append(fxComponent)
-        totalWeightedScore += fxComponent.score * fxComponent.weight
-        totalWeight += fxComponent.weight
-        
-        // 3. FAİZ ORTAMI (Ağırlık: %20)
-        let rateComponent = analyzeInterestRates(snapshot)
-        components.append(rateComponent)
-        totalWeightedScore += rateComponent.score * rateComponent.weight
-        totalWeight += rateComponent.weight
-        
-        // 4. BÜYÜME (Ağırlık: %15)
-        let growthComponent = analyzeGrowth(snapshot)
-        components.append(growthComponent)
-        totalWeightedScore += growthComponent.score * growthComponent.weight
-        totalWeight += growthComponent.weight
-        
-        // 5. CARİ DENGE (Ağırlık: %10)
-        let externalComponent = analyzeExternalBalance(snapshot)
-        components.append(externalComponent)
-        totalWeightedScore += externalComponent.score * externalComponent.weight
-        totalWeight += externalComponent.weight
-        
-        // 6. REZERVLER (Ağırlık: %10)
-        let reserveComponent = analyzeReserves(snapshot)
-        components.append(reserveComponent)
-        totalWeightedScore += reserveComponent.score * reserveComponent.weight
-        totalWeight += reserveComponent.weight
-        
-        // Toplam Skor (Temel Makro)
+
+        // Yeterlilik kontrolü: en az 3 component olmadan güvenilir skor üretemez
+        guard components.count >= 3 else {
+            print("⚠️ SirkiyeAether: Sadece \(components.count) bileşen mevcut, skor güvenilir değil. Eksik: \(missingLabels.joined(separator: ", "))")
+            insights.append("⚠️ Veri yetersiz: \(components.count)/6 bileşen mevcut")
+            if !missingLabels.isEmpty {
+                insights.append("Eksik bileşenler: \(missingLabels.joined(separator: ", "))")
+            }
+            insights.append("TCMB EVDS API key'ini Settings'ten girmek bu eksikleri kapatabilir")
+            let emptyResult = TurkeyMacroScore(
+                overallScore: 50,
+                monetaryStance: .neutral,
+                growthMomentum: .stable,
+                externalRisk: .medium,
+                inflationPressure: .medium,
+                components: components,  // Eldeki bileşenleri yine göster (UI debug için)
+                insights: insights,
+                timestamp: Date()
+            )
+            cachedScore = emptyResult
+            cacheTimestamp = Date()
+            Task { await StaleDataRegistry.shared.touch("aether.turkey") }
+            return emptyResult
+        }
+
+        // Ağırlıklı toplam — yalnız mevcut bileşenler üstünden, ağırlıklar normalize edilir
+        let totalWeight = components.reduce(0.0) { $0 + $1.weight }
+        let totalWeightedScore = components.reduce(0.0) { $0 + $1.score * $1.weight }
         let overallScore = totalWeight > 0 ? totalWeightedScore / totalWeight : 50
-        
-        // Durum Belirleme
+
+        // Eksik bileşen varsa kullanıcıya görünür şekilde uyarı ver
+        if !missingLabels.isEmpty {
+            insights.append("ℹ️ Skor \(components.count)/6 bileşen ile hesaplandı. Eksik: \(missingLabels.joined(separator: ", "))")
+        }
+
+        // Durum Belirleme (snapshot'tan, kendi nil-handling'leri var)
         let monetaryStance = determineMonetaryStance(snapshot)
         let growthMomentum = determineGrowthMomentum(snapshot)
         let externalRisk = determineExternalRisk(snapshot)
         let inflationPressure = determineInflationPressure(snapshot)
-        
+
         // Standart Insight'lar
         let standardInsights = generateInsights(
             score: overallScore,
@@ -215,7 +225,11 @@ actor SirkiyeAetherEngine {
             externalRisk: externalRisk
         )
         insights.append(contentsOf: standardInsights)
-        
+
+        // Score trace (P3-6)
+        let traceParts = components.map { "\($0.name)=\(Int($0.score))" }.joined(separator: " ")
+        print("[SirkiyeAether] components=[\(traceParts)] weights=\(String(format: "%.2f", totalWeight)) → final=\(Int(overallScore))")
+
         let result = TurkeyMacroScore(
             overallScore: min(100, max(0, overallScore)),
             monetaryStance: monetaryStance,
@@ -235,21 +249,25 @@ actor SirkiyeAetherEngine {
     
     // MARK: - Bileşen Analizleri
     
-    private func analyzeInflation(_ snapshot: TCMBDataService.TCMBMacroSnapshot) -> ScoreComponent {
-        let inflation = snapshot.inflation ?? 50
-        
-        // Enflasyon ne kadar düşükse skor o kadar yüksek
+    // 2026-05-05 (Round 4) FIX: Eski sürümde her bileşen `?? defaultValue` ile sahte
+    // skor üretiyordu (inflation ?? 50 → score 40, usdTry ?? 35 → score 65, vb.). Sonuç:
+    // TCMB API key yokken bile sistem ~58 stable skor üretiyor → kullanıcı UI'da
+    // "her şey yolunda" sanıyor. Şimdi her component snapshot'taki gerçek field
+    // nil ise `nil` dönüyor; analyze() bunları filtreleyip ağırlıkları normalize ediyor.
+
+    private func analyzeInflation(_ snapshot: TCMBDataService.TCMBMacroSnapshot) -> ScoreComponent? {
+        guard let inflation = snapshot.inflation else { return nil }
+
         let score: Double
-        let trend: Trend
-        
         if inflation < 10 { score = 100 }
         else if inflation < 20 { score = 80 }
         else if inflation < 40 { score = 60 }
         else if inflation < 60 { score = 40 }
         else if inflation < 80 { score = 20 }
         else { score = 10 }
-        
-        // Trend belirleme (core vs headline karşılaştırması)
+
+        // Trend (core vs headline karşılaştırması)
+        let trend: Trend
         if let core = snapshot.coreInflation {
             if core < inflation - 5 { trend = .down }
             else if core > inflation + 5 { trend = .up }
@@ -257,7 +275,7 @@ actor SirkiyeAetherEngine {
         } else {
             trend = .stable
         }
-        
+
         return ScoreComponent(
             name: "Enflasyon",
             value: inflation,
@@ -267,20 +285,19 @@ actor SirkiyeAetherEngine {
             icon: "percent"
         )
     }
-    
-    private func analyzeFXStability(_ snapshot: TCMBDataService.TCMBMacroSnapshot) -> ScoreComponent {
-        // USD/TRY volatilitesi (basit yaklaşım)
-        let usdTry = snapshot.usdTry ?? 35
-        
-        // Kur ne kadar stabil (düşük) olursa skor yüksek
-        // Bu basit bir yaklaşım - gerçekte volatilite hesaplanmalı
+
+    private func analyzeFXStability(_ snapshot: TCMBDataService.TCMBMacroSnapshot) -> ScoreComponent? {
+        guard let usdTry = snapshot.usdTry else { return nil }
+
+        // Kur seviye-temelli (statik) — gerçekte volatilite hesaplanmalı (TODO: yıllık std dev)
+        // Eşikler 2025-2026 referans aralığında ayarlandı; üretim sırasında güncellenmesi gerekebilir
         let score: Double
         if usdTry < 30 { score = 80 }
         else if usdTry < 35 { score = 65 }
         else if usdTry < 40 { score = 50 }
         else if usdTry < 45 { score = 35 }
         else { score = 20 }
-        
+
         return ScoreComponent(
             name: "Kur Stabilitesi",
             value: usdTry,
@@ -290,20 +307,18 @@ actor SirkiyeAetherEngine {
             icon: "dollarsign.circle"
         )
     }
-    
-    private func analyzeInterestRates(_ snapshot: TCMBDataService.TCMBMacroSnapshot) -> ScoreComponent {
-        // Reel faiz pozitif olmalı
-        let realRate = snapshot.realInterestRate ?? 0
-        
+
+    private func analyzeInterestRates(_ snapshot: TCMBDataService.TCMBMacroSnapshot) -> ScoreComponent? {
+        guard let realRate = snapshot.realInterestRate else { return nil }
+
         let score: Double
         let trend: Trend
-        
         if realRate > 10 { score = 90; trend = .up }
         else if realRate > 5 { score = 75; trend = .up }
         else if realRate > 0 { score = 60; trend = .stable }
         else if realRate > -10 { score = 40; trend = .down }
         else { score = 20; trend = .down }
-        
+
         return ScoreComponent(
             name: "Reel Faiz",
             value: realRate,
@@ -313,19 +328,18 @@ actor SirkiyeAetherEngine {
             icon: "banknote"
         )
     }
-    
-    private func analyzeGrowth(_ snapshot: TCMBDataService.TCMBMacroSnapshot) -> ScoreComponent {
-        let gdp = snapshot.gdpGrowth ?? 3
-        
+
+    private func analyzeGrowth(_ snapshot: TCMBDataService.TCMBMacroSnapshot) -> ScoreComponent? {
+        guard let gdp = snapshot.gdpGrowth else { return nil }
+
         let score: Double
         let trend: Trend
-        
         if gdp > 5 { score = 90; trend = .up }
         else if gdp > 3 { score = 70; trend = .up }
         else if gdp > 0 { score = 50; trend = .stable }
         else if gdp > -3 { score = 30; trend = .down }
         else { score = 10; trend = .down }
-        
+
         return ScoreComponent(
             name: "Büyüme",
             value: gdp,
@@ -335,17 +349,17 @@ actor SirkiyeAetherEngine {
             icon: "chart.line.uptrend.xyaxis"
         )
     }
-    
-    private func analyzeExternalBalance(_ snapshot: TCMBDataService.TCMBMacroSnapshot) -> ScoreComponent {
-        let currentAccount = snapshot.currentAccount ?? -30
-        
+
+    private func analyzeExternalBalance(_ snapshot: TCMBDataService.TCMBMacroSnapshot) -> ScoreComponent? {
+        guard let currentAccount = snapshot.currentAccount else { return nil }
+
         let score: Double
         if currentAccount > 0 { score = 90 }
         else if currentAccount > -10 { score = 70 }
         else if currentAccount > -30 { score = 50 }
         else if currentAccount > -50 { score = 30 }
         else { score = 15 }
-        
+
         return ScoreComponent(
             name: "Cari Denge",
             value: currentAccount,
@@ -355,17 +369,17 @@ actor SirkiyeAetherEngine {
             icon: "arrow.left.arrow.right"
         )
     }
-    
-    private func analyzeReserves(_ snapshot: TCMBDataService.TCMBMacroSnapshot) -> ScoreComponent {
-        let reserves = snapshot.reserves ?? 100
-        
+
+    private func analyzeReserves(_ snapshot: TCMBDataService.TCMBMacroSnapshot) -> ScoreComponent? {
+        guard let reserves = snapshot.reserves else { return nil }
+
         let score: Double
         if reserves > 150 { score = 90 }
         else if reserves > 120 { score = 70 }
         else if reserves > 90 { score = 50 }
         else if reserves > 60 { score = 30 }
         else { score = 15 }
-        
+
         return ScoreComponent(
             name: "MB Rezervleri",
             value: reserves,

@@ -601,22 +601,15 @@ class TradingViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
-        // ❌ REMOVED: 7 objectWillChange.send() broadcast chains
-        // ✅ NEW: Views observe sub-ViewModels directly (@ObservedObject)
-        //
-        // Instead of broadcasting ALL changes through TradingViewModel,
-        // Views now observe specific ViewModels:
-        // - market: MarketViewModel (quotes, candles)
-        // - risk: RiskViewModel (portfolio, balance)
-        // - analysis: AnalysisViewModel (signals, reports)
-        // - DiagnosticsViewModel.shared (data health)
-        // - SignalStateViewModel.shared (argus decisions)
-        // - ExecutionStateViewModel.shared (autopilot state)
-        //
-        // This eliminates Observer Hell:
-        // - No cascading objectWillChange.send()
-        // - Granular updates (only affected views re-render)
-        // - 10x better performance for quote/candle updates
+        // Broadcast kaldırıldı (Observer Hell), AMA bistAtmosphere hâlâ
+        // TradingViewModel üzerinden okuyan view'lar var (SirkiyeDashboardView).
+        // Sadece bu tek property için hedefli relay:
+        analysis.$bistAtmosphere
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.objectWillChange.send()
+            }
+            .store(in: &cancellables)
     }
 
     private func setupTerminalObservation() {

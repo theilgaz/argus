@@ -1,7 +1,14 @@
 import Foundation
 
+// 2026-05-05 (Round 5) DEPRECATION:
+// "5 Ustası" pattern (Value/Growth/Quality/Dividend/Moat) production'dan çıkarıldı.
+// Yerine AtlasV2Engine'in 6 bölüm yaklaşımı (Değerleme, Karlılık, Büyüme, Mali Sağlık, Nakit, Temettü)
+// devreye alındı. Bu dosya hâlâ derlenir (AtlasCouncil tarafından kullanılır, o da deprecated)
+// 2026-Q3'te tüm dosya silinecek.
+
 // MARK: - Value Master Engine
 /// Council member responsible for valuation analysis (P/E, P/B, DCF)
+@available(*, deprecated, message: "AtlasV2 Değerleme bölümü kullan. 2026-Q3'te kaldırılacak.")
 struct ValueMasterEngine: FundamentalCouncilMember, Sendable {
     let id = "value_master"
     let name = "Değer Ustası"
@@ -162,6 +169,7 @@ struct ValueMasterEngine: FundamentalCouncilMember, Sendable {
 
 // MARK: - Growth Master Engine
 /// Council member responsible for growth analysis
+@available(*, deprecated, message: "AtlasV2 Büyüme bölümü kullan. 2026-Q3'te kaldırılacak.")
 struct GrowthMasterEngine: FundamentalCouncilMember, Sendable {
     let id = "growth_master"
     let name = "Büyüme Ustası"
@@ -261,6 +269,7 @@ struct GrowthMasterEngine: FundamentalCouncilMember, Sendable {
 
 // MARK: - Quality Master Engine
 /// Council member responsible for quality metrics (ROE, margins, debt)
+@available(*, deprecated, message: "AtlasV2 Karlılık + Mali Sağlık bölümü kullan. 2026-Q3'te kaldırılacak.")
 struct QualityMasterEngine: FundamentalCouncilMember, Sendable {
     let id = "quality_master"
     let name = "Kalite Ustası"
@@ -353,6 +362,7 @@ struct QualityMasterEngine: FundamentalCouncilMember, Sendable {
 
 // MARK: - Dividend Master Engine
 /// Council member responsible for dividend analysis
+@available(*, deprecated, message: "AtlasV2 Temettü bölümü kullan. 2026-Q3'te kaldırılacak.")
 struct DividendMasterEngine: FundamentalCouncilMember, Sendable {
     let id = "dividend_master"
     let name = "Temettü Ustası"
@@ -441,6 +451,7 @@ struct DividendMasterEngine: FundamentalCouncilMember, Sendable {
 
 // MARK: - Moat Master Engine
 /// Council member responsible for competitive advantage analysis
+@available(*, deprecated, message: "AtlasV2 'rekabet avantajı' Karlılık+Risk bölümlerinde değerlendirilir. 2026-Q3'te kaldırılacak.")
 struct MoatMasterEngine: FundamentalCouncilMember, Sendable {
     let id = "moat_master"
     let name = "Hendek Ustası"

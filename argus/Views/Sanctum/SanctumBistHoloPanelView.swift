@@ -178,7 +178,12 @@ struct BistHoloPanelView: View {
         async let xu100Task = { try? await BorsaPyProvider.shared.getXU100() }()
         async let goldTask = { try? await BorsaPyProvider.shared.getGoldPrice() }()
 
+        // 2026-05-05 (Round 4): newsSnapshot, foreignFlow ve hardcoded fallback'ler düzeltildi.
+        async let newsTask = SirkiyeNewsHelper.snapshotForTurkey()
+        async let foreignFlowTask = ForeignInvestorFlowService.shared.getMarketForeignSentiment()
         let (bpBrent, bpInflation, bpPolicyRate, bpXu100, bpGold) = await (brentTask, inflationTask, policyRateTask, xu100Task, goldTask)
+        let news = await newsTask
+        let foreignFlow = await foreignFlowTask
 
         var xu100Change: Double? = nil
         var xu100Value: Double? = nil
@@ -190,18 +195,21 @@ struct BistHoloPanelView: View {
         }
 
         let macro = await MacroSnapshotService.shared.getSnapshot()
+        // Hardcoded fallback'ler (80, 15, 45, 50) kaldırıldı — veri yoksa optional bırak,
+        // SirkiyeEngine zaten nil-safe (nil bileşenler skor hesabında pas geçilir).
         let sirkiyeInput = SirkiyeEngine.SirkiyeInput(
             usdTry: usdTry,
             usdTryPrevious: usdTryPrev,
             dxy: macro.dxy,
-            brentOil: bpBrent?.last ?? tcmbSnapshot.brentOil ?? 80.0,
-            globalVix: macro.vix ?? 15.0,
-            newsSnapshot: nil,
-            currentInflation: bpInflation?.yearlyInflation ?? tcmbSnapshot.inflation ?? 45.0,
-            policyRate: bpPolicyRate ?? tcmbSnapshot.policyRate ?? 50.0,
+            brentOil: bpBrent?.last ?? tcmbSnapshot.brentOil,
+            globalVix: macro.vix,
+            newsSnapshot: news,                                                            // P0-2
+            currentInflation: bpInflation?.yearlyInflation ?? tcmbSnapshot.inflation,
+            policyRate: bpPolicyRate ?? tcmbSnapshot.policyRate,
             xu100Change: xu100Change,
             xu100Value: xu100Value,
-            goldPrice: bpGold?.last ?? tcmbSnapshot.goldPrice
+            goldPrice: bpGold?.last ?? tcmbSnapshot.goldPrice,
+            foreignFlowScore: foreignFlow                                                  // P2-5
         )
 
         let decision = await ArgusGrandCouncil.shared.convene(

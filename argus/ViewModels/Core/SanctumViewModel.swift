@@ -183,7 +183,12 @@ final class SanctumViewModel: ObservableObject {
                 async let xu100Task = { try? await BorsaPyProvider.shared.getXU100() }()
                 async let goldTask = { try? await BorsaPyProvider.shared.getGoldPrice() }()
 
+                // 2026-05-05 (Round 4): newsSnapshot, foreignFlow ve hardcoded fallback'ler düzeltildi.
+                async let newsTask = SirkiyeNewsHelper.snapshotForTurkey()
+                async let foreignFlowTask = ForeignInvestorFlowService.shared.getMarketForeignSentiment()
                 let (brent, inflation, policyRate, xu100, gold) = await (brentTask, inflationTask, policyRateTask, xu100Task, goldTask)
+                let news = await newsTask
+                let foreignFlow = await foreignFlowTask
 
                 // XU100 günlük değişim hesapla
                 var xu100Change: Double? = nil
@@ -201,12 +206,13 @@ final class SanctumViewModel: ObservableObject {
                     dxy: nil,
                     brentOil: brent?.last,
                     globalVix: macro.vix,
-                    newsSnapshot: nil,
-                    currentInflation: inflation?.yearlyInflation ?? 45.0,
-                    policyRate: policyRate ?? 50.0,
+                    newsSnapshot: news,                            // P0-2
+                    currentInflation: inflation?.yearlyInflation,  // hardcoded 45.0 kaldırıldı
+                    policyRate: policyRate,                         // hardcoded 50.0 kaldırıldı
                     xu100Change: xu100Change,
                     xu100Value: xu100Value,
-                    goldPrice: gold?.last
+                    goldPrice: gold?.last,
+                    foreignFlowScore: foreignFlow                  // P2-5
                 )
             }
         }

@@ -407,6 +407,20 @@ extension SettingsView {
                 }
             }
 
+            // Backtest Validasyon
+            TerminalSection(title: "BACKTEST · VALİDASYON",
+                            systemImage: "chart.bar.xaxis.ascending",
+                            accentColor: InstitutionalTheme.Colors.aurora) {
+                NavigationLink(destination: BacktestValidationView()) {
+                    ArgusTerminalRow(
+                        label: "V2 Alpha Doğrulama",
+                        value: "10 sembol · 6 ay",
+                        icon: "chart.bar.xaxis.ascending",
+                        color: InstitutionalTheme.Colors.aurora
+                    )
+                }
+            }
+
             // Alkindus Kalibrasyon Motoru
             TerminalSection(title: "ALKINDUS · KALİBRASYON",
                             motor: .alkindus) {

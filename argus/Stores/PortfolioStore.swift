@@ -557,13 +557,16 @@ final class PortfolioStore: ObservableObject {
         TradeLogStore.shared.append(tradeLog)
 
         // Öğrenme sistemlerine geri besleme — trade kapanınca hepsini tetikle
-        let _symbol       = trade.symbol
-        let _pnlAbsolute  = pnl
-        let _pnlPercent   = trade.profitPercentage
-        let _entryPrice   = trade.entryPrice
-        let _exitPrice    = currentPrice
-        let _entryDate    = trade.entryDate
-        let _holdingDays  = Calendar.current.dateComponents([.day], from: trade.entryDate, to: Date()).day ?? 0
+        let _symbol           = trade.symbol
+        let _pnlAbsolute      = pnl
+        let _pnlPercent       = trade.profitPercentage
+        let _entryPrice       = trade.entryPrice
+        let _exitPrice        = currentPrice
+        let _entryDate        = trade.entryDate
+        let _holdingDays      = Calendar.current.dateComponents([.day], from: trade.entryDate, to: Date()).day ?? 0
+        let _engine           = trade.engine ?? .manual
+        let _entryOrionScore  = trade.entryOrionSnapshot?.momentumScore
+        let _exitReason       = reason ?? "MANUAL"
 
         Task.detached(priority: .background) {
             // 1a. Chiron öğrenmesi — ağırlık optimizasyonu (mevcut)
@@ -580,6 +583,25 @@ final class PortfolioStore: ObservableObject {
                 duration:      Date().timeIntervalSince(_entryDate),
                 profitPercent: _pnlPercent
             )
+
+            // 1c. ChironDataLakeService — TradeOutcomeRecord ile öğrenme havuzu beslemesi.
+            // ChironLearningJob.analyzeSymbol() bu havuzdan okuyarak ağırlıkları günceller.
+            // Eski sürümde sadece PaperBroker ve backtest DataLake'e yazıyordu; gerçek
+            // trade'ler "kayıp veri" idi → 5 trade minimum'a ulaşılmadığı için
+            // analyzeSymbol early-return yapıyor, hiç öğrenme tetiklenmiyordu.
+            let dataLakeRecord = TradeOutcomeRecord(
+                symbol: _symbol,
+                engine: _engine,
+                entryDate: _entryDate,
+                exitDate: Date(),
+                entryPrice: _entryPrice,
+                exitPrice: _exitPrice,
+                pnlPercent: _pnlPercent,
+                exitReason: _exitReason,
+                orionScoreAtEntry: _entryOrionScore,
+                regime: ChironRegimeEngine.shared.globalResult.regime
+            )
+            await ChironDataLakeService.shared.logTrade(dataLakeRecord)
 
             // 1b. ChironCouncilLearningService — feedback loop'un KAPANIŞ adımı.
             // Eski sürümde bu çağrı yoktu; pending CouncilVotingRecord'lar sonsuza dek

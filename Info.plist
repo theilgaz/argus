@@ -54,5 +54,23 @@
         <key>UIApplicationSupportsMultipleScenes</key>
         <false/>
     </dict>
+
+    <!-- MARK: BorsaPy Backend Config (Secrets.xcconfig'ten substitute edilir) -->
+    <!--
+        BORSAPY_URL: BIST veri sağlayıcısının URL'i (HTTPS önerilir, lokal dev'de http://localhost:8899).
+        BORSAPY_KEY: Backend'e Bearer token koyulduysa aynı değer (boş bırakılabilir).
+
+        ÖNEMLİ: pbxproj'daki `INFOPLIST_KEY_<custom>` ayarları SADECE Apple'ın tanıdığı
+        sistem key'leri (orientations, usage descriptions) için inject olur — custom
+        key'ler için bu placeholder yöntemi şarttır. Yeni secret eklerken hem
+        Secrets.xcconfig'e hem buraya `<key>X</key><string>$(X)</string>` yaz.
+
+        Bu placeholder yokken: Secrets.borsaPyURL boş döner → BorsaPyProvider devre
+        dışı → BIST tüm sembolleri sessizce Yahoo fallback'e düşer.
+    -->
+    <key>BORSAPY_URL</key>
+    <string>$(BORSAPY_URL)</string>
+    <key>BORSAPY_KEY</key>
+    <string>$(BORSAPY_KEY)</string>
 </dict>
 </plist>

@@ -67,23 +67,26 @@ struct ArgusOrionSheet: View {
 }
 
 // MARK: - Aether Sheet (Opens Full Educational Detail View)
+//
+// 2026-05-05 H-65: NavigationStack wrapper main case'e de eklendi.
+// Eski yapıda yalnızca loading case'inde NavigationStack vardı —
+// bu yüzden ArgusAetherDetailView içindeki NavigationLink'ler
+// (Yaklaşan veriler / Tahminlerim / Tüm göstergeler) push yapamıyordu.
 struct ArgusAetherSheet: View {
     let macro: MacroEnvironmentRating?
 
     var body: some View {
-        if let macro = macro {
-            ArgusAetherDetailView(rating: macro)
-        } else {
-            NavigationStack {
+        NavigationStack {
+            if let macro = macro {
+                ArgusAetherDetailView(rating: macro)
+            } else {
                 VStack(spacing: 16) {
                     ProgressView()
                         .scaleEffect(1.5)
-                    Text("Aether Verileri Yükleniyor...")
-                        .foregroundColor(.gray)
+                    Text("Makro veriler yükleniyor…")
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
                 .frame(maxWidth: .infinity, minHeight: 200)
-                .navigationTitle("Aether")
-                .navigationBarTitleDisplayMode(.inline)
             }
         }
     }

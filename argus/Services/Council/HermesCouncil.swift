@@ -1,7 +1,16 @@
 import Foundation
 
 // MARK: - Hermes Council
-/// The News Council - evaluates news and sentiment impact
+/// The News Council - evaluates news and sentiment impact.
+///
+/// ⚠️ **DEPRECATED — 2026-05-05 (Round 8):** Production karar yolundan çıkarıldı.
+/// `ArgusGrandCouncil` artık `HermesV2Engine` + `HermesV2DecisionAdapter` çağırıyor.
+/// 2026-Q3'te kaldırılacak.
+///
+/// Yeni motor: `argus/Services/HermesV2/HermesV2Engine.swift`
+/// - 5 "MasterEngine" yerine 5 Türkçe bölüm: Hissiyat / Etki / Tazelik / Güvenilirlik / Tetikleyici
+/// - nil-aware aggregator (Round 5 patternı), trace logging
+@available(*, deprecated, message: "HermesV2Engine kullan. Bu sınıf 2026-Q3'te kaldırılacak.")
 @MainActor
 struct HermesCouncil {
     static let shared = HermesCouncil()

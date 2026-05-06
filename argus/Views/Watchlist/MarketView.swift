@@ -103,10 +103,16 @@ struct MarketView: View {
                     .preferredColorScheme(.dark)
             }
             .sheet(isPresented: $showAetherDetail) {
-                if let macro = viewModel.macroRating {
-                    ArgusAetherDetailView(rating: macro)
-                        .preferredColorScheme(.dark)
+                // 2026-05-05 H-65: NavigationStack wrapper eklendi.
+                // ArgusAetherDetailView içindeki "Yaklaşan veriler /
+                // Tahminlerim / Tüm göstergeler" NavigationLink'leri
+                // push yapamıyordu çünkü sheet'te NavigationStack yoktu.
+                NavigationStack {
+                    if let macro = viewModel.macroRating {
+                        ArgusAetherDetailView(rating: macro)
+                    }
                 }
+                .preferredColorScheme(.dark)
             }
             .sheet(isPresented: $showEducation) {
                 ChironEducationCard(result: ChironRegimeEngine.shared.lastResult, isPresented: $showEducation)
@@ -332,21 +338,11 @@ struct GlobalCockpitView: View {
             SmartTickerStrip(viewModel: viewModel)
                 .padding(.top, 16)
 
-            // 2026-04-24 H-26: "GLOBAL İZLEME" mono caps + "LIVE" pill yerine
-            // sade sentence-case başlık + canlılık dot'u. Bant zaten "CANLI"
-            // pill'i taşıyor, ikinci kez tekrarlamaya gerek yok.
-            HStack(spacing: 8) {
-                Text("İzleme listesi")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                Spacer()
-                if viewModel.isLiveMode {
-                    ArgusDot(color: InstitutionalTheme.Colors.aurora, size: 6)
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
-            .padding(.bottom, 4)
+            // 2026-05-05 H-65: "İzleme listesi" header silindi. Sayfa zaten
+            // Tarama tab'ında, ticker bandında "CANLI" pill var, üçüncü kez
+            // başlık koymak gereksizdi. Stocks.app de aynı şekilde liste
+            // başlamadan önce ek header koymuyor.
+            Color.clear.frame(height: 12)
 
             // Watchlist
             if watchlist.isEmpty {
@@ -395,18 +391,10 @@ struct BistCockpitView: View {
             // dış header çift başlık yapıyordu.
             SirkiyeDashboardView(viewModel: viewModel)
 
-            // Watchlist başlığı — Global'daki "İzleme listesi" ile aynı dil
-            HStack(spacing: 8) {
-                Text("BIST takip")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                Spacer()
-                Text("Türk lirası")
-                    .font(.system(size: 12))
-                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 4)
+            // 2026-05-05 H-65: "BIST takip · Türk lirası" header silindi.
+            // Sayfa zaten Sirkiye tab'ında, currency tekrarlamak gereksiz;
+            // iOS dilinde liste başlamadan önce ek başlığa gerek yok
+            // (Stocks.app de aynı şekilde header koymuyor).
 
             if watchlist.isEmpty {
                 ArgusEmptyState(
@@ -781,21 +769,17 @@ struct OrionSignalBadge: View {
         return "Tut"
     }
 
+    /// 2026-05-05 H-65: Capsule + "Tut" tekrarı kalktı.
+    /// Çoğu satırda verdict "Tut" olduğu için "Tut 68 · Tut 52 · Tut 56"
+    /// satır satır tekrarlanıp gürültü yapıyordu. Yeni dil: aksiyon
+    /// rengi sayıya taşındı, "Tut" satırlarda muted yüzde, "Al/Sat"
+    /// satırlarında renkli yüzde — capsule yok.
     var body: some View {
-        HStack(spacing: 5) {
-            Text(shortVerdict)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(tint)
-            Text("\(Int(result.score))")
-                .font(.system(size: 11))
-                .foregroundColor(tint.opacity(0.75))
-                .monospacedDigit()
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 3)
-        .background(
-            Capsule().fill(tint.opacity(0.14))
-        )
-        .accessibilityLabel(Text("Orion sinyali \(shortVerdict), skor \(Int(result.score))"))
+        let isHold = shortVerdict == "Tut"
+        return Text("%\(Int(result.score))")
+            .font(.system(size: 12, design: .monospaced))
+            .foregroundColor(isHold ? InstitutionalTheme.Colors.textTertiary : tint)
+            .monospacedDigit()
+            .accessibilityLabel(Text("Orion sinyali \(shortVerdict), skor \(Int(result.score))"))
     }
 }

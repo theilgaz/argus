@@ -1,513 +1,456 @@
 import SwiftUI
 
-// MARK: - Expectations Entry View
-// Kullanıcının ekonomik beklenti değerlerini girmesi için rehberli arayüz
+// MARK: - ExpectationsEntryView (Yaklaşan veriler)
+//
+// 2026-05-04 H-63 — komple yeniden yazıldı.
+// Eski yapı: sarı bulb hint + mor takvim listesi + cyan input row + orange
+// surprises + blue link kartlar (V5 tinted dilinde, emoji yağmuru).
+// Yeni yapı: sade iOS list. Her gösterge tek satır → tıklayınca
+// IndicatorExpectationFormView push ediliyor (üstünde Kaydet, altında
+// büyük input + sade meta + geçmiş açıklamalar).
 
 struct ExpectationsEntryView: View {
     @ObservedObject private var store = ExpectationsStore.shared
     @Environment(\.dismiss) private var dismiss
-    @State private var showingSaveConfirmation = false
-    
+
     var body: some View {
-        VStack(spacing: 0) {
-            ArgusNavHeader(
-                title: "EKONOMİK BEKLENTİ",
-                subtitle: "DEMETER · MAKRO · TAKVİM",
-                leadingDeco: .bars3([.holo, .text, .text]),
-                actions: [.custom(sfSymbol: "xmark", action: { dismiss() })]
-            )
-            ZStack {
-                InstitutionalTheme.Colors.background.ignoresSafeArea()
+        ZStack {
+            InstitutionalTheme.Colors.background.ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                topNav
 
                 ScrollView {
-                    VStack(spacing: 20) {
-                        // Header Card
-                        headerCard
-
-                        // Release Schedule
-                        releaseScheduleCard
-
-                        // Pending Expectations Section
-                        pendingSection
-
-                        // Recent Surprises Section
-                        if !store.getRecentSurprises().isEmpty {
-                            surprisesSection
-                        }
-
-                        // Info Card
-                        infoCard
-
-                        Spacer(minLength: 40)
+                    VStack(alignment: .leading, spacing: 0) {
+                        introParagraph
+                        indicatorList
+                        footerNote
+                        Color.clear.frame(height: 24)
                     }
-                    .padding(.top)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 18)
                 }
             }
-            .overlay(
-                // Save confirmation toast
-                VStack {
-                    Spacer()
-                    if showingSaveConfirmation {
-                        HStack {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
-                            Text("Kaydedildi!")
-                                .font(.caption)
-                                .bold()
-                        }
-                        .padding()
-                        .background(Color.green.opacity(0.2))
-                        .cornerRadius(20)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                        .padding(.bottom, 50)
-                    }
-                }
-                .animation(.spring(), value: showingSaveConfirmation)
-            )
         }
-        .background(InstitutionalTheme.Colors.background.ignoresSafeArea())
         .navigationBarHidden(true)
     }
-    
-    // MARK: - Header Card
-    private var headerCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: "lightbulb.fill")
-                    .foregroundColor(.yellow)
-                Text("Beklenti Nedir?")
-                    .font(.headline)
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-            }
-            
-            Text("Ekonomik veriler açıklanmadan önce piyasanın beklediği değerleri girin. Gerçekleşen değer beklentiden farklı olursa \"sürpriz\" oluşur ve Aether skorunu etkiler.")
-                .font(.caption)
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.yellow.opacity(0.1))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
-                )
-        )
-        .padding(.horizontal)
-    }
-    
-    // MARK: - Release Schedule Card
-    private var releaseScheduleCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: "calendar.badge.clock")
-                    .foregroundColor(.purple)
-                Text("Veri Açıklama Takvimi (ABD)")
-                    .font(.headline)
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-            }
-            
-            VStack(spacing: 8) {
-                ScheduleRow(indicator: "CPI", timing: "Her ayın 10-14'ü arası", icon: "cart.fill", color: .orange)
-                ScheduleRow(indicator: "İstihdam (Payrolls)", timing: "Her ayın ilk Cuma'sı", icon: "person.3.fill", color: .green)
-                ScheduleRow(indicator: "İşsizlik", timing: "Her ayın ilk Cuma'sı (İstihdam ile birlikte)", icon: "person.crop.circle.badge.xmark", color: .red)
-                ScheduleRow(indicator: "ICSA (Haftalık)", timing: "Her Perşembe 15:30 TSİ", icon: "person.badge.minus", color: .blue)
-                ScheduleRow(indicator: "PCE", timing: "Her ayın son haftası", icon: "creditcard.fill", color: .cyan)
-                ScheduleRow(indicator: "GDP", timing: "Çeyreklik - Ocak, Nisan, Temmuz, Ekim", icon: "chart.bar.fill", color: .mint)
-            }
-            
-            HStack(spacing: 4) {
-                Image(systemName: "lightbulb.fill")
-                    .font(.caption2)
-                    .foregroundColor(.yellow)
-                Text("Veriler genellikle 15:30 veya 16:00 TSİ'de açıklanır")
-                    .font(.caption2)
-                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-            }
-                .padding(.top, 4)
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.purple.opacity(0.1))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.purple.opacity(0.3), lineWidth: 1)
-                )
-        )
-        .padding(.horizontal)
-    }
-    
-    // MARK: - Pending Section
-    private var pendingSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: "pencil.circle.fill")
-                    .foregroundColor(.cyan)
-                Text("Beklenti Gir")
-                    .font(.headline)
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                Spacer()
-                
-                // Saved count badge
-                let savedCount = ExpectationsStore.EconomicIndicator.allCases.filter { store.getExpectation(for: $0) != nil }.count
-                if savedCount > 0 {
-                    Text("\(savedCount) kayıtlı")
-                        .font(.caption2)
-                        .foregroundColor(.green)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.green.opacity(DesignTokens.Opacity.glassCard))
-                        .cornerRadius(8)
-                }
-            }
-            .padding(.horizontal)
-            
-            ForEach(ExpectationsStore.EconomicIndicator.allCases) { indicator in
-                ExpectationInputRow(indicator: indicator, store: store) {
-                    showSaveConfirmation()
-                }
-            }
-        }
-    }
-    
-    // MARK: - Surprises Section
-    private var surprisesSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: "sparkles")
-                    .foregroundColor(.orange)
-                Text("Son Sürprizler")
-                    .font(.headline)
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                Spacer()
-            }
-            .padding(.horizontal)
-            
-            ForEach(store.getRecentSurprises().prefix(5)) { entry in
-                SurpriseRow(entry: entry)
-            }
-        }
-    }
-    
-    // MARK: - Info Card
-    private var infoCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: "link")
-                    .foregroundColor(.blue)
-                Text("Beklenti Değerlerini Nereden Buluruz?")
-                    .font(.caption)
-                    .bold()
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-            }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Link(destination: URL(string: "https://www.investing.com/economic-calendar/")!) {
-                    HStack {
-                        Image(systemName: "chart.bar.fill")
-                            .font(.caption)
-                        Text("Investing.com Ekonomik Takvim")
-                            .font(.caption)
-                        Image(systemName: "arrow.up.right.square")
-                            .font(.caption2)
-                    }
-                    .foregroundColor(.cyan)
-                }
-                
-                Link(destination: URL(string: "https://tradingeconomics.com/calendar")!) {
-                    HStack {
-                        Image(systemName: "chart.line.uptrend.xyaxis")
-                            .font(.caption)
-                        Text("Trading Economics Takvim")
-                            .font(.caption)
-                        Image(systemName: "arrow.up.right.square")
-                            .font(.caption2)
-                    }
-                    .foregroundColor(.cyan)
-                }
-            }
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(InstitutionalTheme.Colors.surface1)
-        )
-        .padding(.horizontal)
-    }
-    
-    private func showSaveConfirmation() {
-        showingSaveConfirmation = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            showingSaveConfirmation = false
-        }
-    }
-}
 
-// MARK: - Schedule Row
-struct ScheduleRow: View {
-    let indicator: String
-    let timing: String
-    let icon: String
-    let color: Color
-    
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: icon)
-                .font(.caption)
-                .foregroundColor(color)
-                .frame(width: 20)
-            
-            Text(indicator)
-                .font(.caption)
-                .fontWeight(.medium)
+    // MARK: - Üst nav
+
+    private var topNav: some View {
+        HStack(spacing: 8) {
+            Button(action: { dismiss() }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .frame(width: 36, height: 36)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Geri")
+
+            Text("Yaklaşan veriler")
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                .frame(width: 80, alignment: .leading)
-            
-            Text(timing)
-                .font(.caption2)
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-            
+                .accessibilityAddTraits(.isHeader)
+
             Spacer()
         }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(InstitutionalTheme.Colors.surface1)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
+        }
+    }
+
+    // MARK: - Giriş paragrafı
+
+    private var introParagraph: some View {
+        Text("Veri açıklanmadan önce beklediğin değeri kaydet. Sonra gerçekleşen değerle karşılaştırılır.")
+            .font(.system(size: 13))
+            .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+            .lineSpacing(3)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.bottom, 22)
+    }
+
+    // MARK: - Gösterge listesi
+
+    private var indicatorList: some View {
+        VStack(spacing: 0) {
+            let indicators = ExpectationsStore.EconomicIndicator.allCases
+            ForEach(Array(indicators.enumerated()), id: \.offset) { idx, indicator in
+                NavigationLink(destination: IndicatorExpectationFormView(indicator: indicator)) {
+                    indicatorRow(indicator)
+                }
+                .buttonStyle(.plain)
+                if idx < indicators.count - 1 {
+                    Rectangle()
+                        .fill(InstitutionalTheme.Colors.borderSubtle)
+                        .frame(height: 0.5)
+                        .padding(.leading, 14)
+                }
+            }
+        }
+        .background(InstitutionalTheme.Colors.surface1)
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .padding(.bottom, 14)
+    }
+
+    private func indicatorRow(_ indicator: ExpectationsStore.EconomicIndicator) -> some View {
+        let entry = store.getExpectation(for: indicator)
+        let isPending = entry != nil && entry?.actualValue == nil
+        return HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(indicator.shortName)
+                    .font(.system(size: 15))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                Text(indicator.scheduleHint)
+                    .font(.system(size: 12))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+            }
+            Spacer()
+            if let entry, isPending {
+                Text(String(format: "%.1f%@", entry.expectedValue, indicator.unit))
+                    .font(.system(size: 14, design: .monospaced))
+                    .foregroundColor(InstitutionalTheme.Colors.holo)
+                    .monospacedDigit()
+            } else {
+                Text("—")
+                    .font(.system(size: 14))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+            }
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 13)
+        .contentShape(Rectangle())
+    }
+
+    // MARK: - Footer
+
+    private var footerNote: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Veriler genellikle 15:30 ya da 16:00 TSİ'de açıklanır. Beklentinden saparsa Makro skoruna ±10 puan etki eder.")
+                .font(.system(size: 12))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                .lineSpacing(2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, 4)
+        .padding(.top, 4)
     }
 }
 
-// MARK: - Expectation Input Row
-struct ExpectationInputRow: View {
+// MARK: - IndicatorExpectationFormView (Tek release form)
+//
+// Tek gösterge için tahmin girişi. Üst nav'da Kaydet (mavi accent),
+// liste dilinde input alanı + Sil (kırmızı satır) + geçmiş açıklamalar.
+// Klavye otomatik açılır.
+
+struct IndicatorExpectationFormView: View {
     let indicator: ExpectationsStore.EconomicIndicator
-    @ObservedObject var store: ExpectationsStore
-    var onSave: () -> Void
 
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var store = ExpectationsStore.shared
     @State private var inputText: String = ""
-    @State private var isEditing: Bool = false
-    @FocusState private var isFocused: Bool
+    @FocusState private var inputFocused: Bool
 
-    private var existingEntry: ExpectationsStore.ExpectationEntry? {
+    var body: some View {
+        ZStack {
+            InstitutionalTheme.Colors.background.ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                topNav
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        metaParagraph
+                        inputGroup
+                        if existing != nil {
+                            deleteRow
+                        }
+                        if !pastReleases.isEmpty {
+                            historyGroup
+                        }
+                        footerNote
+                        Color.clear.frame(height: 40)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 18)
+                }
+            }
+        }
+        .navigationBarHidden(true)
+        .onAppear {
+            // Mevcut tahmin varsa input'a yükle.
+            if let entry = existing, entry.actualValue == nil {
+                inputText = String(format: "%.2f", entry.expectedValue)
+            }
+            // Klavyeyi otomatik aç.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                inputFocused = true
+            }
+        }
+    }
+
+    // MARK: - Üst nav
+
+    private var topNav: some View {
+        HStack(spacing: 8) {
+            Button(action: { dismiss() }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .frame(width: 36, height: 36)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Geri")
+
+            Text(indicator.shortName)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                .accessibilityAddTraits(.isHeader)
+
+            Spacer()
+
+            Button(action: save) {
+                Text("Kaydet")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(canSave ? InstitutionalTheme.Colors.holo : InstitutionalTheme.Colors.textTertiary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 6)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(!canSave)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(InstitutionalTheme.Colors.surface1)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
+        }
+    }
+
+    private var canSave: Bool {
+        let cleaned = inputText
+            .replacingOccurrences(of: ",", with: ".")
+            .trimmingCharacters(in: .whitespaces)
+        return Double(cleaned) != nil
+    }
+
+    // MARK: - Meta paragraf
+
+    private var metaParagraph: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(indicator.fullDisplayName)
+                .font(.system(size: 14))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+            Text(indicator.scheduleHint)
+                .font(.system(size: 12))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+        }
+        .padding(.bottom, 22)
+    }
+
+    // MARK: - Input grubu
+
+    private var inputGroup: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Tahminim")
+                .font(.system(size: 13))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                .padding(.leading, 2)
+
+            HStack(spacing: 0) {
+                Text("Beklenen değer")
+                    .font(.system(size: 15))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                Spacer()
+                TextField(indicator.placeholder, text: $inputText)
+                    .keyboardType(.decimalPad)
+                    .multilineTextAlignment(.trailing)
+                    .font(.system(size: 15, design: .monospaced))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .frame(width: 80)
+                    .focused($inputFocused)
+                Text(indicator.unit)
+                    .font(.system(size: 13))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                    .padding(.leading, 4)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 13)
+            .background(InstitutionalTheme.Colors.surface1)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+        .padding(.bottom, existing == nil ? 22 : 12)
+    }
+
+    // MARK: - Sil satırı
+
+    private var deleteRow: some View {
+        Button(action: deleteExpectation) {
+            HStack {
+                Text("Sil")
+                    .font(.system(size: 15))
+                    .foregroundColor(InstitutionalTheme.Colors.crimson)
+                Spacer()
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 13)
+            .background(InstitutionalTheme.Colors.surface1)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .padding(.bottom, 22)
+    }
+
+    // MARK: - Geçmiş açıklamalar
+
+    private var pastReleases: [PastRelease] {
+        // Bu göstergeye ait actualValue dolu kayıtları en yeniden eskiye sırala.
+        store.expectations.values
+            .filter { $0.indicator == indicator && $0.actualValue != nil }
+            .sorted { ($0.announcedAt ?? .distantPast) > ($1.announcedAt ?? .distantPast) }
+            .prefix(5)
+            .map { entry in
+                PastRelease(
+                    when: entry.announcedAt ?? entry.enteredAt,
+                    actual: entry.actualValue ?? 0
+                )
+            }
+    }
+
+    private struct PastRelease {
+        let when: Date
+        let actual: Double
+    }
+
+    private var historyGroup: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Geçmiş açıklamalar")
+                .font(.system(size: 13))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                .padding(.leading, 2)
+
+            VStack(spacing: 0) {
+                ForEach(Array(pastReleases.enumerated()), id: \.offset) { idx, item in
+                    HStack {
+                        Text(monthLabel(item.when))
+                            .font(.system(size: 14))
+                            .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                        Spacer()
+                        Text(String(format: "%.1f%@", item.actual, indicator.unit))
+                            .font(.system(size: 14, design: .monospaced))
+                            .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                            .monospacedDigit()
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 11)
+                    if idx < pastReleases.count - 1 {
+                        Rectangle()
+                            .fill(InstitutionalTheme.Colors.borderSubtle)
+                            .frame(height: 0.5)
+                            .padding(.leading, 14)
+                    }
+                }
+            }
+            .background(InstitutionalTheme.Colors.surface1)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+        .padding(.bottom, 14)
+    }
+
+    private func monthLabel(_ date: Date) -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "tr_TR")
+        f.dateFormat = "MMMM yyyy"
+        return f.string(from: date)
+    }
+
+    // MARK: - Footer
+
+    private var footerNote: some View {
+        Text("\(indicator.helpText). Beklentin gerçekleşen değerle karşılaştırılır; sapma Makro skorunu etkiler.")
+            .font(.system(size: 12))
+            .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+            .lineSpacing(2)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 4)
+            .padding(.top, 4)
+    }
+
+    // MARK: - Aksiyonlar
+
+    private var existing: ExpectationsStore.ExpectationEntry? {
         store.getExpectation(for: indicator)
     }
 
-    /// Düzenleme modu aktif olmalı mı?
-    /// - Kayıt yoksa: her zaman input modunda (editing = true).
-    /// - Kayıt varsa ve actualValue gelmemişse: "Düzenle" butonu ile editing'e geçilebilir.
-    /// - Kayıt varsa ve actualValue dolmuşsa: sürpriz kilidi — Son Sürprizler'de görünür, düzenlenemez.
-    private var showsInputField: Bool {
-        guard let entry = existingEntry else { return true }
-        if entry.actualValue != nil { return false }
-        return isEditing
-    }
-
-    var body: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 12) {
-                // Icon
-                Image(systemName: indicator.icon)
-                    .font(.system(size: 18))
-                    .foregroundColor(iconColor)
-                    .frame(width: 32)
-
-                // Info
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(indicator.displayName)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-
-                    Text(indicator.helpText)
-                        .font(.caption2)
-                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                }
-
-                Spacer()
-
-                // Input or Display
-                if showsInputField {
-                    inputFieldView
-                } else if let entry = existingEntry {
-                    savedBadgeView(entry: entry)
-                }
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(existingEntry != nil ? Color.cyan.opacity(0.05) : InstitutionalTheme.Colors.surface1)
-            )
-        }
-        .padding(.horizontal)
-    }
-
-    /// Mevcut tahmini gösteren rozet — "Düzenle" ve "Sil" aksiyonları ile.
-    /// actualValue dolduysa (sürpriz oluştu) "Son Sürprizler" bölümünde görünür,
-    /// bu rozette düzenleme/silme verilmez (tarih kilidi).
-    @ViewBuilder
-    private func savedBadgeView(entry: ExpectationsStore.ExpectationEntry) -> some View {
-        HStack(spacing: 4) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.caption2)
-                .foregroundColor(.green)
-
-            Text("\(String(format: "%.1f", entry.expectedValue))\(indicator.unit)")
-                .font(.system(size: 14, weight: .bold, design: .monospaced))
-                .foregroundColor(.cyan)
-
-            Button(action: {
-                inputText = String(format: "%.1f", entry.expectedValue)
-                isEditing = true
-                isFocused = true
-            }) {
-                Image(systemName: "pencil.circle.fill")
-                    .font(.caption)
-                    .foregroundColor(.cyan.opacity(0.9))
-            }
-            .accessibilityLabel("Tahmini düzenle")
-
-            Button(action: {
-                store.clearExpectation(for: indicator)
-            }) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.caption)
-                    .foregroundColor(.gray)
-            }
-            .accessibilityLabel("Tahmini sil")
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(Color.cyan.opacity(DesignTokens.Opacity.glassCard))
-        .cornerRadius(8)
-    }
-
-    /// Yeni tahmin girişi veya mevcut tahmin düzenleme input alanı.
-    /// isEditing=true ise iptal butonu gösterilir.
-    @ViewBuilder
-    private var inputFieldView: some View {
-        HStack(spacing: 4) {
-            if isEditing {
-                Button(action: {
-                    isEditing = false
-                    inputText = ""
-                    isFocused = false
-                }) {
-                    Image(systemName: "arrow.uturn.backward.circle.fill")
-                        .font(.system(size: 18))
-                        .foregroundColor(.gray)
-                }
-                .accessibilityLabel("Düzenlemeyi iptal et")
-            }
-
-            TextField(indicator.placeholder, text: $inputText)
-                .font(.system(size: 14, design: .monospaced))
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.trailing)
-                .frame(width: 60)
-                .focused($isFocused)
-
-            Text(indicator.unit)
-                .font(.caption)
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-
-            Button(action: saveExpectation) {
-                Image(systemName: isEditing ? "arrow.triangle.2.circlepath.circle.fill" : "checkmark.circle.fill")
-                    .font(.system(size: 20))
-                    .foregroundColor(inputText.isEmpty ? .gray : (isEditing ? .cyan : .green))
-            }
-            .disabled(inputText.isEmpty)
-            .accessibilityLabel(isEditing ? "Tahmini güncelle" : "Tahmini kaydet")
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
-        .background(InstitutionalTheme.Colors.background)
-        .cornerRadius(8)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(isFocused ? Color.cyan : InstitutionalTheme.Colors.border, lineWidth: 1)
-        )
-    }
-
-    private var iconColor: Color {
-        if existingEntry != nil { return .cyan }
-        if indicator.isInverse { return .orange }
-        return .green
-    }
-
-    private func saveExpectation() {
-        let cleanedInput = inputText
+    private func save() {
+        let cleaned = inputText
             .replacingOccurrences(of: ",", with: ".")
             .replacingOccurrences(of: "+", with: "")
             .trimmingCharacters(in: .whitespaces)
+        guard let value = Double(cleaned) else { return }
 
-        guard let value = Double(cleanedInput) else {
-            print("❌ Invalid input: \(inputText)")
-            return
-        }
-
-        // Düzenleme modunda actualValue'yu koruyarak güncelle; yeni tahminde setExpectation kullan.
-        if isEditing {
+        if existing?.actualValue == nil, existing != nil {
             store.updateExpectedValue(indicator: indicator, newValue: value)
         } else {
             store.setExpectation(indicator: indicator, value: value)
         }
 
-        inputText = ""
-        isEditing = false
-        isFocused = false
-        onSave()
+        let h = UIImpactFeedbackGenerator(style: .medium)
+        h.impactOccurred()
 
-        // Haptic feedback
-        let generator = UIImpactFeedbackGenerator(style: .medium)
-        generator.impactOccurred()
+        inputFocused = false
+        dismiss()
+    }
+
+    private func deleteExpectation() {
+        store.clearExpectation(for: indicator)
+        let h = UIImpactFeedbackGenerator(style: .light)
+        h.impactOccurred()
+        dismiss()
     }
 }
 
-// MARK: - Surprise Row
-struct SurpriseRow: View {
-    let entry: ExpectationsStore.ExpectationEntry
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            // Status Icon
-            Image(systemName: entry.isPositiveSurprise == true ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                .foregroundColor(entry.isPositiveSurprise == true ? .green : .orange)
-            
-            // Info
-            VStack(alignment: .leading, spacing: 2) {
-                Text(entry.indicator.displayName)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                
-                if let announcedAt = entry.announcedAt {
-                    Text(announcedAt, style: .relative)
-                        .font(.caption2)
-                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                }
-            }
-            
-            Spacer()
-            
-            // Values
-            if let actual = entry.actualValue, let surprise = entry.surprise {
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("\(String(format: "%.1f", actual)) vs \(String(format: "%.1f", entry.expectedValue))")
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                    
-                    Text(String(format: "%+.2f%@", surprise, entry.indicator.unit))
-                        .font(.system(size: 12, weight: .bold, design: .monospaced))
-                        .foregroundColor(entry.isPositiveSurprise == true ? .green : .orange)
-                }
-            }
+// MARK: - Indicator helpers
+
+extension ExpectationsStore.EconomicIndicator {
+    /// Form ekranında gösterilen uzun isim. displayName parantez içeriyor;
+    /// burada plain Türkçe açıklamayı bırakıyoruz.
+    var fullDisplayName: String {
+        switch self {
+        case .cpi: return "Tüketici fiyat endeksi, yıllık değişim"
+        case .unemployment: return "İşsizlik oranı (U-3)"
+        case .payrolls: return "Tarım dışı istihdam, aylık değişim"
+        case .claims: return "Haftalık işsizlik başvurusu"
+        case .pce: return "Çekirdek PCE enflasyonu, yıllık"
+        case .gdp: return "GSYİH, çeyreklik büyüme"
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(InstitutionalTheme.Colors.surface1)
-        )
-        .padding(.horizontal)
     }
-}
 
-// MARK: - Preview
-#Preview {
-    ExpectationsEntryView()
+    /// Liste satırında ve formda göstergenin ne zaman açıklandığını
+    /// anlatan kısa ifade.
+    var scheduleHint: String {
+        switch self {
+        case .cpi: return "Her ayın 10–14'ü arası"
+        case .payrolls: return "Her ayın ilk Cuma'sı"
+        case .unemployment: return "İstihdam ile birlikte"
+        case .claims: return "Her Perşembe 15:30 TSİ"
+        case .pce: return "Her ayın son haftası"
+        case .gdp: return "Çeyreklik · Oca / Nis / Tem / Eki"
+        }
+    }
 }

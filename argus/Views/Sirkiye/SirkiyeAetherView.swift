@@ -1,867 +1,826 @@
 import SwiftUI
 
-// MARK: - Sirkiye Aether View
-/// Türkiye Makro Zeka Dashboard'u
-/// Premium cyberpunk terminal estetiği
+// MARK: - SirkiyeAetherView (Türkiye makrosu)
+//
+// 2026-05-05 H-64 — komple yeniden yazıldı. Eski yapı: 180pt circle gauge
+// + 48pt rounded skor + glass + linear gradient mavi-mor + 4 mini card
+// grid + 3 sparkline kart + sektör rotasyonu kartı + bileşenler tablosu
+// + 80+ satır data grid + insights banner + rationale section. AI
+// dashboard dili, Theme.* legacy tokenları, 867 satır.
+//
+// Yeni yapı: iOS Settings hub'ı (Global Aether ile aynı dil).
+// Root: durum cümlesi + "Bugün" 3 satır (USD/TRY, BIST 100, Politika
+// faizi) + 3 link satırı (Bileşenler / Sektör rotasyonu / TCMB verileri)
+// + footer. Detaylar sub-page'lere bölündü, geri butonu sistem
+// NavigationStack push'undan geliyor.
+//
+// Public API korundu: `init(linkedDecision: AetherDecision? = nil)`.
 
 struct SirkiyeAetherView: View {
     let linkedDecision: AetherDecision?
+
     @State private var macroScore: SirkiyeAetherEngine.TurkeyMacroScore = .empty
     @State private var snapshot: TCMBDataService.TCMBMacroSnapshot = .empty
     @State private var sectorRotation: BistSektorResult?
     @State private var isLoading = true
 
+    @Environment(\.dismiss) private var dismiss
+
     init(linkedDecision: AetherDecision? = nil) {
         self.linkedDecision = linkedDecision
     }
-    
+
     var body: some View {
-        ScrollView {
-            VStack(spacing: Theme.Spacing.large) {
-                // Hero Section
-                heroSection
+        ZStack {
+            InstitutionalTheme.Colors.background.ignoresSafeArea()
 
-                // Neden Böyle? + Etki Dağılımı
-                if !isLoading {
-                    rationaleSection
-                }
-                
-                // 4 Mini Kartlar
-                miniCardsGrid
-                
-                // Trend Grafikleri (Sparklines)
-                trendSparklinesSection
-                
-                // Sektör Rotasyonu Özeti
-                sectorRotationSection
-                
-                // Bileşen Detayları
-                componentsSection
-                
-                // Veri Matrisi
-                if !isLoading {
-                    SirkiyeDataGrid(snapshot: snapshot)
-                }
-                
-                // Insights Banner
-                insightsBanner
-            }
-            .padding()
-        }
-        .background(InstitutionalTheme.Colors.background)
-        .navigationTitle("Türkiye Makro Paneli")
-        .navigationBarTitleDisplayMode(.inline)
-        .task {
-            await loadData(forceRefresh: true)
-        }
-        .refreshable {
-            await loadData(forceRefresh: true)
-        }
-    }
-    
-    // MARK: - Hero Section
-    
-    private var heroSection: some View {
-        VStack(spacing: Theme.Spacing.medium) {
-            // Başlık
-            HStack {
-                Image(systemName: "globe.europe.africa")
-                    .font(.system(size: 16))
-                    .foregroundColor(Theme.textSecondary)
+            VStack(spacing: 0) {
+                inlineTopNav
 
-                Text("Türkiye makro skoru")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(Theme.textPrimary)
-                if linkedDecision != nil {
-                    Text("· senkron")
-                        .font(.system(size: 11))
-                        .foregroundColor(Theme.textTertiary)
-                }
-
-                Spacer()
-
-                // Yenileme Zamanı
-                if !isLoading {
-                    Text(macroScore.timestamp, style: .time)
-                        .font(.system(size: 11))
-                        .foregroundColor(Theme.textTertiary)
-                        .monospacedDigit()
-                }
-            }
-            
-            // Büyük Gauge
-            ZStack {
-                // Arka Plan Halkası
-                Circle()
-                    .stroke(Theme.border, lineWidth: 12)
-                    .frame(width: 180, height: 180)
-                
-                // Skor Halkası
-                Circle()
-                    .trim(from: 0, to: isLoading ? 0 : heroScore / 100)
-                    .stroke(
-                        scoreGradient,
-                        style: StrokeStyle(lineWidth: 12, lineCap: .round)
-                    )
-                    .frame(width: 180, height: 180)
-                    .rotationEffect(.degrees(-90))
-                    .animation(.spring(response: 1.0, dampingFraction: 0.7), value: heroScore)
-                
-                // Merkez İçerik
-                VStack(spacing: 4) {
-                    if isLoading {
-                        ProgressView()
-                            .tint(Theme.primary)
-                    } else {
-                        Text("\(Int(heroScore))")
-                            .font(.system(size: 48, weight: .bold, design: .rounded))
-                            .foregroundStyle(scoreGradient)
-                        
-                        Text(heroLabel)
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundColor(riskColor)
-                    }
-                }
-            }
-            .frame(height: 200)
-            
-            // Risk Önerisi
-            if !isLoading {
-                Text(heroRecommendation)
-                    .font(.subheadline)
-                    .foregroundColor(Theme.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-            }
-        }
-        .padding()
-        .background(glassBackground)
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.large))
-    }
-    
-    // MARK: - Mini Kartlar Grid
-    
-    private var miniCardsGrid: some View {
-        LazyVGrid(columns: [
-            GridItem(.flexible()),
-            GridItem(.flexible())
-        ], spacing: Theme.Spacing.medium) {
-            // Para Politikası
-            SirkiyeMiniCard(
-                title: "Para Politikası",
-                value: macroScore.monetaryStance.rawValue,
-                icon: "building.columns.fill",
-                color: stanceColor(macroScore.monetaryStance)
-            )
-            
-            // Büyüme İvmesi
-            SirkiyeMiniCard(
-                title: "Büyüme",
-                value: macroScore.growthMomentum.rawValue,
-                icon: macroScore.growthMomentum.icon,
-                color: momentumColor(macroScore.growthMomentum)
-            )
-            
-            // Dış Risk
-            SirkiyeMiniCard(
-                title: "Dış Kırılganlık",
-                value: macroScore.externalRisk.rawValue,
-                icon: "globe",
-                color: riskLevelColor(macroScore.externalRisk)
-            )
-            
-            // Enflasyon Baskısı
-            SirkiyeMiniCard(
-                title: "Enflasyon",
-                value: macroScore.inflationPressure.rawValue,
-                icon: "flame.fill",
-                color: pressureColor(macroScore.inflationPressure)
-            )
-        }
-    }
-    
-    // MARK: - Trend Sparklines Section
-    
-    private var trendSparklinesSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
-            Text("Trend göstergeleri (30 gün)")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(Theme.textSecondary)
-            
-            HStack(spacing: 12) {
-                // USD/TRY
-                sparklineCard(title: "USD/TRY", code: .usdTry, color: Theme.bistAccent)
-                
-                // BIST 100
-                sparklineCard(title: "BIST 100", code: .bist100, color: Theme.positive)
-                
-                // Faiz (Politika)
-                sparklineCard(title: "Politika Faizi", code: .policyRate, color: Theme.warning)
-            }
-            .frame(height: 100)
-        }
-        .padding()
-        .background(glassBackground)
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.large))
-    }
-    
-    private func sparklineCard(title: String, code: TCMBDataService.SerieCode, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(.caption2)
-                .foregroundColor(Theme.textSecondary)
-            
-            SirkiyeSparkline(serieCode: code, color: color)
-        }
-        .padding(8)
-        .background(Color.black.opacity(0.2))
-        .cornerRadius(8)
-    }
-
-    // MARK: - Bileşenler Section
-    
-    private var sectorRotationSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
-            Text("Sektör rotasyonu")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(Theme.textSecondary)
-            
-            if let sectorRotation {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(sectorRotation.rotation.rawValue)
-                            .font(.headline)
-                            .foregroundColor(Theme.textPrimary)
-                        Text("Güçlü: \(sectorRotation.strongestSector?.name ?? "—")")
-                            .font(.caption)
-                            .foregroundColor(Theme.textSecondary)
-                    }
-                    Spacer()
-                    Text(String(format: "%+.1f%%", sectorRotation.strongestSector?.dailyChange ?? 0))
-                        .font(.system(size: 16, weight: .bold, design: .monospaced))
-                        .foregroundColor((sectorRotation.strongestSector?.dailyChange ?? 0) >= 0 ? Theme.positive : Theme.negative)
-                }
-            } else {
-                Text("Sektör rotasyonu verisi bekleniyor.")
-                    .font(.caption)
-                    .foregroundColor(Theme.textSecondary)
-            }
-        }
-        .padding()
-        .background(glassBackground)
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.large))
-    }
-    
-    private var componentsSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
-            Text("Skor bileşenleri")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(Theme.textSecondary)
-            
-            ForEach(impactDrivers) { driver in
-                SirkiyeComponentRow(
-                    component: driver.component,
-                    weightedImpact: driver.weightedImpact
-                )
-            }
-        }
-        .padding()
-        .background(glassBackground)
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.large))
-    }
-    
-    // MARK: - Insights Banner
-    
-    private var insightsBanner: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.small) {
-            Text("Makro notlar")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(Theme.textSecondary)
-            
-            if sanitizedInsights.isEmpty {
-                Text("Analiz notu üretilemedi. Makro veri güncellendiğinde özet notlar burada görünecek.")
-                    .font(.subheadline)
-                    .foregroundColor(Theme.textSecondary)
-                    .padding(.vertical, 4)
-            } else {
-                ForEach(sanitizedInsights, id: \.self) { insight in
-                    Text(insight)
-                        .font(.subheadline)
-                        .foregroundColor(Theme.textPrimary)
-                        .padding(.vertical, 4)
-                }
-            }
-        }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            LinearGradient(
-                colors: [
-                    Theme.primary.opacity(0.1),
-                    Theme.bistAccent.opacity(0.05)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.large))
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.large)
-                .stroke(Theme.primary.opacity(0.3), lineWidth: 1)
-        )
-    }
-
-    private var rationaleSection: some View {
-        let drivers = topImpactDrivers(limit: 5)
-        return VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
-            HStack {
-                Text("Skoru ne belirledi")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(Theme.textSecondary)
-                Spacer()
-                Text("ilk \(min(3, drivers.count)) etki")
-                    .font(.system(size: 11))
-                    .foregroundColor(Theme.textSecondary)
-            }
-
-            if drivers.isEmpty {
-                Text("Bileşen etkisi hesaplanamadı. Veri akışı tamamlanınca katkı dağılımı gösterilecek.")
-                    .font(.caption)
-                    .foregroundColor(Theme.textSecondary)
-            } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(Array(drivers.prefix(3))) { driver in
-                            SirkiyeDriverChip(
-                                title: driver.name,
-                                subtitle: "Ağırlık %\(Int(driver.component.weight * 100)) • Trend \(driver.component.trend.rawValue)",
-                                impactText: String(format: "%+.1f", driver.weightedImpact),
-                                tint: impactColor(for: driver.weightedImpact)
-                            )
-                        }
-                    }
-                }
-
-                HStack(spacing: 12) {
-                    let slices = contributionSlices(from: Array(drivers.prefix(4)))
-                    ZStack {
-                        Circle()
-                            .stroke(Theme.border.opacity(0.5), lineWidth: 9)
-                            .frame(width: 72, height: 72)
-                        ForEach(slices) { slice in
-                            Circle()
-                                .trim(from: slice.start, to: slice.end)
-                                .stroke(slice.color, style: StrokeStyle(lineWidth: 9, lineCap: .round))
-                                .rotationEffect(.degrees(-90))
-                        }
-                        Text("Katkı")
-                            .font(.caption2)
-                            .foregroundColor(Theme.textSecondary)
-                    }
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Etki dağılımı")
-                            .font(.system(size: 11))
-                            .foregroundColor(Theme.textTertiary)
-                        ForEach(Array(drivers.prefix(3))) { driver in
-                            HStack(spacing: 6) {
-                                Circle()
-                                    .fill(impactColor(for: driver.weightedImpact))
-                                    .frame(width: 6, height: 6)
-                                Text(driver.name)
-                                    .font(.caption2)
-                                    .foregroundColor(Theme.textSecondary)
-                                    .lineLimit(1)
-                                Spacer(minLength: 0)
-                                Text(String(format: "%+.1f", driver.weightedImpact))
-                                    .font(.caption2.weight(.semibold))
-                                    .foregroundColor(impactColor(for: driver.weightedImpact))
-                                    .monospacedDigit()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        if isLoading {
+                            loadingState
+                        } else {
+                            statusParagraph
+                            if !todayRows.isEmpty {
+                                todayList
                             }
+                            navigationGroup
+                            footerNote
                         }
+                        Color.clear.frame(height: 24)
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 18)
+                }
+                .refreshable {
+                    await loadData(forceRefresh: true)
                 }
             }
         }
-        .padding()
-        .background(glassBackground)
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.large))
+        .navigationBarHidden(true)
+        .task {
+            await loadData(forceRefresh: false)
+        }
     }
-    
-    // MARK: - Data Loading
-    
-    private func loadData(forceRefresh: Bool = false) async {
+
+    // MARK: - Üst nav
+
+    private var inlineTopNav: some View {
+        HStack(spacing: 8) {
+            Button(action: { dismiss() }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .frame(width: 36, height: 36)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Geri")
+
+            Text("Türkiye makrosu")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                .accessibilityAddTraits(.isHeader)
+
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(InstitutionalTheme.Colors.surface1)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
+        }
+    }
+
+    // MARK: - Loading
+
+    private var loadingState: some View {
+        HStack(spacing: 10) {
+            ProgressView().scaleEffect(0.8)
+            Text("TCMB verileri yükleniyor…")
+                .font(.system(size: 13))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 22)
+    }
+
+    // MARK: - Durum cümlesi
+
+    /// Hero gauge yerine geçen tek paragraf. Para politikası + enflasyon
+    /// baskısı + dış kırılganlık üzerinden plain Türkçe cümle.
+    private var statusParagraph: some View {
+        Text(statusSentence)
+            .font(.system(size: 14))
+            .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+            .lineSpacing(3)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.bottom, 22)
+    }
+
+    private var statusSentence: String {
+        let stanceText: String
+        switch macroScore.monetaryStance {
+        case .tight:   stanceText = "Sıkı para politikası sürüyor"
+        case .neutral: stanceText = "Para politikası nötr"
+        case .loose:   stanceText = "Para politikası gevşek"
+        }
+
+        let infText: String
+        switch macroScore.inflationPressure {
+        case .severe: infText = "enflasyon baskısı şiddetli"
+        case .high:   infText = "enflasyon baskısı yüksek"
+        case .medium: infText = "enflasyon baskısı dengelenmiş"
+        case .low:    infText = "enflasyon baskısı düşük"
+        }
+
+        let extText: String
+        switch macroScore.externalRisk {
+        case .critical: extText = "dış kırılganlık kritik"
+        case .high:     extText = "dış kırılganlık yüksek"
+        case .medium:   extText = "dış denge orta"
+        case .low:      extText = "dış denge desteklenmiş"
+        }
+
+        return "\(stanceText). \(infText.capitalized), \(extText)."
+    }
+
+    // MARK: - Bugün satırları
+
+    private struct TodayRow {
+        let label: String
+        let sub: String
+        let value: String
+        let valueColor: Color
+    }
+
+    private var todayRows: [TodayRow] {
+        var rows: [TodayRow] = []
+
+        if let usdTry = snapshot.usdTry {
+            rows.append(TodayRow(
+                label: "USD/TRY",
+                sub: String(format: "%.2f", usdTry),
+                value: "—",
+                valueColor: InstitutionalTheme.Colors.textSecondary
+            ))
+        }
+
+        if let bist = snapshot.bist100 {
+            rows.append(TodayRow(
+                label: "BIST 100",
+                sub: bistFormatted(bist),
+                value: "—",
+                valueColor: InstitutionalTheme.Colors.textSecondary
+            ))
+        }
+
+        if let policy = snapshot.policyRate {
+            rows.append(TodayRow(
+                label: "Politika faizi",
+                sub: "TCMB",
+                value: String(format: "%.2f%%", policy),
+                valueColor: InstitutionalTheme.Colors.textSecondary
+            ))
+        }
+
+        return rows
+    }
+
+    private var todayList: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Bugün")
+                .font(.system(size: 13))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                .padding(.leading, 2)
+
+            VStack(spacing: 0) {
+                ForEach(Array(todayRows.enumerated()), id: \.offset) { idx, row in
+                    HStack(spacing: 0) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(row.label)
+                                .font(.system(size: 14))
+                                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                            Text(row.sub)
+                                .font(.system(size: 11, design: .monospaced))
+                                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                        }
+                        Spacer()
+                        if row.value != "—" {
+                            Text(row.value)
+                                .font(.system(size: 14, design: .monospaced))
+                                .foregroundColor(row.valueColor)
+                                .monospacedDigit()
+                        }
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
+                    if idx < todayRows.count - 1 {
+                        Rectangle()
+                            .fill(InstitutionalTheme.Colors.borderSubtle)
+                            .frame(height: 0.5)
+                            .padding(.leading, 14)
+                    }
+                }
+            }
+            .background(InstitutionalTheme.Colors.surface1)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+        .padding(.bottom, 22)
+    }
+
+    private func bistFormatted(_ value: Double) -> String {
+        // 10842.5 → "10.842"
+        let int = Int(value)
+        let nf = NumberFormatter()
+        nf.numberStyle = .decimal
+        nf.groupingSeparator = "."
+        return nf.string(from: NSNumber(value: int)) ?? String(int)
+    }
+
+    // MARK: - Navigasyon grupları
+
+    private var navigationGroup: some View {
+        VStack(spacing: 0) {
+            NavigationLink(destination: SirkiyeBilesenlerView(macroScore: macroScore)) {
+                hubRow(title: "Bileşenler", trailing: "4 boyut")
+            }
+            .buttonStyle(.plain)
+
+            divider
+
+            NavigationLink(destination: SirkiyeSektorView(result: sectorRotation)) {
+                hubRow(title: "Sektör rotasyonu", trailing: sectorTrailing)
+            }
+            .buttonStyle(.plain)
+
+            divider
+
+            NavigationLink(destination: SirkiyeTCMBView(snapshot: snapshot)) {
+                hubRow(title: "TCMB verileri", trailing: nil)
+            }
+            .buttonStyle(.plain)
+        }
+        .background(InstitutionalTheme.Colors.surface1)
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .padding(.bottom, 18)
+    }
+
+    private var divider: some View {
+        Rectangle()
+            .fill(InstitutionalTheme.Colors.borderSubtle)
+            .frame(height: 0.5)
+            .padding(.leading, 14)
+    }
+
+    private func hubRow(title: String, trailing: String?) -> some View {
+        HStack(spacing: 10) {
+            Text(title)
+                .font(.system(size: 15))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+            Spacer()
+            if let trailing {
+                Text(trailing)
+                    .font(.system(size: 13))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                    .lineLimit(1)
+            }
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 13)
+        .contentShape(Rectangle())
+    }
+
+    private var sectorTrailing: String? {
+        guard let sectorRotation, let strongest = sectorRotation.strongestSector else {
+            return nil
+        }
+        return "\(strongest.name) ön planda"
+    }
+
+    // MARK: - Footer
+
+    private var footerNote: some View {
+        Text("Skor TCMB politika faizi, USD/TRY, enflasyon ve dış denge göstergelerinin ağırlıklı ortalamasıdır.")
+            .font(.system(size: 12))
+            .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+            .lineSpacing(2)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 4)
+            .padding(.top, 4)
+    }
+
+    // MARK: - Data loading
+
+    private func loadData(forceRefresh: Bool) async {
         isLoading = true
-        // Parallel fetch
         async let scoreTask = SirkiyeAetherEngine.shared.analyze(forceRefresh: forceRefresh)
         async let snapshotTask = TCMBDataService.shared.getMacroSnapshot(forceRefresh: forceRefresh)
         async let sectorTask = try? BistSektorEngine.shared.analyze(forceRefresh: forceRefresh)
-        
-        macroScore = await scoreTask
-        snapshot = await snapshotTask
-        sectorRotation = await sectorTask
-        isLoading = false
-    }
-    
-    // MARK: - Helpers
-    
-    private var scoreGradient: LinearGradient {
-        let score = heroScore
-        let colors: [Color]
-        
-        if score >= 70 {
-            colors = [InstitutionalTheme.Colors.positive, InstitutionalTheme.Colors.primary]
-        } else if score >= 50 {
-            colors = [InstitutionalTheme.Colors.warning, InstitutionalTheme.Colors.primary]
-        } else if score >= 30 {
-            colors = [InstitutionalTheme.Colors.warning, InstitutionalTheme.Colors.negative]
-        } else {
-            colors = [InstitutionalTheme.Colors.negative, InstitutionalTheme.Colors.warning]
+
+        let score = await scoreTask
+        let snap = await snapshotTask
+        let sect = await sectorTask
+
+        await MainActor.run {
+            macroScore = score
+            snapshot = snap
+            sectorRotation = sect
+            isLoading = false
         }
-        
-        return LinearGradient(colors: colors, startPoint: .leading, endPoint: .trailing)
     }
-    
-    private var riskColor: Color {
-        if heroScore >= 70 { return InstitutionalTheme.Colors.positive }
-        if heroScore >= 50 { return InstitutionalTheme.Colors.warning }
-        if heroScore >= 30 { return .orange }
-        return InstitutionalTheme.Colors.negative
-    }
+}
 
-    private var heroScore: Double {
-        return macroScore.overallScore
-    }
+// MARK: - SirkiyeBilesenlerView (Bileşenler sub-page)
+//
+// 4 boyut grouped list: Para politikası, Büyüme, Dış kırılganlık,
+// Enflasyon. Her satır plain durum etiketi (Sıkı / Yavaşlama / Düşük /
+// Yüksek). Tıklamayla detail çıkmıyor — durum etiketi zaten anlamlı,
+// daha derin metin gerekirse footer'da kullanıcıya yön verilir.
 
-    private var heroLabel: String {
-        if let linkedDecision {
-            switch linkedDecision.stance {
-            case .riskOn: return "RİSK AÇIK"
-            case .cautious: return "TEDBİRLİ"
-            case .defensive: return "DEFANSİF"
-            case .riskOff: return "RİSK KAPALI"
+struct SirkiyeBilesenlerView: View {
+    let macroScore: SirkiyeAetherEngine.TurkeyMacroScore
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack {
+            InstitutionalTheme.Colors.background.ignoresSafeArea()
+            VStack(spacing: 0) {
+                topNav
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        boyutlarGroup
+                        if !macroScore.components.isEmpty {
+                            componentsGroup
+                        }
+                        footer
+                        Color.clear.frame(height: 24)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 18)
+                }
             }
         }
-        return macroScore.investmentRisk.rawValue
+        .navigationBarHidden(true)
     }
 
-    private var heroRecommendation: String {
-        if let linkedDecision {
-            return linkedDecision.winningProposal?.reasoning ?? "SİRKIYE kararı güncellendi."
+    private var topNav: some View {
+        HStack(spacing: 8) {
+            Button(action: { dismiss() }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .frame(width: 36, height: 36)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            Text("Bileşenler")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+            Spacer()
         }
-        return macroScore.investmentRisk.recommendation
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(InstitutionalTheme.Colors.surface1)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
+        }
     }
-    
-    private var glassBackground: some View {
-        RoundedRectangle(cornerRadius: Theme.Radius.large)
-            .fill(InstitutionalTheme.Colors.surface1)
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.Radius.large)
-                    .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 1)
-            )
+
+    private var boyutlarGroup: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Boyutlar")
+                .font(.system(size: 13))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                .padding(.leading, 2)
+
+            VStack(spacing: 0) {
+                boyutRow(
+                    title: "Para politikası",
+                    sub: "TCMB faizi, M2 büyümesi",
+                    status: macroScore.monetaryStance.rawValue,
+                    color: stanceColor(macroScore.monetaryStance)
+                )
+                divider
+                boyutRow(
+                    title: "Büyüme",
+                    sub: "GSYİH, sanayi üretimi",
+                    status: macroScore.growthMomentum.rawValue,
+                    color: momentumColor(macroScore.growthMomentum)
+                )
+                divider
+                boyutRow(
+                    title: "Dış kırılganlık",
+                    sub: "Cari denge, rezerv, CDS",
+                    status: macroScore.externalRisk.rawValue,
+                    color: riskColor(macroScore.externalRisk)
+                )
+                divider
+                boyutRow(
+                    title: "Enflasyon",
+                    sub: "TÜFE, ÜFE, beklenti",
+                    status: macroScore.inflationPressure.rawValue,
+                    color: pressureColor(macroScore.inflationPressure)
+                )
+            }
+            .background(InstitutionalTheme.Colors.surface1)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+        .padding(.bottom, 18)
     }
-    
+
+    private func boyutRow(title: String, sub: String, status: String, color: Color) -> some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 15))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                Text(sub)
+                    .font(.system(size: 12))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+            }
+            Spacer()
+            Text(status)
+                .font(.system(size: 14))
+                .foregroundColor(color)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 13)
+    }
+
+    private var divider: some View {
+        Rectangle()
+            .fill(InstitutionalTheme.Colors.borderSubtle)
+            .frame(height: 0.5)
+            .padding(.leading, 14)
+    }
+
+    /// Engine'in döndürdüğü ağırlıklı bileşen listesi (analyzeInflation,
+    /// analyzeFXStability vs.).
+    private var componentsGroup: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Detay bileşenler")
+                .font(.system(size: 13))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                .padding(.leading, 2)
+
+            VStack(spacing: 0) {
+                ForEach(Array(macroScore.components.enumerated()), id: \.offset) { idx, component in
+                    HStack(spacing: 10) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(component.name)
+                                .font(.system(size: 14))
+                                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                            Text(formatComponentValue(component))
+                                .font(.system(size: 11, design: .monospaced))
+                                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                        }
+                        Spacer()
+                        Text("\(Int(component.score))")
+                            .font(.system(size: 14))
+                            .foregroundColor(scoreColor(component.score))
+                            .monospacedDigit()
+                            .frame(width: 32, alignment: .trailing)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 11)
+                    if idx < macroScore.components.count - 1 {
+                        divider
+                    }
+                }
+            }
+            .background(InstitutionalTheme.Colors.surface1)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+        .padding(.bottom, 14)
+    }
+
+    private func formatComponentValue(_ component: SirkiyeAetherEngine.ScoreComponent) -> String {
+        let weightPct = Int(component.weight * 100)
+        return "Ağırlık %\(weightPct)"
+    }
+
+    private var footer: some View {
+        Text("Boyutlar TCMB ve makro veri akışından her 5 dakikada güncellenir.")
+            .font(.system(size: 12))
+            .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+            .lineSpacing(2)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 4)
+            .padding(.top, 4)
+    }
+
+    // MARK: - Color helpers
+
     private func stanceColor(_ stance: SirkiyeAetherEngine.PolicyStance) -> Color {
         switch stance {
-        case .tight: return Theme.positive
-        case .neutral: return Theme.warning
-        case .loose: return Theme.negative
-        }
-    }
-    
-    private func momentumColor(_ momentum: SirkiyeAetherEngine.Momentum) -> Color {
-        switch momentum {
-        case .accelerating: return Theme.positive
-        case .stable: return Theme.warning
-        case .decelerating: return Theme.negative
-        }
-    }
-    
-    private func riskLevelColor(_ risk: SirkiyeAetherEngine.RiskLevel) -> Color {
-        switch risk {
-        case .low: return Theme.positive
-        case .medium: return Theme.warning
-        case .high: return .orange
-        case .critical: return Theme.negative
-        }
-    }
-    
-    private func pressureColor(_ pressure: SirkiyeAetherEngine.Pressure) -> Color {
-        switch pressure {
-        case .low: return Theme.positive
-        case .medium: return Theme.warning
-        case .high: return .orange
-        case .severe: return Theme.negative
+        case .tight: return InstitutionalTheme.Colors.aurora
+        case .neutral: return InstitutionalTheme.Colors.titan
+        case .loose: return InstitutionalTheme.Colors.crimson
         }
     }
 
-    private var impactDrivers: [SirkiyeImpactDriver] {
-        macroScore.components.map { component in
-            SirkiyeImpactDriver(component: component)
-        }
-    }
-
-    private func topImpactDrivers(limit: Int) -> [SirkiyeImpactDriver] {
-        impactDrivers
-            .sorted { abs($0.weightedImpact) > abs($1.weightedImpact) }
-            .prefix(limit)
-            .map { $0 }
-    }
-
-    private func contributionSlices(from drivers: [SirkiyeImpactDriver]) -> [SirkiyeContributionSlice] {
-        let magnitudes = drivers.map { max(abs($0.weightedImpact), 0.01) }
-        let total = max(magnitudes.reduce(0, +), 0.001)
-        var cursor = 0.0
-
-        return zip(drivers, magnitudes).map { driver, magnitude in
-            let start = cursor / total
-            cursor += magnitude
-            let end = cursor / total
-            return SirkiyeContributionSlice(
-                id: driver.id,
-                start: start,
-                end: end,
-                color: impactColor(for: driver.weightedImpact)
-            )
-        }
-    }
-
-    private func impactColor(for impact: Double) -> Color {
-        if impact > 0.8 { return InstitutionalTheme.Colors.positive }
-        if impact < -0.8 { return InstitutionalTheme.Colors.negative }
-        return InstitutionalTheme.Colors.warning
-    }
-
-    private var sanitizedInsights: [String] {
-        macroScore.insights
-            .map(sanitizeInsight)
-            .filter { !$0.isEmpty }
-    }
-
-    private func sanitizeInsight(_ text: String) -> String {
-        text.replacingOccurrences(
-            of: #"^[^\p{L}\p{N}]+"#,
-            with: "",
-            options: .regularExpression
-        )
-    }
-}
-
-private struct SirkiyeImpactDriver: Identifiable {
-    let component: SirkiyeAetherEngine.ScoreComponent
-    let weightedImpact: Double
-
-    var id: String { component.id }
-    var name: String { component.name }
-
-    init(component: SirkiyeAetherEngine.ScoreComponent) {
-        self.component = component
-        self.weightedImpact = (component.score - 50.0) * component.weight
-    }
-}
-
-private struct SirkiyeContributionSlice: Identifiable {
-    let id: String
-    let start: CGFloat
-    let end: CGFloat
-    let color: Color
-
-    init(id: String, start: Double, end: Double, color: Color) {
-        self.id = id
-        self.start = CGFloat(start)
-        self.end = CGFloat(end)
-        self.color = color
-    }
-}
-
-private struct SirkiyeDriverChip: View {
-    let title: String
-    let subtitle: String
-    let impactText: String
-    let tint: Color
-
-    var body: some View {
-        HStack(spacing: 8) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title.uppercased())
-                    .font(.system(size: 9, weight: .bold, design: .monospaced))
-                    .foregroundColor(tint)
-                    .lineLimit(1)
-                Text(subtitle)
-                    .font(.caption2)
-                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                    .lineLimit(1)
-            }
-            Text(impactText)
-                .font(.caption2.weight(.bold))
-                .foregroundColor(tint)
-                .monospacedDigit()
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .background(InstitutionalTheme.Colors.surface2)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(tint.opacity(0.22), lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-    }
-}
-
-// MARK: - Sirkiye Mini Card
-
-struct SirkiyeMiniCard: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: icon)
-                    .font(.system(size: 14))
-                    .foregroundColor(color)
-                
-                Spacer()
-            }
-            
-            Text(value)
-                .font(.headline)
-                .fontWeight(.bold)
-                .foregroundColor(color)
-            
-            Text(title)
-                .font(.caption2)
-                .foregroundColor(Theme.textSecondary)
-        }
-        .padding()
-        .background(InstitutionalTheme.Colors.surface2)
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.medium))
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.medium)
-                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 1)
-        )
-    }
-}
-
-// MARK: - Sirkiye Component Row
-
-struct SirkiyeComponentRow: View {
-    let component: SirkiyeAetherEngine.ScoreComponent
-    let weightedImpact: Double
-    
-    var body: some View {
-        HStack(spacing: Theme.Spacing.medium) {
-            // İkon
-            Image(systemName: component.icon)
-                .font(.system(size: 16))
-                .foregroundColor(scoreColor)
-                .frame(width: 24)
-            
-            // İsim ve Değer
-            VStack(alignment: .leading, spacing: 2) {
-                Text(component.name)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(Theme.textPrimary)
-                
-                Text(formattedValue)
-                    .font(.caption)
-                    .foregroundColor(Theme.textSecondary)
-
-                Text(String(format: "Etki %+.1f", weightedImpact))
-                    .font(.caption2)
-                    .foregroundColor(impactColor)
-            }
-            
-            Spacer()
-            
-            // Trend İkonu
-            Image(systemName: component.trend.icon)
-                .font(.caption)
-                .foregroundColor(trendColor)
-            
-            // Skor Bar
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Theme.border)
-                    .frame(width: 60, height: 8)
-                
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(scoreColor)
-                    .frame(width: 60 * (component.score / 100), height: 8)
-            }
-            
-            // Skor Değeri
-            Text("\(Int(component.score))")
-                .font(.caption)
-                .fontWeight(.bold)
-                .foregroundColor(scoreColor)
-                .frame(width: 30, alignment: .trailing)
-        }
-        .padding(.vertical, 8)
-    }
-    
-    private var scoreColor: Color {
-        if component.score >= 70 { return InstitutionalTheme.Colors.positive }
-        if component.score >= 50 { return InstitutionalTheme.Colors.warning }
-        if component.score >= 30 { return .orange }
-        return InstitutionalTheme.Colors.negative
-    }
-    
-    private var trendColor: Color {
-        switch component.trend {
-        case .up: return InstitutionalTheme.Colors.positive
+    private func momentumColor(_ m: SirkiyeAetherEngine.Momentum) -> Color {
+        switch m {
+        case .accelerating: return InstitutionalTheme.Colors.aurora
         case .stable: return InstitutionalTheme.Colors.textSecondary
-        case .down: return InstitutionalTheme.Colors.negative
-        }
-    }
-    
-    private var formattedValue: String {
-        let val = component.value
-        switch component.name {
-        case "Enflasyon", "Reel Faiz", "Büyüme":
-            return "%\(String(format: "%.1f", val))"
-        case "Kur Stabilitesi":
-            return "₺\(String(format: "%.2f", val))"
-        case "Cari Denge":
-            return "\(String(format: "%.1f", val))B$"
-        case "MB Rezervleri":
-            return "\(String(format: "%.0f", val))B$"
-        default:
-            return String(format: "%.1f", val)
+        case .decelerating: return InstitutionalTheme.Colors.titan
         }
     }
 
-    private var impactColor: Color {
-        if weightedImpact > 0.8 { return InstitutionalTheme.Colors.positive }
-        if weightedImpact < -0.8 { return InstitutionalTheme.Colors.negative }
-        return InstitutionalTheme.Colors.warning
+    private func riskColor(_ r: SirkiyeAetherEngine.RiskLevel) -> Color {
+        switch r {
+        case .low: return InstitutionalTheme.Colors.aurora
+        case .medium: return InstitutionalTheme.Colors.textSecondary
+        case .high: return InstitutionalTheme.Colors.titan
+        case .critical: return InstitutionalTheme.Colors.crimson
+        }
+    }
+
+    private func pressureColor(_ p: SirkiyeAetherEngine.Pressure) -> Color {
+        switch p {
+        case .low: return InstitutionalTheme.Colors.aurora
+        case .medium: return InstitutionalTheme.Colors.textSecondary
+        case .high: return InstitutionalTheme.Colors.titan
+        case .severe: return InstitutionalTheme.Colors.crimson
+        }
+    }
+
+    private func scoreColor(_ value: Double) -> Color {
+        if value >= 70 { return InstitutionalTheme.Colors.aurora }
+        if value >= 50 { return InstitutionalTheme.Colors.titan }
+        return InstitutionalTheme.Colors.crimson
     }
 }
 
-// MARK: - Sirkiye Sparkline
+// MARK: - SirkiyeSektorView (Sektör rotasyonu sub-page)
+//
+// Rotation kısa cümle özeti + sektör listesi (dailyChange'e göre sıralı).
 
-struct SirkiyeSparkline: View {
-    let serieCode: TCMBDataService.SerieCode
-    let color: Color
-    @State private var data: [Double] = []
-    
+struct SirkiyeSektorView: View {
+    let result: BistSektorResult?
+
+    @Environment(\.dismiss) private var dismiss
+
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                Path { path in
-                    guard data.count > 1 else { return }
-                    
-                    let stepX = geometry.size.width / CGFloat(data.count - 1)
-                    let minVal = data.min() ?? 0
-                    let maxVal = data.max() ?? 100
-                    let range = maxVal - minVal
-                    
-                    guard range > 0 else { return }
-                    
-                    let points = data.enumerated().map { index, value in
-                        CGPoint(
-                            x: CGFloat(index) * stepX,
-                            y: geometry.size.height - (CGFloat(value - minVal) / CGFloat(range) * geometry.size.height)
-                        )
+        ZStack {
+            InstitutionalTheme.Colors.background.ignoresSafeArea()
+            VStack(spacing: 0) {
+                topNav
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        if let result {
+                            summaryParagraph(result)
+                            sectorList(result)
+                        } else {
+                            emptyState
+                        }
+                        Color.clear.frame(height: 24)
                     }
-                    
-                    path.addLines(points)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 18)
                 }
-                .stroke(color, style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+            }
+        }
+        .navigationBarHidden(true)
+    }
 
-                if data.count < 2 {
-                    Text("Veri yok")
-                        .font(.caption2)
-                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+    private var topNav: some View {
+        HStack(spacing: 8) {
+            Button(action: { dismiss() }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .frame(width: 36, height: 36)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            Text("Sektör rotasyonu")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(InstitutionalTheme.Colors.surface1)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
+        }
+    }
+
+    private func summaryParagraph(_ result: BistSektorResult) -> some View {
+        let strongest = result.strongestSector?.name ?? "—"
+        let weakest = result.weakestSector?.name ?? "—"
+        let rotation = result.rotation.rawValue.lowercased()
+        return Text("\(rotation.capitalized) eğilimi öne çıkıyor. \(strongest) güçleniyor, \(weakest) zayıf seyrediyor.")
+            .font(.system(size: 14))
+            .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+            .lineSpacing(3)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.bottom, 22)
+    }
+
+    private func sectorList(_ result: BistSektorResult) -> some View {
+        let sorted = result.sectors.sorted(by: { $0.dailyChange > $1.dailyChange })
+        return VStack(alignment: .leading, spacing: 8) {
+            Text("Bugün")
+                .font(.system(size: 13))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                .padding(.leading, 2)
+
+            VStack(spacing: 0) {
+                ForEach(Array(sorted.enumerated()), id: \.offset) { idx, sector in
+                    HStack(spacing: 0) {
+                        Text(sector.name)
+                            .font(.system(size: 14))
+                            .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                        Spacer()
+                        Text(formattedChange(sector.dailyChange))
+                            .font(.system(size: 14, design: .monospaced))
+                            .foregroundColor(changeColor(sector.dailyChange))
+                            .monospacedDigit()
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
+                    if idx < sorted.count - 1 {
+                        Rectangle()
+                            .fill(InstitutionalTheme.Colors.borderSubtle)
+                            .frame(height: 0.5)
+                            .padding(.leading, 14)
+                    }
                 }
             }
+            .background(InstitutionalTheme.Colors.surface1)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         }
-        .task {
-            let points = await TCMBDataService.shared.getSeriesHistory(serieCode)
-            if !points.isEmpty {
-                withAnimation {
-                    self.data = points.map { $0.value }
-                }
-            } else {
-                self.data = []
-            }
-        }
+    }
+
+    private func formattedChange(_ value: Double) -> String {
+        if abs(value) < 0.05 { return "±0.0%" }
+        return String(format: "%@%.1f%%", value >= 0 ? "+" : "", value)
+    }
+
+    private func changeColor(_ value: Double) -> Color {
+        if abs(value) < 0.05 { return InstitutionalTheme.Colors.textSecondary }
+        return value >= 0 ? InstitutionalTheme.Colors.aurora : InstitutionalTheme.Colors.crimson
+    }
+
+    private var emptyState: some View {
+        Text("Sektör rotasyonu verisi bekleniyor.")
+            .font(.system(size: 14))
+            .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+            .padding(.vertical, 22)
     }
 }
 
-// MARK: - Sirkiye Data Grid
+// MARK: - SirkiyeTCMBView (TCMB verileri sub-page)
+//
+// Raw TCMB snapshot'ı 3 grup altında plain key-value listesi olarak
+// gösterir: Faiz/kur, Enflasyon, Dış denge.
 
-struct SirkiyeDataGrid: View {
+struct SirkiyeTCMBView: View {
     let snapshot: TCMBDataService.TCMBMacroSnapshot
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
-            Text("Makro veri matrisi")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                .padding(.bottom, 4)
 
-            LazyVGrid(columns: [
-                GridItem(.flexible(), alignment: .leading),
-                GridItem(.flexible(), alignment: .trailing),
-                GridItem(.flexible(), alignment: .trailing)
-            ], spacing: 12) {
-                // Header
-                Group {
-                    Text("Gösterge").font(.system(size: 11)).foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                    Text("Değer").font(.system(size: 11)).foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                    Text("Durum").font(.system(size: 11)).foregroundColor(InstitutionalTheme.Colors.textTertiary)
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack {
+            InstitutionalTheme.Colors.background.ignoresSafeArea()
+            VStack(spacing: 0) {
+                topNav
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        faizKurGroup
+                        enflasyonGroup
+                        disDengeGroup
+                        Color.clear.frame(height: 24)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 18)
                 }
-                
-                Divider()
-                Divider()
-                Divider()
-                
-                // Rows
-                gridRow(name: "Enflasyon", value: snapshot.inflation, format: "%.1f%%")
-                gridRow(name: "Çekirdek Enflasyon", value: snapshot.coreInflation, format: "%.1f%%")
-                gridRow(name: "Politika Faizi", value: snapshot.policyRate, format: "%.0f%%")
-                gridRow(name: "USD/TRY", value: snapshot.usdTry, format: "%.2f₺")
-                gridRow(name: "Rezervler", value: snapshot.reserves, format: "%.1fB$")
-                gridRow(name: "Cari Denge", value: snapshot.currentAccount, format: "%.1fB$")
-                gridRow(name: "Sanayi Üretimi", value: snapshot.industrialProduction, format: "%.1f")
-                gridRow(name: "İşsizlik", value: snapshot.unemployment, format: "%.1f%%")
             }
         }
-        .padding()
+        .navigationBarHidden(true)
+    }
+
+    private var topNav: some View {
+        HStack(spacing: 8) {
+            Button(action: { dismiss() }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .frame(width: 36, height: 36)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            Text("TCMB verileri")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
         .background(InstitutionalTheme.Colors.surface1)
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.large))
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.large)
-                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 1)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
+        }
+    }
+
+    private struct DataRow {
+        let label: String
+        let value: String
+    }
+
+    private func dataGroup(title: String, rows: [DataRow]) -> some View {
+        let valid = rows.filter { $0.value != "—" }
+        guard !valid.isEmpty else { return AnyView(EmptyView()) }
+        return AnyView(
+            VStack(alignment: .leading, spacing: 8) {
+                Text(title)
+                    .font(.system(size: 13))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                    .padding(.leading, 2)
+
+                VStack(spacing: 0) {
+                    ForEach(Array(valid.enumerated()), id: \.offset) { idx, row in
+                        HStack {
+                            Text(row.label)
+                                .font(.system(size: 14))
+                                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                            Spacer()
+                            Text(row.value)
+                                .font(.system(size: 14, design: .monospaced))
+                                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                                .monospacedDigit()
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 11)
+                        if idx < valid.count - 1 {
+                            Rectangle()
+                                .fill(InstitutionalTheme.Colors.borderSubtle)
+                                .frame(height: 0.5)
+                                .padding(.leading, 14)
+                        }
+                    }
+                }
+                .background(InstitutionalTheme.Colors.surface1)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            }
+            .padding(.bottom, 18)
         )
     }
-    
-    private func gridRow(name: String, value: Double?, format: String) -> some View {
-        Group {
-            Text(name)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(Theme.textPrimary)
-            
-            Text(value != nil ? String(format: format, value!) : "-")
-                .font(.system(size: 13, design: .monospaced))
-                .foregroundColor(Theme.textPrimary)
-            
-            Text(value != nil ? "Anlık Veri" : "Veri Yok")
-                .font(.caption2)
-                .foregroundColor(value != nil ? InstitutionalTheme.Colors.textSecondary : InstitutionalTheme.Colors.warning)
-        }
+
+    private var faizKurGroup: some View {
+        dataGroup(title: "Faiz ve kur", rows: [
+            DataRow(label: "Politika faizi", value: format(snapshot.policyRate, suffix: "%")),
+            DataRow(label: "Mevduat faizi", value: format(snapshot.depositRate, suffix: "%")),
+            DataRow(label: "Kredi faizi", value: format(snapshot.loanRate, suffix: "%")),
+            DataRow(label: "USD/TRY", value: format(snapshot.usdTry, decimals: 2)),
+            DataRow(label: "EUR/TRY", value: format(snapshot.eurTry, decimals: 2))
+        ])
     }
-}
 
-// MARK: - Preview
+    private var enflasyonGroup: some View {
+        dataGroup(title: "Enflasyon", rows: [
+            DataRow(label: "TÜFE, yıllık", value: format(snapshot.inflation, suffix: "%")),
+            DataRow(label: "Çekirdek TÜFE", value: format(snapshot.coreInflation, suffix: "%"))
+        ])
+    }
 
-#Preview {
-    NavigationStack {
-        SirkiyeAetherView()
+    private var disDengeGroup: some View {
+        dataGroup(title: "Dış denge ve rezerv", rows: [
+            DataRow(label: "Cari denge", value: formatBillions(snapshot.currentAccount)),
+            DataRow(label: "İhracat", value: formatBillions(snapshot.exports)),
+            DataRow(label: "İthalat", value: formatBillions(snapshot.imports)),
+            DataRow(label: "Brüt rezerv", value: formatBillions(snapshot.reserves)),
+            DataRow(label: "Net rezerv", value: formatBillions(snapshot.netReserves))
+        ])
+    }
+
+    // MARK: - Format helpers
+
+    private func format(_ value: Double?, suffix: String = "", decimals: Int = 2) -> String {
+        guard let value else { return "—" }
+        let f = "%.\(decimals)f\(suffix)"
+        return String(format: f, value)
+    }
+
+    private func formatBillions(_ value: Double?) -> String {
+        guard let value else { return "—" }
+        return String(format: "%.1f mlr $", value)
     }
 }

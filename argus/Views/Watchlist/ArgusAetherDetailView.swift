@@ -1,545 +1,732 @@
 import SwiftUI
 
-/// V5 mockup dil bütünlüğü için in-place refactor.
-/// 2026-04-22 Sprint 3 — üst chrome `ArgusNavHeader`'a alındı (geri deco +
-/// Aether motor pill, beklenti/kapat aksiyonları custom ikon olarak). Panel
-/// içerik, skor halkası, makro ayrıştırma ve beklenti sheet'i aynı.
+// MARK: - ArgusAetherDetailView (Makro merkezi)
+//
+// 2026-05-04 H-63 — komple yeniden yazıldı. Önceki yapı tek ekrana hero
+// skor + 3 katman expandable + accuracy + formula + decision + tüm
+// metric tablolarını yığıyordu (AI dashboard dili). Yeni yapı iOS
+// Settings hub'ı: kısa durum cümlesi + "Bugün" 3 satır inline + grouped
+// list (Yaklaşan veriler / Tahminlerim / Tüm göstergeler) + footer.
+// Detay içerikler ayrı sub-page'lere bölündü, geri butonu sistem
+// NavigationStack push'undan geliyor.
+
 struct ArgusAetherDetailView: View {
     let rating: MacroEnvironmentRating
 
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var expectationsStore = ExpectationsStore.shared
-    @State private var expandedSections: Set<AetherPanelSection> = [.leading]
-    @State private var showExpectationsSheet = false
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                InstitutionalTheme.Colors.background.ignoresSafeArea()
+        ZStack {
+            InstitutionalTheme.Colors.background.ignoresSafeArea()
 
-                VStack(spacing: 0) {
-                    ArgusNavHeader(
-                        title: "Makro",
-                        subtitle: "Rejim, skor, formül",
-                        leadingDeco: .back(onTap: { dismiss() }),
-                        titlePill: nil,
-                        actions: [
-                            .custom(sfSymbol: "slider.horizontal.3",
-                                    action: { showExpectationsSheet = true }),
-                            .custom(sfSymbol: "xmark",
-                                    action: { dismiss() })
-                        ]
-                    )
+            VStack(spacing: 0) {
+                inlineTopNav
 
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 18) {
-                            headerCard
-                            educationalCard
-
-                            ForEach(AetherPanelSection.allCases) { section in
-                                sectionCard(section)
-                            }
-
-                            accuracyCard
-                            formulaCard
-                            decisionCard
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        statusParagraph
+                        if !todayMovers.isEmpty {
+                            todayList
                         }
-                        .padding(20)
+                        navigationGroup
+                        advancedGroup
+                        footerNote
+                        Color.clear.frame(height: 24)
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 18)
                 }
-            }
-            .navigationBarHidden(true)
-            .sheet(isPresented: $showExpectationsSheet) {
-                ExpectationsEntryView()
             }
         }
+        .navigationBarHidden(true)
     }
 
-    private var headerCard: some View {
-        // 2026-04-30 H-58 — sade. 66pt motor ring + caps "AETHER" + caps
-        // mono "AETHER · MAKRO REJİM" subtitle + ArgusChip "NOT X" + ×mult
-        // chip motor tone kalktı. Yerine: 32pt skor + sentence rejim adı +
-        // sentence "Not" + ×mult sade text.
-        HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Makro skoru")
-                    .font(.system(size: 11))
-                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text("\(Int(clampedScore))")
-                        .font(.system(size: 32, weight: .medium))
-                        .foregroundColor(scoreColor)
-                        .monospacedDigit()
-                    Text("/ 100")
-                        .font(.system(size: 13))
-                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                }
-                Text(rating.regime.displayName)
-                    .font(.system(size: 13))
-                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                    .padding(.top, 2)
+    // MARK: - Üst nav
+
+    private var inlineTopNav: some View {
+        HStack(spacing: 8) {
+            Button(action: { dismiss() }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .frame(width: 36, height: 36)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Geri")
+
+            Text("Makro")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                .accessibilityAddTraits(.isHeader)
 
             Spacer()
-
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("Not \(rating.letterGrade)")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(scoreColor)
-                Text(String(format: "×%.2f", rating.multiplier))
-                    .font(.system(size: 12))
-                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                    .monospacedDigit()
-            }
         }
-        .padding(14)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
         .background(InstitutionalTheme.Colors.surface1)
-        .overlay(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous))
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
+        }
     }
 
-    private var educationalCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Nasıl okunur")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+    // MARK: - Durum paragrafı
 
-            HStack(spacing: 10) {
-                legendChip("Öncü",      tone: .aurora)
-                legendChip("Eşzamanlı", tone: .holo)
-                legendChip("Gecikmeli", tone: .titan)
-            }
+    /// Hero skor / 100/100 yüzde rozetinin yerini alan tek paragraf.
+    /// Rejim + en belirgin katman üzerinden plain Türkçe cümle kuruluyor.
+    private var statusParagraph: some View {
+        Text(statusSentence)
+            .font(.system(size: 14))
+            .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+            .lineSpacing(3)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.bottom, 22)
+    }
 
-            Text("Makro ortam 3 katmanda değerlendirilir: öncü (erken sinyal), eşzamanlı (anlık tablo), gecikmeli (onay katmanı).")
+    private var statusSentence: String {
+        let regimeText: String
+        switch rating.regime {
+        case .riskOn:  regimeText = "Genişleme rejimi"
+        case .neutral: regimeText = "Karışık rejim"
+        case .riskOff: regimeText = "Sıkılaşma rejimi"
+        }
+
+        // En yüksek katmanı bul → hangi katman destek veriyor?
+        // 2026-05-05: Rating.{leading,coincident,lagging}Score son refactor'da Double? oldu
+        // (OrionModels.swift:112-114). Veri eksikliğinde 0 fallback → hâlâ kıyaslanabilir.
+        let scores: [(String, Double)] = [
+            ("öncü göstergeler", rating.leadingScore ?? 0),
+            ("eşzamanlı göstergeler", rating.coincidentScore ?? 0),
+            ("gecikmeli göstergeler", rating.laggingScore ?? 0)
+        ]
+        let strongest = scores.max(by: { $0.1 < $1.1 })?.0 ?? "göstergeler"
+
+        switch rating.regime {
+        case .riskOn:
+            return "\(regimeText). \(strongest.capitalized) destekleyici, risk iştahı pozitif."
+        case .neutral:
+            return "\(regimeText). \(strongest.capitalized) ön planda, yön belirsiz."
+        case .riskOff:
+            return "\(regimeText). \(strongest.capitalized) baskı yapıyor, koruma önemli."
+        }
+    }
+
+    // MARK: - Bugün satırları (inline 3 indicator)
+
+    /// rating.componentChanges'tan en belirgin 3 hareketi seçer.
+    /// Boşsa kart hiç çizilmez.
+    private var todayMovers: [TodayMover] {
+        let pairs: [(String, String)] = [
+            ("volatility", "Volatilite, VIX"),
+            ("crypto", "Bitcoin"),
+            ("dollar", "Dolar endeksi, DXY"),
+            ("equity", "S&P 500"),
+            ("gold", "Altın")
+        ]
+        let movers: [TodayMover] = pairs.compactMap { key, label in
+            guard let change = rating.componentChanges[key] else { return nil }
+            return TodayMover(label: label, change: change)
+        }
+        // Mutlak değere göre sırala, ilk 3'ü al.
+        return movers.sorted { abs($0.change) > abs($1.change) }.prefix(3).map { $0 }
+    }
+
+    private struct TodayMover {
+        let label: String
+        let change: Double
+    }
+
+    private var todayList: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Bugün")
                 .font(.system(size: 13))
-                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                .fixedSize(horizontal: false, vertical: true)
-                .lineSpacing(2)
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(InstitutionalTheme.Colors.surface1)
-        .overlay(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
-    }
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                .padding(.leading, 2)
 
-    private func legendChip(_ text: String, tone: ArgusChipTone) -> some View {
-        HStack(spacing: 5) {
-            ArgusDot(color: tone.foreground, size: 5)
-            Text(text)
-                .font(.system(size: 9, weight: .bold, design: .monospaced))
-                .tracking(0.7)
-                .foregroundColor(tone.foreground)
-        }
-    }
-
-    private func sectionCard(_ section: AetherPanelSection) -> some View {
-        let isExpanded = expandedSections.contains(section)
-        let sectionScore = score(for: section)
-        let tone = section.tone
-
-        return VStack(alignment: .leading, spacing: 10) {
-            Button { toggle(section) } label: {
-                HStack(spacing: 10) {
-                    ArgusDot(color: tone.foreground, size: 8)
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(section.title.uppercased())
-                            .font(.system(size: 11, weight: .bold, design: .monospaced))
-                            .tracking(1)
-                            .foregroundColor(tone.foreground)
-                        Text(section.subtitle)
-                            .font(.system(size: 9, weight: .medium, design: .monospaced))
-                            .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+            VStack(spacing: 0) {
+                ForEach(Array(todayMovers.enumerated()), id: \.offset) { idx, mover in
+                    HStack(spacing: 0) {
+                        Text(mover.label)
+                            .font(.system(size: 14))
+                            .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                        Spacer()
+                        Text(String(format: "%@%.1f%%", mover.change >= 0 ? "+" : "", mover.change))
+                            .font(.system(size: 14, design: .monospaced))
+                            .foregroundColor(changeColor(mover.change))
+                            .monospacedDigit()
                     }
-
-                    Spacer()
-
-                    Text("\(Int(sectionScore))")
-                        .font(.system(size: 20, weight: .black, design: .monospaced))
-                        .foregroundColor(scoreColor(for: sectionScore))
-
-                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
+                    if idx < todayMovers.count - 1 {
+                        Rectangle()
+                            .fill(InstitutionalTheme.Colors.borderSubtle)
+                            .frame(height: 0.5)
+                            .padding(.leading, 14)
+                    }
                 }
+            }
+            .background(InstitutionalTheme.Colors.surface1)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+        .padding(.bottom, 22)
+    }
+
+    private func changeColor(_ value: Double) -> Color {
+        if abs(value) < 0.1 { return InstitutionalTheme.Colors.textSecondary }
+        return value >= 0 ? InstitutionalTheme.Colors.aurora : InstitutionalTheme.Colors.crimson
+    }
+
+    // MARK: - Ana navigasyon grubu
+
+    private var navigationGroup: some View {
+        VStack(spacing: 0) {
+            NavigationLink(destination: ExpectationsEntryView()) {
+                hubRow(title: "Yaklaşan veriler", trailing: pendingCount > 0 ? "\(pendingCount)" : nil)
             }
             .buttonStyle(.plain)
 
-            ArgusBar(value: sectionScore / 100.0,
-                     color: scoreColor(for: sectionScore),
-                     height: 6)
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
+                .padding(.leading, 14)
 
-            if isExpanded {
-                VStack(alignment: .leading, spacing: 0) {
-                    ForEach(metrics(for: section)) { metric in
-                        metricRow(metric)
-                    }
-                }
-                .transition(.opacity.combined(with: .move(edge: .top)))
+            NavigationLink(destination: MyPredictionsView()) {
+                hubRow(title: "Tahminlerim", trailing: predictionsTrailing)
             }
+            .buttonStyle(.plain)
         }
-        .padding(14)
         .background(InstitutionalTheme.Colors.surface1)
-        .overlay(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
-                .stroke(tone.foreground.opacity(isExpanded ? 0.4 : 0.15), lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .padding(.bottom, 18)
     }
 
-    /// Tahmin Doğruluğu kartı — kullanıcının son N tahmininin ne kadarının tuttuğunu gösterir.
-    /// Hiç çözümlenmiş tahmin yoksa kısa bir teşvik mesajı, ayrıca "Tahmin Gir" kısayolu gösterir.
-    private var accuracyCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
-                Image(systemName: "scope")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(InstitutionalTheme.Colors.Motors.aether)
-                ArgusSectionCaption("TAHMİN DOĞRULUĞU")
-                Spacer()
-                Button(action: { showExpectationsSheet = true }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "pencil.and.list.clipboard")
-                            .font(.system(size: 11))
-                        Text("Tahmin gir")
-                            .font(.system(size: 12, weight: .medium))
-                    }
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(InstitutionalTheme.Colors.surface2)
-                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                }
-            }
-
-            if let overall = expectationsStore.getOverallAccuracy(lastN: 20) {
-                HStack(spacing: 14) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(String(format: "%.0f%%", overall.accuracy))
-                            .font(.system(size: 22, weight: .medium))
-                            .foregroundColor(accuracyColor(for: overall.accuracy))
-                            .monospacedDigit()
-                        Text("Genel doğruluk")
-                            .font(.system(size: 11))
-                            .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                    }
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("\(overall.correct) / \(overall.total)")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                            .monospacedDigit()
-                        Text("Son \(overall.total) tahmin")
-                            .font(.system(size: 11))
-                            .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                    }
-
-                    Spacer()
-                }
-
-                ArgusBar(value: overall.accuracy / 100.0,
-                         color: accuracyColor(for: overall.accuracy),
-                         height: 5)
-
-                // Gösterge bazlı dağılım (yalnızca çözümlenmiş kayıtları olanlar).
-                VStack(alignment: .leading, spacing: 6) {
-                    ForEach(ExpectationsStore.EconomicIndicator.allCases) { indicator in
-                        if let summary = expectationsStore.getAccuracySummary(for: indicator, lastN: 10) {
-                            indicatorAccuracyRow(indicator: indicator, summary: summary)
-                        }
-                    }
-                }
-                .padding(.top, 4)
-            } else {
-                // Henüz çözümlenmiş tahmin yok — boş durum
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Henüz tahmin geçmişi yok")
-                        .font(InstitutionalTheme.Typography.bodyStrong)
-                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                    Text("Ekonomik veri açıklanmadan önce beklentinizi girin. Veri geldiğinde tahmininizin tutup tutmadığı burada izlenir; sürpriz Aether skoruna ±10 puan etki eder.")
-                        .font(InstitutionalTheme.Typography.caption)
-                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
+    private var advancedGroup: some View {
+        NavigationLink(destination: MakroIndicatorsListView(rating: rating)) {
+            hubRow(title: "Tüm göstergeler", trailing: nil)
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .buttonStyle(.plain)
         .background(InstitutionalTheme.Colors.surface1)
-        .overlay(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.Motors.aether.opacity(0.3), lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
-    private func indicatorAccuracyRow(indicator: ExpectationsStore.EconomicIndicator,
-                                      summary: ExpectationsStore.AccuracySummary) -> some View {
+    private func hubRow(title: String, trailing: String?) -> some View {
         HStack(spacing: 10) {
-            Image(systemName: indicator.icon)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                .frame(width: 16)
-
-            Text(indicator.displayName)
-                .font(.system(size: 11, weight: .medium))
+            Text(title)
+                .font(.system(size: 15))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                .lineLimit(1)
-
             Spacer()
-
-            Text("\(summary.correct)/\(summary.total)")
-                .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-
-            Text(String(format: "%.0f%%", summary.accuracy))
-                .font(.system(size: 11, weight: .bold, design: .monospaced))
-                .foregroundColor(accuracyColor(for: summary.accuracy))
-                .frame(width: 40, alignment: .trailing)
-        }
-        .padding(.vertical, 3)
-    }
-
-    private func accuracyColor(for value: Double) -> Color {
-        if value >= 70 { return InstitutionalTheme.Colors.aurora }
-        if value >= 50 { return InstitutionalTheme.Colors.titan }
-        return InstitutionalTheme.Colors.crimson
-    }
-
-    private var formulaCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            ArgusSectionCaption("SKOR FORMÜLÜ")
-
-            Text("(Öncü×1.5 + Eşzamanlı×1.0 + Gecikmeli×0.8) / 3.3")
-                .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-
-            HStack(spacing: 10) {
-                contributionPill(label: "ÖNCÜ",   value: rating.leadingContribution,
-                                 tone: .aurora)
-                contributionPill(label: "EŞZ.",   value: rating.coincidentContribution,
-                                 tone: .holo)
-                contributionPill(label: "GECİK.", value: rating.laggingContribution,
-                                 tone: .titan)
-            }
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(InstitutionalTheme.Colors.surface1)
-        .overlay(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.border, lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
-    }
-
-    private var decisionCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            ArgusSectionCaption("NİHAİ YORUM")
-
-            Text(decisionSummary)
-                .font(InstitutionalTheme.Typography.caption)
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            ArgusPill(decisionAction.uppercased(), tone: decisionActionTone)
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(InstitutionalTheme.Colors.surface1)
-        .overlay(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
-                .stroke(decisionActionTone.foreground.opacity(0.35), lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
-    }
-
-    private var decisionActionTone: ArgusChipTone {
-        switch rating.regime {
-        case .riskOn:  return .aurora
-        case .neutral: return .titan
-        case .riskOff: return .crimson
-        }
-    }
-
-    private func metricRow(_ metric: AetherMetric) -> some View {
-        let metricScore = clamp(metric.score)
-
-        return HStack(spacing: 10) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(metric.title)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                Text(metric.detail)
-                    .font(.system(size: 10))
+            if let trailing {
+                Text(trailing)
+                    .font(.system(size: 14))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                    .lineLimit(1)
             }
-
-            Spacer()
-
-            if let change = metric.change {
-                let isPositiveForScore = metric.inverse ? change <= 0 : change >= 0
-                let tone: ArgusChipTone = isPositiveForScore ? .aurora : .crimson
-                ArgusChip(String(format: "%@%.2f%%", change >= 0 ? "+" : "", change), tone: tone)
-            }
-
-            Text("\(Int(metricScore))")
-                .font(.system(size: 13, weight: .black, design: .monospaced))
-                .foregroundColor(scoreColor(for: metricScore))
-                .frame(width: 32, alignment: .trailing)
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
-        .padding(.vertical, 6)
-        .overlay(ArgusHair(), alignment: .bottom)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 13)
+        .contentShape(Rectangle())
     }
 
-    private func contributionPill(label: String, value: Double?, tone: ArgusChipTone) -> some View {
-        let val = max(0, min(100, value ?? 0))
-        return VStack(alignment: .leading, spacing: 4) {
-            Text(label)
-                .font(.system(size: 9, weight: .bold, design: .monospaced))
-                .tracking(0.7)
-                .foregroundColor(tone.foreground)
-            Text(String(format: "%.1f", val))
-                .font(.system(size: 15, weight: .black, design: .monospaced))
+    private var pendingCount: Int {
+        expectationsStore.getPendingExpectations().count
+    }
+
+    private var predictionsTrailing: String? {
+        guard let summary = expectationsStore.getOverallAccuracy(lastN: 20) else {
+            return nil
+        }
+        return String(format: "%%%.0f", summary.accuracy)
+    }
+
+    // MARK: - Footer
+
+    private var footerNote: some View {
+        Text("Skor 30 günlük öncü, eşzamanlı ve gecikmeli göstergelerin ağırlıklı ortalamasından üretilir.")
+            .font(.system(size: 12))
+            .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+            .lineSpacing(2)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 4)
+            .padding(.top, 14)
+    }
+}
+
+// MARK: - MakroIndicatorsListView (Tüm göstergeler sub-page)
+//
+// Eski 3 katman expandable kart + skor formülü kartı buraya taşındı.
+// Sade list dili: katman = grouped row, skor sağ tarafta sentence.
+// Tıklandığında katmanın metricleri açılıyor (DisclosureGroup yerine
+// inline expand state).
+
+struct MakroIndicatorsListView: View {
+    let rating: MacroEnvironmentRating
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var expanded: Set<MakroLayer> = []
+
+    var body: some View {
+        ZStack {
+            InstitutionalTheme.Colors.background.ignoresSafeArea()
+            VStack(spacing: 0) {
+                topNav
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        layerGroup
+                        formulaGroup
+                        Color.clear.frame(height: 24)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 18)
+                }
+            }
+        }
+        .navigationBarHidden(true)
+    }
+
+    private var topNav: some View {
+        HStack(spacing: 8) {
+            Button(action: { dismiss() }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .frame(width: 36, height: 36)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            Text("Tüm göstergeler")
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-            ArgusBar(value: val / 100.0, color: tone.foreground, height: 4)
+            Spacer()
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(10)
-        .background(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm, style: .continuous)
-                .fill(tone.background)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm, style: .continuous)
-                .stroke(tone.foreground.opacity(0.3), lineWidth: 1)
-        )
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(InstitutionalTheme.Colors.surface1)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
+        }
     }
 
-    private func toggle(_ section: AetherPanelSection) {
-        withAnimation(.easeInOut(duration: 0.2)) {
-            if expandedSections.contains(section) {
-                expandedSections.remove(section)
-            } else {
-                expandedSections.insert(section)
+    private var layerGroup: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Katmanlar")
+                .font(.system(size: 13))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                .padding(.leading, 2)
+
+            VStack(spacing: 0) {
+                ForEach(Array(MakroLayer.allCases.enumerated()), id: \.offset) { idx, layer in
+                    layerRow(layer)
+                    if expanded.contains(layer) {
+                        layerMetrics(layer)
+                    }
+                    if idx < MakroLayer.allCases.count - 1 {
+                        Rectangle()
+                            .fill(InstitutionalTheme.Colors.borderSubtle)
+                            .frame(height: 0.5)
+                            .padding(.leading, 14)
+                    }
+                }
+            }
+            .background(InstitutionalTheme.Colors.surface1)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+        .padding(.bottom, 18)
+    }
+
+    private func layerRow(_ layer: MakroLayer) -> some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                if expanded.contains(layer) {
+                    expanded.remove(layer)
+                } else {
+                    expanded.insert(layer)
+                }
+            }
+        } label: {
+            HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(layer.title)
+                        .font(.system(size: 15))
+                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    Text(layer.subtitle)
+                        .font(.system(size: 12))
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                }
+                Spacer()
+                Text("\(Int(score(for: layer)))")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(scoreColor(score(for: layer)))
+                    .monospacedDigit()
+                Image(systemName: expanded.contains(layer) ? "chevron.down" : "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 13)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func layerMetrics(_ layer: MakroLayer) -> some View {
+        VStack(spacing: 0) {
+            ForEach(metrics(for: layer), id: \.title) { metric in
+                Rectangle()
+                    .fill(InstitutionalTheme.Colors.borderSubtle)
+                    .frame(height: 0.5)
+                    .padding(.leading, 14)
+                HStack(spacing: 10) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(metric.title)
+                            .font(.system(size: 13))
+                            .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                        Text(metric.detail)
+                            .font(.system(size: 11))
+                            .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                    }
+                    Spacer()
+                    if let change = metric.change {
+                        Text(String(format: "%@%.1f%%", change >= 0 ? "+" : "", change))
+                            .font(.system(size: 12, design: .monospaced))
+                            .foregroundColor(metric.inverse
+                                             ? (change <= 0 ? InstitutionalTheme.Colors.aurora : InstitutionalTheme.Colors.crimson)
+                                             : (change >= 0 ? InstitutionalTheme.Colors.aurora : InstitutionalTheme.Colors.crimson))
+                            .monospacedDigit()
+                    }
+                    Text("\(Int(metric.score ?? 50))")
+                        .font(.system(size: 13))
+                        .foregroundColor(scoreColor(metric.score ?? 50))
+                        .monospacedDigit()
+                        .frame(width: 32, alignment: .trailing)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .padding(.leading, 14)
+            }
+        }
+        .background(InstitutionalTheme.Colors.background.opacity(0.5))
+    }
+
+    private var formulaGroup: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Skor formülü")
+                .font(.system(size: 13))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                .padding(.leading, 2)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("(Öncü × 1.5 + Eşzamanlı × 1.0 + Gecikmeli × 0.8) / 3.3")
+                    .font(.system(size: 13, design: .monospaced))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                Text("Öncü göstergeler erken sinyal verdiği için en yüksek ağırlığı taşır. Gecikmeli göstergeler onay rolündedir.")
+                    .font(.system(size: 12))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                    .lineSpacing(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 13)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(InstitutionalTheme.Colors.surface1)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+    }
+
+    // MARK: - Layer data
+
+    enum MakroLayer: CaseIterable {
+        case leading, coincident, lagging
+
+        var title: String {
+            switch self {
+            case .leading: return "Öncü katman"
+            case .coincident: return "Eşzamanlı katman"
+            case .lagging: return "Gecikmeli katman"
+            }
+        }
+
+        var subtitle: String {
+            switch self {
+            case .leading: return "VIX · faiz · ICSA · BTC"
+            case .coincident: return "S&P · istihdam · DXY"
+            case .lagging: return "CPI · işsizlik · altın"
             }
         }
     }
 
-    private func metrics(for section: AetherPanelSection) -> [AetherMetric] {
-        switch section {
+    private func score(for layer: MakroLayer) -> Double {
+        // Rating.*Score Double? — veri henüz hesaplanmamışsa 0 ile clamp et (max(0, min(100, 0)) = 0).
+        let value: Double
+        switch layer {
+        case .leading: value = rating.leadingScore ?? 0
+        case .coincident: value = rating.coincidentScore ?? 0
+        case .lagging: value = rating.laggingScore ?? 0
+        }
+        return max(0, min(100, value))
+    }
+
+    private struct LayerMetric {
+        let title: String
+        let detail: String
+        let score: Double?
+        let change: Double?
+        let inverse: Bool
+    }
+
+    private func metrics(for layer: MakroLayer) -> [LayerMetric] {
+        switch layer {
         case .leading:
             return [
-                AetherMetric(title: "VIX", detail: "Volatilite / korku göstergesi", score: rating.volatilityScore, change: rating.componentChanges["volatility"], inverse: true),
-                AetherMetric(title: "Faiz Eğrisi", detail: "10Y-2Y yayılımı", score: rating.interestRateScore, change: nil, inverse: false),
-                AetherMetric(title: "İşsizlik Başvuruları", detail: "Haftalık ICSA eğilimi", score: rating.claimsScore, change: nil, inverse: true),
-                AetherMetric(title: "Bitcoin", detail: "Risk iştahı proxysi", score: rating.cryptoRiskScore, change: rating.componentChanges["crypto"], inverse: false)
+                LayerMetric(title: "VIX", detail: "Volatilite, korku göstergesi", score: rating.volatilityScore, change: rating.componentChanges["volatility"], inverse: true),
+                LayerMetric(title: "Faiz eğrisi", detail: "10Y–2Y yayılımı", score: rating.interestRateScore, change: nil, inverse: false),
+                LayerMetric(title: "İşsizlik başvuruları", detail: "Haftalık ICSA eğilimi", score: rating.claimsScore, change: nil, inverse: true),
+                LayerMetric(title: "Bitcoin", detail: "Risk iştahı proxy'si", score: rating.cryptoRiskScore, change: rating.componentChanges["crypto"], inverse: false)
             ]
         case .coincident:
             return [
-                AetherMetric(title: "SPY Trendi", detail: "Piyasa yönü", score: rating.equityRiskScore, change: rating.componentChanges["equity"], inverse: false),
-                AetherMetric(title: "İstihdam", detail: "Büyüme temposu", score: rating.growthScore, change: nil, inverse: false),
-                AetherMetric(title: "DXY", detail: "Dolar baskısı", score: rating.currencyScore, change: rating.componentChanges["dollar"], inverse: true)
+                LayerMetric(title: "S&P 500", detail: "Piyasa yönü", score: rating.equityRiskScore, change: rating.componentChanges["equity"], inverse: false),
+                LayerMetric(title: "İstihdam", detail: "Büyüme temposu", score: rating.growthScore, change: nil, inverse: false),
+                LayerMetric(title: "DXY", detail: "Dolar baskısı", score: rating.currencyScore, change: rating.componentChanges["dollar"], inverse: true)
             ]
         case .lagging:
             return [
-                AetherMetric(title: "CPI", detail: "Enflasyon yönü", score: rating.inflationScore, change: nil, inverse: true),
-                AetherMetric(title: "İşsizlik", detail: "Gecikmeli iş gücü etkisi", score: rating.laborScore, change: nil, inverse: true),
-                AetherMetric(title: "Altın (GLD)", detail: "Güvenli liman eğilimi", score: rating.safeHavenScore, change: rating.componentChanges["gold"], inverse: true)
+                LayerMetric(title: "CPI", detail: "Enflasyon yönü", score: rating.inflationScore, change: nil, inverse: true),
+                LayerMetric(title: "İşsizlik", detail: "Gecikmeli iş gücü etkisi", score: rating.laborScore, change: nil, inverse: true),
+                LayerMetric(title: "Altın, GLD", detail: "Güvenli liman eğilimi", score: rating.safeHavenScore, change: rating.componentChanges["gold"], inverse: true)
             ]
         }
     }
 
-    private func score(for section: AetherPanelSection) -> Double {
-        switch section {
-        case .leading: return clamp(rating.leadingScore)
-        case .coincident: return clamp(rating.coincidentScore)
-        case .lagging: return clamp(rating.laggingScore)
-        }
-    }
-
-    private var clampedScore: Double {
-        max(0, min(100, rating.numericScore))
-    }
-
-    private var scoreColor: Color {
-        scoreColor(for: clampedScore)
-    }
-
-    private func scoreColor(for value: Double) -> Color {
+    private func scoreColor(_ value: Double) -> Color {
         if value >= 70 { return InstitutionalTheme.Colors.aurora }
         if value >= 50 { return InstitutionalTheme.Colors.titan }
         return InstitutionalTheme.Colors.crimson
     }
+}
 
-    private func clamp(_ value: Double?) -> Double {
-        max(0, min(100, value ?? 50))
+// MARK: - MyPredictionsView (Tahminlerim sub-page)
+//
+// Önceki accuracyCard + indicatorAccuracyRow buraya taşındı, ayrı bir
+// sub-page olarak. Hero %X + indicator breakdown + geçmiş tahminler.
+
+struct MyPredictionsView: View {
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var store = ExpectationsStore.shared
+
+    var body: some View {
+        ZStack {
+            InstitutionalTheme.Colors.background.ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                topNav
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        accuracyHero
+                        indicatorBreakdown
+                        historyList
+                        Color.clear.frame(height: 24)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 18)
+                }
+            }
+        }
+        .navigationBarHidden(true)
     }
 
-    private var decisionSummary: String {
-        if clampedScore >= 70 {
-            return "Makro zemin destekleyici. Öncü katman risk iştahını doğruluyorsa pozisyon artırımı düşünülebilir."
+    private var topNav: some View {
+        HStack(spacing: 8) {
+            Button(action: { dismiss() }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .frame(width: 36, height: 36)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            Text("Tahminlerim")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+            Spacer()
         }
-        if clampedScore >= 50 {
-            return "Makro sinyaller karışık. Yönlü agresyon yerine seçici ve kademeli yaklaşım daha rasyonel."
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(InstitutionalTheme.Colors.surface1)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
         }
-        return "Makro baskı yüksek. Koruma ve pozisyon küçültme öncelikli tutulmalı."
     }
 
-    private var decisionAction: String {
-        switch rating.regime {
-        case .riskOn: return "Risk artışı mümkün"
-        case .neutral: return "Denge ve seçicilik"
-        case .riskOff: return "Risk azalt / koruma artır"
+    private var accuracyHero: some View {
+        Group {
+            if let summary = store.getOverallAccuracy(lastN: 20) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Son \(summary.total) tahminin \(summary.correct) tanesi tutmuş.")
+                        .font(.system(size: 14))
+                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    Text("Sapma her gösterge için ayrı eşikle değerlendirilir.")
+                        .font(.system(size: 12))
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                }
+                .padding(.bottom, 22)
+            } else {
+                Text("Henüz olgunlaşmış tahmin yok. Veri açıklandıkça burada görünecek.")
+                    .font(.system(size: 14))
+                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.bottom, 22)
+            }
         }
+    }
+
+    private var indicatorBreakdown: some View {
+        let rows = ExpectationsStore.EconomicIndicator.allCases.compactMap { indicator -> (ExpectationsStore.EconomicIndicator, ExpectationsStore.AccuracySummary)? in
+            guard let s = store.getAccuracySummary(for: indicator, lastN: 10) else { return nil }
+            return (indicator, s)
+        }
+        return Group {
+            if !rows.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Göstergeye göre")
+                        .font(.system(size: 13))
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                        .padding(.leading, 2)
+
+                    VStack(spacing: 0) {
+                        ForEach(Array(rows.enumerated()), id: \.offset) { idx, row in
+                            HStack {
+                                Text(row.0.shortName)
+                                    .font(.system(size: 14))
+                                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                                Spacer()
+                                Text("\(row.1.correct) / \(row.1.total)")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                                    .monospacedDigit()
+                                Text(String(format: "%%%.0f", row.1.accuracy))
+                                    .font(.system(size: 14, design: .monospaced))
+                                    .foregroundColor(accuracyColor(row.1.accuracy))
+                                    .monospacedDigit()
+                                    .frame(width: 56, alignment: .trailing)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 11)
+                            if idx < rows.count - 1 {
+                                Rectangle()
+                                    .fill(InstitutionalTheme.Colors.borderSubtle)
+                                    .frame(height: 0.5)
+                                    .padding(.leading, 14)
+                            }
+                        }
+                    }
+                    .background(InstitutionalTheme.Colors.surface1)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                }
+                .padding(.bottom, 18)
+            }
+        }
+    }
+
+    private var historyList: some View {
+        let history = store.getRecentSurprises().prefix(20)
+        return Group {
+            if !history.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Geçmiş tahminler")
+                        .font(.system(size: 13))
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                        .padding(.leading, 2)
+
+                    VStack(spacing: 0) {
+                        ForEach(Array(history.enumerated()), id: \.offset) { idx, entry in
+                            historyRow(entry)
+                            if idx < history.count - 1 {
+                                Rectangle()
+                                    .fill(InstitutionalTheme.Colors.borderSubtle)
+                                    .frame(height: 0.5)
+                                    .padding(.leading, 14)
+                            }
+                        }
+                    }
+                    .background(InstitutionalTheme.Colors.surface1)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                }
+            }
+        }
+    }
+
+    private func historyRow(_ entry: ExpectationsStore.ExpectationEntry) -> some View {
+        let surprise = entry.surprise ?? 0
+        let isCorrect = entry.isCorrect == true
+        return HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(entry.indicator.shortName)
+                    .font(.system(size: 14))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                Text(historySubtitle(entry, isCorrect: isCorrect))
+                    .font(.system(size: 11))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+            }
+            Spacer()
+            if let actual = entry.actualValue {
+                Text(String(format: "%.1f / %.1f", actual, entry.expectedValue))
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                    .monospacedDigit()
+            }
+            Text(String(format: "%@%.2f%@", surprise >= 0 ? "+" : "", surprise, entry.indicator.unit))
+                .font(.system(size: 13, design: .monospaced))
+                .foregroundColor(isCorrect ? InstitutionalTheme.Colors.aurora : InstitutionalTheme.Colors.crimson)
+                .monospacedDigit()
+                .frame(width: 64, alignment: .trailing)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 11)
+    }
+
+    private func historySubtitle(_ entry: ExpectationsStore.ExpectationEntry, isCorrect: Bool) -> String {
+        let when: String
+        if let date = entry.announcedAt {
+            let elapsed = Date().timeIntervalSince(date)
+            if elapsed < 86400 { when = "bugün" }
+            else if elapsed < 86400 * 2 { when = "dün" }
+            else { when = "\(Int(elapsed / 86400)) gün önce" }
+        } else {
+            when = "—"
+        }
+        return "\(when) · \(isCorrect ? "isabet" : "sapma")"
+    }
+
+    private func accuracyColor(_ value: Double) -> Color {
+        if value >= 70 { return InstitutionalTheme.Colors.aurora }
+        if value >= 50 { return InstitutionalTheme.Colors.titan }
+        return InstitutionalTheme.Colors.crimson
     }
 }
 
-private enum AetherPanelSection: CaseIterable, Identifiable {
-    case leading
-    case coincident
-    case lagging
+// MARK: - Indicator helpers
 
-    var id: String { title }
-
-    var title: String {
+extension ExpectationsStore.EconomicIndicator {
+    /// Liste sayfaları için kısa isim — displayName parantez vs içeriyor.
+    var shortName: String {
         switch self {
-        case .leading: return "Öncü Katman"
-        case .coincident: return "Eşzamanlı Katman"
-        case .lagging: return "Gecikmeli Katman"
+        case .cpi: return "CPI"
+        case .unemployment: return "İşsizlik"
+        case .payrolls: return "İstihdam"
+        case .claims: return "İşsizlik başvurusu"
+        case .pce: return "PCE"
+        case .gdp: return "GDP"
         }
     }
-
-    var subtitle: String {
-        switch self {
-        case .leading: return "×1.5 ağırlık · erken sinyal"
-        case .coincident: return "×1.0 ağırlık · anlık tablo"
-        case .lagging: return "×0.8 ağırlık · onay katmanı"
-        }
-    }
-
-    var tone: ArgusChipTone {
-        switch self {
-        case .leading:    return .aurora
-        case .coincident: return .holo
-        case .lagging:    return .titan
-        }
-    }
-}
-
-private struct AetherMetric: Identifiable {
-    let id = UUID()
-    let title: String
-    let detail: String
-    let score: Double?
-    let change: Double?
-    let inverse: Bool
 }

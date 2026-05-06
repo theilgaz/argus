@@ -1,7 +1,18 @@
 import Foundation
 
 // MARK: - Aether Council
-/// The Macro Council - evaluates market conditions and macro environment
+/// The Macro Council - evaluates market conditions and macro environment.
+///
+/// ⚠️ **DEPRECATED — 2026-05-05 (Round 7B):** Production karar yolundan çıkarıldı.
+/// `ArgusGrandCouncil` artık `AetherV2Engine` + `AetherV2DecisionAdapter` çağırıyor.
+/// Bu sınıf hâlâ derlenir, 2026-Q3'te kaldırılacak.
+///
+/// Yeni motor: `argus/Services/AetherV2/AetherV2Engine.swift`
+/// - 5 İngilizce "Engine" (MonetaryPolicy/MarketSentiment/SectorRotation/EconomicCycle/CrossAsset)
+///   yerine 5 Türkçe bölüm (Likidite/Risk Modu/Sektör Rotasyonu/Cross-Asset/Hissiyat)
+/// - Static heuristic yerine MacroSnapshot field-bazlı section skorları
+/// - Veri eksikse "Makro veri yetersiz" warning (silent fail değil)
+@available(*, deprecated, message: "AetherV2Engine kullan. Bu sınıf 2026-Q3'te kaldırılacak.")
 actor AetherCouncil {
     static let shared = AetherCouncil()
     

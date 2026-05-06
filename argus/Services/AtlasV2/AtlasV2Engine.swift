@@ -55,20 +55,54 @@ actor AtlasV2Engine {
         let dividendData = analyzeDividend(financials: financials)
         let riskData = analyzeRisk(financials: financials, quote: quote)
         
-        // 5. Bölüm skorlarını hesapla
-        let valuationScore = calculateSectionScore(valuationData.allMetrics)
-        let profitabilityScore = calculateSectionScore(profitabilityData.allMetrics)
-        let growthScore = calculateSectionScore(growthData.allMetrics)
-        let healthScore = calculateSectionScore(healthData.allMetrics)
-        let cashScore = calculateSectionScore(cashData.allMetrics)
-        let dividendScore = calculateSectionScore(dividendData.allMetrics)
-        
-        // 6. Toplam skor (ağırlıklı)
-        let totalScore = (profitabilityScore * 0.30) +
-                         (valuationScore * 0.25) +
-                         (healthScore * 0.20) +
-                         (growthScore * 0.15) +
-                         (cashScore * 0.10)
+        // 5. Bölüm skorlarını hesapla — her biri Optional<Double> (nil = veri yok)
+        let valuationScoreOpt = calculateSectionScore(valuationData.allMetrics)
+        let profitabilityScoreOpt = calculateSectionScore(profitabilityData.allMetrics)
+        let growthScoreOpt = calculateSectionScore(growthData.allMetrics)
+        let healthScoreOpt = calculateSectionScore(healthData.allMetrics)
+        let cashScoreOpt = calculateSectionScore(cashData.allMetrics)
+        let dividendScoreOpt = calculateSectionScore(dividendData.allMetrics)
+
+        // 2026-05-05 (Round 5) FIX: Nil section'ları ağırlık hesabından dışla,
+        // ağırlıkları normalize et. Eksik section'lar warnings'e eklenir.
+        let candidateSections: [(label: String, score: Double?, weight: Double)] = [
+            ("Karlılık", profitabilityScoreOpt, 0.30),
+            ("Değerleme", valuationScoreOpt, 0.25),
+            ("Mali Sağlık", healthScoreOpt, 0.20),
+            ("Büyüme", growthScoreOpt, 0.15),
+            ("Nakit", cashScoreOpt, 0.10)
+        ]
+        let validSections = candidateSections.compactMap { (label, score, weight) -> (String, Double, Double)? in
+            guard let score = score else { return nil }
+            return (label, score, weight)
+        }
+        let missingSectionLabels = candidateSections.filter { $0.score == nil }.map { $0.label }
+
+        let totalScore: Double
+        var dataAdequacyWarning: String? = nil
+        if validSections.count < 3 {
+            // Yetersiz veri — sahte skor üretmek yerine 50 (nötr) ver, ama warnings'e açıkça yaz
+            totalScore = 50.0
+            dataAdequacyWarning = "⚠️ Veri yetersiz: 5 bölümden yalnız \(validSections.count) tanesi mevcut. Eksik: \(missingSectionLabels.joined(separator: ", ")). Skor güvenilir değil — 50 (nötr) atandı."
+            ArgusLogger.warning(.atlas, "V2: \(symbol) için yetersiz veri (\(validSections.count)/5 bölüm). Skor 50 atandı.")
+        } else {
+            // Ağırlıkları normalize et — eksik section'ın ağırlığı kalan section'lara dağılır
+            let totalWeight = validSections.reduce(0.0) { $0 + $1.2 }
+            let weightedSum = validSections.reduce(0.0) { $0 + $1.1 * $1.2 }
+            totalScore = weightedSum / totalWeight
+            if !missingSectionLabels.isEmpty {
+                dataAdequacyWarning = "ℹ️ Skor \(validSections.count)/5 bölümle hesaplandı. Eksik: \(missingSectionLabels.joined(separator: ", "))"
+            }
+        }
+
+        // 5b. UI ve downstream API uyumluluğu için section skorlarını UI'a düz Double olarak veriyoruz
+        // (nil olanlar 0 olarak görünür ama UI tarafı bunu warnings ile birlikte yorumlamalı)
+        let valuationScore = valuationScoreOpt ?? 0
+        let profitabilityScore = profitabilityScoreOpt ?? 0
+        let growthScore = growthScoreOpt ?? 0
+        let healthScore = healthScoreOpt ?? 0
+        let cashScore = cashScoreOpt ?? 0
+        let dividendScore = dividendScoreOpt ?? 0
         
         // 7. Şirket profili
         let profile = AtlasCompanyProfile(
@@ -84,23 +118,44 @@ actor AtlasV2Engine {
         )
         
         // 8. Öne çıkanlar ve uyarılar
-        let (highlights, warnings) = generateHighlightsAndWarnings(
+        let (highlights, baseWarnings) = generateHighlightsAndWarnings(
             valuation: valuationData,
             profitability: profitabilityData,
             growth: growthData,
             health: healthData,
             cash: cashData
         )
+        // Round 5: Veri yetersizliği uyarısı en üste eklenir (kullanıcı için en kritik bilgi)
+        var warnings: [String] = baseWarnings
+        if let warn = dataAdequacyWarning {
+            warnings.insert(warn, at: 0)
+        }
+
+        // Round 5 P3-6: Score trace
+        // 2026-05-05 (Round 9) FIX: nil section → "N/A" yaz (eskiden 0 yazıyordu, kullanıcı
+        // "veri var ama 0 puan" sanıyordu — gerçekte veri yok).
+        func fmt(_ value: Double?) -> String {
+            return value.map { "\(Int($0))" } ?? "N/A"
+        }
+        let sectionTrace = "val=\(fmt(valuationScoreOpt)) prof=\(fmt(profitabilityScoreOpt)) grow=\(fmt(growthScoreOpt)) health=\(fmt(healthScoreOpt)) cash=\(fmt(cashScoreOpt)) div=\(fmt(dividendScoreOpt))"
+        ArgusLogger.info(.atlas, "V2 \(symbol) total=\(Int(totalScore)) (\(validSections.count)/5 bölüm) \(sectionTrace)")
         
         // 9. Özet yorum
-        let summary = generateSummary(
-            symbol: symbol,
-            totalScore: totalScore,
-            profitability: profitabilityScore,
-            valuation: valuationScore,
-            growth: growthScore,
-            health: healthScore
-        )
+        // 2026-05-05 (Round 9) FIX: < 3 bölüm varsa "şirket olarak değerlendirildi" demek
+        // yanıltıcı (BTC-USD'de "Karlılık zayıf" bile diyordu). Veri yetersiz net mesajı ver.
+        let summary: String
+        if validSections.count < 3 {
+            summary = "[\(symbol)] Veri yetersiz — \(validSections.count)/5 bölüm mevcut, fundamental analiz güvenilir değil. Eksik: \(missingSectionLabels.joined(separator: ", "))"
+        } else {
+            summary = generateSummary(
+                symbol: symbol,
+                totalScore: totalScore,
+                profitability: profitabilityScore,
+                valuation: valuationScore,
+                growth: growthScore,
+                health: healthScore
+            )
+        }
         
         // 10. Sonuç oluştur
         let result = AtlasV2Result(
@@ -403,9 +458,14 @@ actor AtlasV2Engine {
     
     // MARK: - Yardımcı Fonksiyonlar
     
-    private func calculateSectionScore(_ metrics: [AtlasMetric]) -> Double {
+    /// 2026-05-05 (Round 5) FIX: Eski sürüm `validScores.isEmpty` durumunda `return 50`
+    /// (default fallback) dönüyordu — Sirkiye L56 anti-pattern. Veri yokken sahte
+    /// nötr skor üretiyordu, kullanıcı "veri var sanıp" yanlış kararlar veriyordu.
+    /// Şimdi: veri yoksa `nil` dön → analyze() bu section'ı total skor hesabından
+    /// dışla + warnings'e ekle. UI ve adapter "veri yetersiz" davranışını görür.
+    private func calculateSectionScore(_ metrics: [AtlasMetric]) -> Double? {
         let validScores = metrics.compactMap { $0.value != nil ? $0.score : nil }
-        guard !validScores.isEmpty else { return 50 }
+        guard !validScores.isEmpty else { return nil }
         return validScores.reduce(0, +) / Double(validScores.count)
     }
     

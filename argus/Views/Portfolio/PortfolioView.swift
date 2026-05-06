@@ -557,13 +557,11 @@ struct EngineSelector: View {
                                     : InstitutionalTheme.Colors.textSecondary
                             )
                         Text(engineLabel(filter))
-                            .font(.system(.caption2, design: .monospaced))
-                            .fontWeight(.bold)
-                            .tracking(0.8)
+                            .font(.system(size: 13, weight: selected == filter ? .medium : .regular))
                             .foregroundColor(
                                 selected == filter
-                                    ? engineColor(filter)
-                                    : InstitutionalTheme.Colors.textSecondary.opacity(0.7)
+                                    ? InstitutionalTheme.Colors.textPrimary
+                                    : InstitutionalTheme.Colors.textSecondary
                             )
                     }
                     .padding(.horizontal, 10)
@@ -603,12 +601,13 @@ struct EngineSelector: View {
         }
     }
 
+    /// 2026-05-05 H-67: caps mono ("GENEL/CORSE/PULSE/GÖZCÜ") → sentence.
     func engineLabel(_ filter: PortfolioView.AutoPilotEngineFilter) -> String {
         switch filter {
-        case .all:      return "GENEL"
-        case .corse:    return "CORSE"
-        case .pulse:    return "PULSE"
-        case .scouting: return "GÖZCÜ"
+        case .all:      return "Tümü"
+        case .corse:    return "Korse"
+        case .pulse:    return "Pulse"
+        case .scouting: return "Gözcü"
         }
     }
 
@@ -622,71 +621,15 @@ struct EngineSelector: View {
     }
 }
 
-// MARK: - ScoutCandidateCard
-
-struct ScoutCandidateCard: View {
-    let signal: TradeSignal
-    @ObservedObject var viewModel: TradingViewModel
-
-    private let scoutTint = InstitutionalTheme.Colors.neutral
-
-    var body: some View {
-        HStack(spacing: 16) {
-            Rectangle()
-                .fill(scoutTint)
-                .frame(width: 4)
-                .clipShape(Capsule())
-
-            CompanyLogoView(symbol: signal.symbol, size: 44)
-
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
-                    Text(signal.symbol)
-                        .font(.headline)
-                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-
-                    Text("GÖZCÜ ONAYI")
-                        .font(.system(.caption2, design: .monospaced))
-                        .fontWeight(.bold)
-                        .tracking(0.8)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(scoutTint.opacity(0.18))
-                        .foregroundColor(scoutTint)
-                        .clipShape(Capsule())
-                }
-
-                Text(signal.reason)
-                    .font(.caption)
-                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                    .lineLimit(1)
-            }
-
-            Spacer()
-
-            Button(action: {
-                viewModel.buy(symbol: signal.symbol, quantity: 10)
-            }) {
-                Image(systemName: "plus.circle.fill")
-                    .font(.title2)
-                    .foregroundColor(InstitutionalTheme.Colors.positive)
-                    .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Manuel alım")
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(InstitutionalTheme.Colors.surface1)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 1)
-        )
-    }
-}
+// 2026-05-05 H-67: ScoutCandidateCard, BistPortfolioHeader silindi.
+// İkisi de hiçbir yerden çağrılmıyordu (ölü kod). V5 izleri taşıyorlardı:
+//   • ScoutCandidateCard: "GÖZCÜ ONAYI" caps mono tracking 0.8 capsule
+//   • BistPortfolioHeader: kırmızı LinearGradient hero kart + "BIST
+//     PORTFÖY DEĞERİ / KAR/ZARAR / KULLANILABİLİR BAKİYE" caps mono
+//     tracking 1.2 + "BIST" 9pt black mono capsule
+// PortfolioView body'si LiquidDashboardHeader (Tier #33) kullanıyor;
+// BIST portföyü için ayrı bir header'a gerek yok, market segmenti
+// LiquidDashboardHeader'da binding ile çalışıyor.
 
 // MARK: - PortfolioHeader (legacy — HolographicBalanceCard sarmalayıcısı)
 
@@ -697,96 +640,6 @@ struct PortfolioHeader: View {
         HolographicBalanceCard(viewModel: viewModel)
             .padding(.horizontal)
             .padding(.top, 10)
-    }
-}
-
-// MARK: - BistPortfolioHeader (kırmızı tema)
-
-struct BistPortfolioHeader: View {
-    @ObservedObject var viewModel: TradingViewModel
-
-    private var totalValue: Double { viewModel.getBistPortfolioValue() }
-    private var totalPL:    Double { viewModel.getBistUnrealizedPnL() }
-
-    var body: some View {
-        VStack(spacing: 12) {
-            VStack(spacing: 10) {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("BIST PORTFÖY DEĞERİ")
-                            .font(.system(.caption2, design: .monospaced))
-                            .fontWeight(.bold)
-                            .tracking(1.2)
-                            .foregroundColor(.white.opacity(0.7))
-                        Text("₺\(String(format: "%.0f", totalValue))")
-                            .font(.system(.title, design: .rounded))
-                            .fontWeight(.bold)
-                            .monospacedDigit()
-                            .foregroundColor(.white)
-                    }
-                    Spacer()
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text("KAR/ZARAR")
-                            .font(.system(.caption2, design: .monospaced))
-                            .fontWeight(.bold)
-                            .tracking(1.2)
-                            .foregroundColor(.white.opacity(0.7))
-                        Text("\(totalPL >= 0 ? "+" : "")₺\(totalPL, specifier: "%.2f")")
-                            .font(.headline)
-                            .monospacedDigit()
-                            .foregroundColor(
-                                totalPL >= 0
-                                    ? InstitutionalTheme.Colors.positive
-                                    : InstitutionalTheme.Colors.negative
-                            )
-                    }
-                }
-
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("KULLANILABİLİR BAKİYE")
-                            .font(.system(.caption2, design: .monospaced))
-                            .fontWeight(.bold)
-                            .tracking(1.2)
-                            .foregroundColor(.white.opacity(0.55))
-                        Text("₺\(viewModel.bistBalance, specifier: "%.2f")")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .monospacedDigit()
-                            .foregroundColor(.white.opacity(0.9))
-                    }
-                    Spacer()
-                    Text("\(viewModel.bistPortfolio.filter { $0.isOpen }.count) açık pozisyon")
-                        .font(InstitutionalTheme.Typography.caption)
-                        .foregroundColor(.white.opacity(0.7))
-                    // V5 emojisiz — BIST rozeti küçük kapsülle
-                    Text("BIST")
-                        .font(.system(size: 9, weight: .black, design: .monospaced))
-                        .tracking(1)
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 6).padding(.vertical, 2)
-                        .background(Capsule().fill(Color.white.opacity(0.18)))
-                }
-            }
-            .padding(16)
-            .background(
-                LinearGradient(
-                    colors: [
-                        InstitutionalTheme.Colors.negative.opacity(0.85),
-                        InstitutionalTheme.Colors.negative.opacity(0.35)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(Color.white.opacity(0.12), lineWidth: 1)
-            )
-        }
-        .padding(.horizontal)
-        .padding(.top, 10)
     }
 }
 
@@ -864,11 +717,11 @@ struct NewTradeSheet: View {
 
                 VStack(spacing: 20) {
                     // Symbol Input
+                    // 2026-05-05 H-67: caps mono "HİSSE SEMBOLÜ" tracking 1.2
+                    // → sentence "Hisse" iOS form label dilinde.
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("HİSSE SEMBOLÜ")
-                            .font(.system(.caption2, design: .monospaced))
-                            .fontWeight(.bold)
-                            .tracking(1.2)
+                        Text("Hisse")
+                            .font(.system(size: 13))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
 
                         HStack(spacing: 8) {
@@ -927,11 +780,11 @@ struct NewTradeSheet: View {
                     }
 
                     // Quantity Input
+                    // 2026-05-05 H-67: caps mono "ADET" tracking 1.2
+                    // → sentence "Adet".
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("ADET")
-                            .font(.system(.caption2, design: .monospaced))
-                            .fontWeight(.bold)
-                            .tracking(1.2)
+                        Text("Adet")
+                            .font(.system(size: 13))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
 
                         HStack {
@@ -1021,11 +874,11 @@ struct NewTradeSheet: View {
                     Spacer()
 
                     // Action Button
+                    // 2026-05-05 H-67: caps "SATIN AL" tracking 1 → sentence
+                    // "Satın al", iOS primary button dilinde.
                     Button(action: executeTrade) {
-                        Text("SATIN AL")
-                            .font(.headline)
-                            .fontWeight(.bold)
-                            .tracking(1)
+                        Text("Satın al")
+                            .font(.system(size: 15, weight: .semibold))
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
@@ -1035,7 +888,7 @@ struct NewTradeSheet: View {
                                     ? InstitutionalTheme.Colors.neutral
                                     : InstitutionalTheme.Colors.positive
                             )
-                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     }
                     .buttonStyle(.plain)
                     .disabled(symbol.isEmpty)

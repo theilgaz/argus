@@ -142,6 +142,21 @@ struct argusApp: App {
                                     print("🧠 Chiron: Startup learning cycle completed")
                                 }
 
+                                // 🇹🇷 BorsaPy: backend ısınma çağrısı (FIX F).
+                                // Render.com free-tier cold start 40-60sn yanıt verebiliyor;
+                                // ilk kullanıcı isteği bunun üstüne denk gelirse 8sn timeout
+                                // tetikleniyor → 3 timeout = circuit AÇIK 5dk → BIST'in tamamı
+                                // Yahoo fallback'e düşüyordu. Açılışta health endpoint'i
+                                // çağırarak backend'i önceden uyandırırız (warmUp method
+                                // BorsaPyProvider.swift:305-312'de zaten mevcut, bağlanmamıştı).
+                                // Eğer BORSAPY_URL boşsa veya backend tepkisizse warmUp sessiz
+                                // dönecek; circuit açık kalmadığı için Yahoo fallback hızlı çalışır.
+                                Task.detached(priority: .background) {
+                                    // Hafif gecikme — Heimdall/Yahoo ana data fetch'lerini bloklamasın
+                                    try? await Task.sleep(nanoseconds: 2_000_000_000)
+                                    await BorsaPyProvider.shared.warmUp()
+                                }
+
                                 // 👁️ Alkindus: Start periodic maturation checks
                                 startAlkindusPeriodicCheck()
                                 

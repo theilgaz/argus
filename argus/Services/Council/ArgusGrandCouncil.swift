@@ -143,29 +143,57 @@ actor ArgusGrandCouncil {
         
         let isBist = symbol.uppercased().hasSuffix(".IS")
         
-        // 1.5 Orion V3 Pattern Detection (Synchronous calculation for decision input)
+        // 1.5 Orion Pattern Detection (Synchronous calculation for decision input)
+        // 2026-05-05 (Round 10): Log "Orion V3" yerine "Orion Patterns" — V2/V3
+        // adlandırma karmaşası önlenir (asıl motor OrionV2Engine, bu pattern subsystem'i).
         let detectedPatterns = await OrionPatternEngine.shared.detectPatterns(candles: candles)
         if !detectedPatterns.isEmpty {
-            print("📐 Orion V3: \(detectedPatterns.count) formasyon tespit edildi.")
+            print("📐 Orion Patterns: \(detectedPatterns.count) formasyon tespit edildi.")
         }
         
         // 2. Gather all council decisions (Parallel execution could be optimized here)
         let orionDecision: CouncilDecision
         
         if isBist {
-            print("🇹🇷 Orion TR (Turquoise) Devrede - \(symbol)")
-            orionDecision = await OrionBistEngine.shared.analyze(symbol: symbol, candles: candles)
+            let bistOrionV2 = await OrionBistV2Engine.shared.analyze(symbol: symbol, candles: candles, forceRefresh: forceRefresh)
+            orionDecision = OrionV2DecisionAdapter.adapt(bistOrionV2)
+            ArgusLogger.info(.orion, "BistV2 → \(bistOrionV2.summary)")
         } else {
-            orionDecision = await OrionCouncil.shared.convene(symbol: symbol, candles: candles, engine: engine)
+            // 2026-05-05 (Round 7B) MIMARI YENİLEME: Eski "5 Ustası" pattern (OrionCouncil)
+            // production'dan kaldırıldı, modern section-based OrionV2Engine devreye alındı.
+            // 6 bölüm: Trend / Momentum / Hacim / Formasyon / Destek-Direnç / Volatilite
+            // OrionV2DecisionAdapter çıktıyı eski CouncilDecision struct'ına çevirir.
+            let v2Result = await OrionV2Engine.shared.analyze(symbol: symbol, candles: candles)
+            orionDecision = OrionV2DecisionAdapter.adapt(v2Result)
+            ArgusLogger.info(.orion, "V2 → \(v2Result.summary)")
         }
         
         var atlasDecision: AtlasDecision? = nil
-        if let snap = snapshot {
-            if isBist {
-                print("🇹🇷 Atlas TR (Turquoise) Devrede - \(symbol)")
-                atlasDecision = await AtlasBistEngine.shared.analyze(symbol: symbol, financials: snap)
+        // 2026-05-05 (Round 9) FIX: Kripto + FX sembolleri için fundamental analiz uygun değil.
+        // Eski sürüm BTC-USD'ye Atlas çağırıp "BTC-USD genel olarak orta bir şirket olarak
+        // değerlendiriliyor. Karlılık zayıf." gibi anlam yanlışlığı üretiyordu (1/5 bölüm).
+        // Yahoo formatı: kripto `-USD`, FX `=X` suffix'leriyle.
+        let symUpper = symbol.uppercased()
+        let isCryptoOrFX = symUpper.hasSuffix("-USD") || symUpper.hasSuffix("=X") ||
+                          symUpper.hasSuffix("=F") || symUpper.contains("-EUR") ||
+                          symUpper.contains("-GBP")
+
+        if isCryptoOrFX {
+            ArgusLogger.info(.atlas, "V2 \(symbol) atlandı (kripto/FX/emtia — fundamental analiz uygun değil)")
+            atlasDecision = nil
+        } else if isBist {
+            // BistV2 kendi verisini BorsaPy'dan çeker — dış snapshot'a bağımlılık yok
+            let bistAtlasV2 = await AtlasBistV2Engine.shared.analyze(symbol: symbol, forceRefresh: forceRefresh)
+            atlasDecision = AtlasV2DecisionAdapter.adapt(bistAtlasV2, engine: engine)
+            ArgusLogger.info(.atlas, "BistV2 → \(bistAtlasV2.summary)")
+        } else if let snap = snapshot {
+            // 2026-05-05 (Round 5) MIMARİ YENİLEME: AtlasCouncil → AtlasV2Engine + Adapter
+            if let v2Result = try? await AtlasV2Engine.shared.analyze(symbol: symbol) {
+                atlasDecision = AtlasV2DecisionAdapter.adapt(v2Result, engine: engine)
+                ArgusLogger.info(.atlas, "V2 \(symbol) → \(v2Result.summary)")
             } else {
-                atlasDecision = await AtlasCouncil.shared.convene(symbol: symbol, financials: snap, engine: engine)
+                ArgusLogger.warning(.atlas, "V2 \(symbol) için analiz başarısız (HeimdallOrchestrator timeout veya veri yok)")
+                atlasDecision = nil
             }
         }
         
@@ -173,24 +201,36 @@ actor ArgusGrandCouncil {
         let aetherDecision: AetherDecision
         
         if isBist, let bistInput = sirkiyeInput {
-            print("🇹🇷 Sirkiye (Politik Korteks) Devrede - \(symbol)")
+            ArgusLogger.info(.sirkiye, "Politik Korteks Devrede - \(symbol)")
             aetherDecision = await SirkiyeEngine.shared.analyze(input: bistInput)
         } else {
-            aetherDecision = await AetherCouncil.shared.convene(macro: macro)
+            // 2026-05-05 (Round 7B) MIMARI YENİLEME: Eski 5 İngilizce "Engine" pattern
+            // (AetherCouncil) production'dan kaldırıldı, modern section-based AetherV2Engine
+            // devreye alındı. 5 bölüm Türkçe naming:
+            // Likidite / Risk Modu / Sektör Rotasyonu / Cross-Asset / Hissiyat
+            let v2Result = await AetherV2Engine.shared.analyze(macro: macro)
+            aetherDecision = AetherV2DecisionAdapter.adapt(v2Result, marketMode: macro.marketMode)
+            ArgusLogger.info(.aether, "V2 → \(v2Result.summary)")
         }
         
         var hermesDecision: HermesDecision? = nil
-        
+
+        // 2026-05-05 (Round 8) MIMARI YENİLEME: Eski 5 "MasterEngine" pattern (HermesCouncil)
+        // production'dan kaldırıldı, modern section-based HermesV2Engine devreye alındı.
+        // 5 bölüm: Hissiyat / Etki / Tazelik / Güvenilirlik / Tetikleyici
+        // HermesV2DecisionAdapter çıktıyı eski HermesDecision struct'ına çevirir.
         if isBist {
-            // [ADAPTER] BIST Sentiment -> Hermes Snapshot
-            // BIST için native sentiment analizini çalıştırıp Hermes formatına çeviriyoruz
+            // [ADAPTER] BIST Sentiment -> Hermes Snapshot (BIST için RSS/sentiment kanalı)
             if let payload = try? await BISTSentimentEngine.shared.analyzeSentimentPayload(for: symbol) {
                 let adaptedSnapshot = BISTSentimentAdapter.adapt(result: payload.result, articles: payload.articles)
-                hermesDecision = await HermesCouncil.shared.convene(symbol: symbol, news: adaptedSnapshot)
-                print("🇹🇷 Hermes (Adapter): BIST Sentiment Entegre Edildi. Skor: \(Int(payload.result.overallScore))")
+                let v2Result = await HermesV2Engine.shared.analyze(symbol: symbol, news: adaptedSnapshot)
+                hermesDecision = HermesV2DecisionAdapter.adapt(v2Result)
+                ArgusLogger.info(.hermes, "V2 (BIST Adapter) → \(v2Result.summary)")
             }
         } else if let newsData = news {
-            hermesDecision = await HermesCouncil.shared.convene(symbol: symbol, news: newsData)
+            let v2Result = await HermesV2Engine.shared.analyze(symbol: symbol, news: newsData)
+            hermesDecision = HermesV2DecisionAdapter.adapt(v2Result)
+            ArgusLogger.info(.hermes, "V2 → \(v2Result.summary)")
         }
         
         // 2.5 Get Weights (Non-blocking now)
@@ -198,8 +238,11 @@ actor ArgusGrandCouncil {
         
         // --- BIST V2 REFORM ---
         if isBist {
-            // Re-fetch True Macro (Rejim) because 'aetherDecision' holds Sirkiye (Flow) result for BIST currently
-            let trueMacroDecision = await AetherCouncil.shared.convene(macro: macro)
+            // 2026-05-05 (Round 7B): AetherCouncil → AetherV2Engine swap.
+            // BIST için Sirkiye (Flow/Politik) ana karar, ama "True Macro Rejim" (global makro)
+            // ek olarak çekilir karar destekleyici. AetherV2 modern section-based motoru.
+            let trueMacroV2 = await AetherV2Engine.shared.analyze(macro: macro)
+            let trueMacroDecision = AetherV2DecisionAdapter.adapt(trueMacroV2, marketMode: macro.marketMode)
             let flowDecision = aetherDecision // Currently SirkiyeEngine output
 
             // Analist konsensüsünü BorsaPy'den çek (BIST sembolü için)
@@ -394,18 +437,18 @@ actor ArgusGrandCouncil {
             // çalışıyor → hitrate brackets güncellenmiyor → "hiçbir şey öğrenmiyor".
             // Şimdi her aksiyonlu karar (BUY/SELL) observation olarak kaydedilir;
             // 7/15 gün sonra olgunlaşıp verdict üretir.
-            let alkindusAction: String? = {
+            let alkindusAction: String = {
                 switch grandDecision.action {
                 case .aggressiveBuy, .accumulate: return "BUY"
                 case .trim, .liquidate:           return "SELL"
-                case .neutral:                    return nil
+                case .neutral:                    return "HOLD"
                 }
             }()
             let priceNow = candles.last?.close ?? 0
-            if let action = alkindusAction, priceNow > 0 {
+            if priceNow > 0 {
                 await AlkindusCalibrationEngine.shared.observe(
                     symbol: symbol,
-                    action: action,
+                    action: alkindusAction,
                     moduleScores: [
                         "orion":  orionDecision.netSupport * 100.0,
                         "atlas":  (atlasDecision?.netSupport ?? 0.0) * 100.0,
@@ -418,6 +461,8 @@ actor ArgusGrandCouncil {
                     currentPrice: priceNow,
                     reasoning: grandDecision.reasoning
                 )
+            } else {
+                print("⚠️ Alkindus observe SKIP (Council) — \(symbol) action=\(alkindusAction) priceNow=\(priceNow) candleCount=\(candles.count)")
             }
         }
         
@@ -530,12 +575,19 @@ actor ArgusGrandCouncil {
         let isPanic = aether.marketMode == .panic
         let isFear = aether.marketMode == .fear
         
-        // Aether ALWAYS contributes - determine action based on stance
+        // 2026-05-05 (Round 9) FIX: Aether stance → action mapping düzeltildi.
+        // Eski sürüm `cautious` ve `defensive` ikisini de `.hold` yapıyordu. AetherV2
+        // tipik 55-75 bandında `cautious` üretir (orta-üstü olumlu makro). `.hold`'a
+        // düşünce totalHold ağırlığı baskın oluyor, BUY eşiği aşılmıyor → her sembolde
+        // GÖZLE. Şimdi:
+        // - cautious (orta-üstü, 55-75) → .buy (olumlu eğilim, AL'a destek)
+        // - defensive (orta-altı, 30-55) → .hold (dikkatli)
+        // - riskOff/riskOn/.sell mevcut davranış korundu.
         let aetherAction: ProposedAction
         switch aether.stance {
-        case .riskOn:
+        case .riskOn, .cautious:
             aetherAction = .buy
-        case .cautious, .defensive:
+        case .defensive:
             aetherAction = .hold
         case .riskOff:
             aetherAction = .sell
@@ -704,16 +756,31 @@ actor ArgusGrandCouncil {
                 ]
             }
 
+            // 2026-05-05 (Round 6 A.1) Zayıf sinyal penalty: Eski sürüm her council'ın
+            // confidence'ını olduğu gibi alıp ağırlıkla çarpıyordu. Sonuç: Aether %38
+            // (zayıf risk-on) Atlas %82 (güçlü AL) ile eşit "olumlu" sayılıyordu, toplam
+            // BUY 30.20% sıfır milimetre marjla 0.30 eşiğini aşıp HÜCUM tetikliyordu.
+            // Şimdi: confidence < 0.40 ise %30 cezayla normalize → zayıf sinyaller
+            // toplama daha az katkı yapıyor, "kararsız bölgede güçlü iddialara dur de" prensibi.
+            func normalizedConfidence(_ raw: Double) -> Double {
+                return raw < 0.40 ? raw * 0.7 : raw
+            }
+
             // Ağırlıklı oyları hesapla
             var totalBuyWeight: Double = 0
             var totalSellWeight: Double = 0
             var totalHoldWeight: Double = 0
             var buyVoters: [String] = []
             var sellVoters: [String] = []
+            // Round 6 A.3: Counter-signal awareness için module-level sell weight izle
+            var sellByModule: [String: Double] = [:]
+            // Round 6 A.4: Orion zayıf SAT advisory için
+            var orionWeakSell: Bool = false
 
             for contrib in contributors {
                 let weight = moduleWeights[contrib.module] ?? 0.1
-                let vote = weight * contrib.confidence
+                let normConfidence = normalizedConfidence(contrib.confidence)
+                let vote = weight * normConfidence
 
                 switch contrib.action {
                 case .buy:
@@ -722,6 +789,10 @@ actor ArgusGrandCouncil {
                 case .sell:
                     totalSellWeight += vote
                     sellVoters.append(contrib.module)
+                    sellByModule[contrib.module] = vote
+                    if contrib.module.hasPrefix("Orion") && contrib.confidence < 0.25 {
+                        orionWeakSell = true
+                    }
                 case .hold:
                     totalHoldWeight += vote
                 }
@@ -751,20 +822,37 @@ actor ArgusGrandCouncil {
             )
             let voteSummary = "\(buyVoters.count) AL · \(sellVoters.count) SAT"
 
+            // Round 6 A.3: Counter-signal awareness — herhangi bir council ≥%5 ağırlıkla
+            // SAT diyorsa, HÜCUM (aggressive buy) yerine ACCUMULATE'e indir. "İki ayrı
+            // motor olumlu ama biri tam zıt" durumunda ihtiyatlı davran.
+            let hasSignificantCounterSell = sellByModule.values.contains { $0 >= 0.05 }
+
             if totalBuyWeight > 0.10 && (maxWeight == totalBuyWeight || buyLead >= -0.05) {
                 // Alım kararı
-                if totalBuyWeight > 0.45 && buyVoters.count >= 3 {
+                // Round 6 A.2: HÜCUM eşiği 0.30 → 0.35. Eski sıfır milimetre marj
+                // sorunu (HOOD'da 0.302) çözülür; gerçekten 2+ council konsensüsü olan
+                // durumlar geçer. ACCUMULATE eşikleri korundu (genel hassasiyet sürdü).
+                if totalBuyWeight > 0.45 && buyVoters.count >= 3 && !hasSignificantCounterSell {
                     finalAction = .aggressiveBuy
                     strength = .strong
                     reasoning = "Güçlü Konsey Mutabakatı (\(voteSummary), \(weightSummary)): \(buyVoters.joined(separator: ", "))"
-                } else if totalBuyWeight > 0.30 && buyVoters.count >= 2 {
+                } else if totalBuyWeight > 0.35 && buyVoters.count >= 2 && !hasSignificantCounterSell && !orionWeakSell {
                     finalAction = .aggressiveBuy
                     strength = .normal
                     reasoning = "Konsey Çoğunluğu Alım (\(voteSummary), \(weightSummary)): \(buyVoters.joined(separator: ", "))"
                 } else {
                     finalAction = .accumulate
                     strength = .normal
-                    reasoning = "Kademeli Alım (\(voteSummary), \(weightSummary)): \(buyVoters.joined(separator: ", "))"
+                    let counterNote: String
+                    if hasSignificantCounterSell {
+                        let topCounter = sellByModule.max(by: { $0.value < $1.value })?.key ?? "?"
+                        counterNote = " · Kontra: \(topCounter)"
+                    } else if orionWeakSell {
+                        counterNote = " · Orion zayıf SAT (consistency risk)"
+                    } else {
+                        counterNote = ""
+                    }
+                    reasoning = "Kademeli Alım (\(voteSummary), \(weightSummary))\(counterNote): \(buyVoters.joined(separator: ", "))"
                 }
             } else if isStrongOrion && totalBuyWeight >= 0.09 && totalSellWeight < 0.12 {
                 finalAction = .accumulate

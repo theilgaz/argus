@@ -3,6 +3,7 @@ import Foundation
 /// Atlas BIST Engine (Project Turquoise)
 /// Specialized Fundamental Engine for Turkey Markets
 /// Adapts valuation metrics for BIST (High Inflation, Local Dynamics)
+@available(*, deprecated, message: "Use AtlasBistV2Engine — self-fetches BorsaPy data, section-based scoring")
 actor AtlasBistEngine {
     static let shared = AtlasBistEngine()
     

@@ -1,7 +1,17 @@
 import Foundation
 
 // MARK: - Orion Council
-/// The main technical decision council - collects proposals, conducts voting, and decides
+/// The main technical decision council - collects proposals, conducts voting, and decides.
+///
+/// ⚠️ **DEPRECATED — 2026-05-05 (Round 7B):** Production karar yolundan çıkarıldı.
+/// `ArgusGrandCouncil` artık `OrionV2Engine` + `OrionV2DecisionAdapter` çağırıyor.
+/// Bu sınıf hâlâ derlenir (UI debug için `OrionCouncilCard:455`), 2026-Q3'te kaldırılacak.
+///
+/// Yeni motor: `argus/Services/OrionV2/OrionV2Engine.swift`
+/// - 5 "Ustası" (Trend/Momentum/Yapısal/Formasyon/Fiyat) yerine 6 bölüm
+/// - Static heuristic yerine standart indicator (RSI/MACD/EMA/ADX/ATR/BB)
+/// - Veri eksikse "Veri yetersiz" warning (silent fail değil)
+@available(*, deprecated, message: "OrionV2Engine kullan. Bu sınıf 2026-Q3'te kaldırılacak.")
 actor OrionCouncil {
     static let shared = OrionCouncil()
     

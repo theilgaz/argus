@@ -1,1048 +1,664 @@
 import SwiftUI
 
-// MARK: - Bilanço Detay Ekranı (eski adıyla Atlas V2 Detail)
-// Şirketi A'dan Z'ye öğreten arayüz.
+// MARK: - AtlasV2DetailView (Global Bilanço)
 //
-// 2026-04-30 H-58 — sade refactor.
-// Eski yapı V5: "ATLAS · TEMEL ANALİZ" caps subtitle + "ATLAS" pill +
-// ArgusOrb + 84pt motor-tinted ring + caps mono captions her yerde
-// ("ATLAS ÇEKİRDEĞİ", "POZİTİF SİNYALLER", "KARLILIK" mini grid).
-// Yeni dil: "Bilanço analizi" sentence subtitle, mitoloji pill kalktı,
-// orb + ring gitti, sade hairline kartlar, sentence başlıklar.
-// Public API ve loadData() flow korundu.
+// 2026-05-05 H-66 — sıfırdan yeniden yazıldı.
+//
+// Eski yapı (>900 satır): ArgusNavHeader caps subtitle, 80pt circle ring
+// + qualityBand hero, ArgusOrb, ArgusDot/Chip/SectionCaption, atlas
+// motor tinted border'lar, expandable bölüm kartları progress bar
+// chevron ile, "POZİTİF SİNYALLER / KRİTİK NOTLAR" caps captions, value
+// alert tinted block'lar. AI dashboard dili.
+//
+// Yeni yapı: iOS Settings hub (Makro / Türkiye makrosu / Bilanço-BIST
+// ile aynı dil).
+//   • Üst nav: chevron + sembol
+//   • Şirket meta tek satır (isim · sektör · marketCap)
+//   • Durum cümlesi (result.summary)
+//   • Pozitif sinyaller / Kritik notlar — link satırları → sub-page
+//   • Boyutlar 3 grupta: Temel (Değerleme/Karlılık/Sağlık),
+//     Genişleme (Büyüme/Nakit), Ek (Temettü/Risk)
+//   • Her boyut tıklayınca metric listesi sub-page'i
+//   • Footer
+//
+// Public API korundu: `init(symbol:)`.
 
 struct AtlasV2DetailView: View {
     let symbol: String
+
     @State private var result: AtlasV2Result?
     @State private var isLoading = true
     @State private var error: String?
-    @State private var detailedError: String? // Additional debug info
-    @State private var expandedSections: Set<String> = []
+
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        VStack(spacing: 0) {
-            ArgusNavHeader(
-                title: symbol.replacingOccurrences(of: ".IS", with: ""),
-                subtitle: "Bilanço analizi",
-                leadingDeco: .back(onTap: { dismiss() }),
-                titlePill: nil,
-                status: headerStatus
-            )
+        ZStack {
+            InstitutionalTheme.Colors.background.ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: 20) {
-                    if isLoading {
-                        loadingView
-                    } else if let error = error {
-                        errorView(error)
-                    } else if let result = result {
-                    // Başlık ve Genel Skor
-                    headerCard(result)
-                    educationalRationaleCard(result)
-                    
-                    // Öne Çıkanlar & Uyarılar
-                    if !result.highlights.isEmpty || !result.warnings.isEmpty {
-                        highlightsCard(result)
+            VStack(spacing: 0) {
+                inlineTopNav
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        if isLoading {
+                            loadingState
+                        } else if let err = error {
+                            errorState(err)
+                        } else if let r = result {
+                            companyMeta(r)
+                            statusParagraph(r)
+                            signalsGroup(r)
+                            boyutlarTemel(r)
+                            boyutlarGenisleme(r)
+                            boyutlarEk(r)
+                            footerNote
+                        }
+                        Color.clear.frame(height: 24)
                     }
-                    
-                    // VALUE ALERT SYSTEM (BIST-ÖZEL)
-                    if symbol.hasSuffix(".IS"), hasValueAlerts(result) {
-                        valueAlertCard(result)
-                    }
-                    
-                    // Bölüm Kartları
-                    sectionCard(
-                        title: "Değerleme",
-                        icon: "dollarsign.circle.fill",
-                        iconColor: InstitutionalTheme.Colors.warning,
-                        score: result.valuationScore,
-                        metrics: result.valuation.allMetrics,
-                        sectionId: "valuation"
-                    )
-                    
-                    sectionCard(
-                        title: "Karlılık",
-                        icon: "chart.line.uptrend.xyaxis",
-                        iconColor: InstitutionalTheme.Colors.positive,
-                        score: result.profitabilityScore,
-                        metrics: result.profitability.allMetrics,
-                        sectionId: "profitability"
-                    )
-                    
-                    sectionCard(
-                        title: "Büyüme",
-                        icon: "arrow.up.right.circle.fill",
-                        iconColor: InstitutionalTheme.Colors.primary,
-                        score: result.growthScore,
-                        metrics: result.growth.allMetrics,
-                        sectionId: "growth"
-                    )
-                    
-                    sectionCard(
-                        title: "Finansal Sağlık",
-                        icon: "shield.checkered",
-                        iconColor: InstitutionalTheme.Colors.primary,
-                        score: result.healthScore,
-                        metrics: result.health.allMetrics,
-                        sectionId: "health"
-                    )
-                    
-                    sectionCard(
-                        title: "Nakit Kalitesi",
-                        icon: "banknote.fill",
-                        iconColor: InstitutionalTheme.Colors.positive,
-                        score: result.cashScore,
-                        metrics: result.cash.allMetrics,
-                        sectionId: "cash"
-                    )
-                    
-                    sectionCard(
-                        title: "Temettü",
-                        icon: "gift.fill",
-                        iconColor: InstitutionalTheme.Colors.warning,
-                        score: result.dividendScore,
-                        metrics: result.dividend.allMetrics,
-                        sectionId: "dividend"
-                    )
-                    
-                    // YENİ: Risk Kartı
-                    sectionCard(
-                        title: "Risk Analizi",
-                        icon: "exclamationmark.triangle.fill",
-                        iconColor: InstitutionalTheme.Colors.negative,
-                        score: 100 - (result.risk.beta.value ?? 1.0) * 20,
-                        metrics: result.risk.allMetrics,
-                        sectionId: "risk"
-                    )
-                    
-                    // Özet
-                    summaryCard(result)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 18)
                 }
             }
-                .padding()
-            }
         }
-        .background(InstitutionalTheme.Colors.background)
         .navigationBarHidden(true)
         .task {
             await loadData()
         }
     }
 
-    private var headerStatus: ArgusNavHeader.Status {
-        if isLoading {
-            return .custom(dotColor: InstitutionalTheme.Colors.textTertiary,
-                           label: "Analiz ediliyor",
-                           trailing: symbol.uppercased())
-        }
-        if error != nil {
-            return .custom(dotColor: InstitutionalTheme.Colors.crimson,
-                           label: "Hata",
-                           trailing: symbol.uppercased())
-        }
-        if let r = result {
-            let score = Int(r.totalScore.rounded())
-            return .custom(dotColor: atlasScoreTone(r.totalScore).foreground,
-                           label: "Skor \(score)",
-                           trailing: r.qualityBand.rawValue)
-        }
-        return .none
-    }
-    
-    // MARK: - Header Card
-    
-    private func headerCard(_ result: AtlasV2Result) -> some View {
-        // 2026-04-30 H-58 — sade. Orb + 84pt ring + caps "ATLAS ÇEKİRDEĞİ"
-        // gitti. Yerine: şirket adı + sektör + market cap (sentence) +
-        // skor satırı (32pt medium + /100 + kalite bandı sentence).
-        VStack(alignment: .leading, spacing: 14) {
+    // MARK: - Üst nav
 
-            // Şirket künyesi
-            HStack(alignment: .top, spacing: 12) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(result.profile.name)
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                        .lineLimit(2)
-                    HStack(spacing: 6) {
-                        Text(result.symbol)
-                            .font(.system(size: 12))
-                            .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                        if let sector = result.profile.sector {
-                            Text("·")
-                                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                            Text(sector)
-                                .font(.system(size: 12))
-                                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                                .lineLimit(1)
-                        }
-                    }
-                }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(result.profile.formattedMarketCap)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                        .monospacedDigit()
-                    Text(result.profile.marketCapTier.lowercased())
-                        .font(.system(size: 11))
+    private var inlineTopNav: some View {
+        HStack(spacing: 8) {
+            Button(action: { dismiss() }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .frame(width: 36, height: 36)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Geri")
+
+            Text(symbol.replacingOccurrences(of: ".IS", with: ""))
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                .accessibilityAddTraits(.isHeader)
+
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(InstitutionalTheme.Colors.surface1)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
+        }
+    }
+
+    // MARK: - States
+
+    private var loadingState: some View {
+        HStack(spacing: 10) {
+            ProgressView().scaleEffect(0.8)
+            Text("Bilanço analizi yükleniyor…")
+                .font(.system(size: 13))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 22)
+    }
+
+    private func errorState(_ err: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Analiz tamamlanamadı")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+            Text(err)
+                .font(.system(size: 12))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                .lineSpacing(2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(14)
+        .background(InstitutionalTheme.Colors.surface1)
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .padding(.vertical, 22)
+    }
+
+    // MARK: - Şirket meta
+
+    private func companyMeta(_ r: AtlasV2Result) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(r.profile.name)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: 0) {
+                Text(symbol.replacingOccurrences(of: ".IS", with: ""))
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                if let sector = r.profile.sector, !sector.isEmpty {
+                    Text(" · \(sector)")
+                        .font(.system(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
-            }
-
-            if let industry = result.profile.industry {
-                Text(industry)
+                Text(" · \(r.profile.formattedMarketCap)")
                     .font(.system(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
-
-            Rectangle()
-                .fill(InstitutionalTheme.Colors.borderSubtle)
-                .frame(height: 0.5)
-
-            // Skor satırı — sade
-            HStack(alignment: .firstTextBaseline) {
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text("\(Int(result.totalScore))")
-                        .font(.system(size: 32, weight: .medium))
-                        .foregroundColor(atlasScoreColor(result.totalScore))
-                        .monospacedDigit()
-                    Text("/ 100")
-                        .font(.system(size: 13))
-                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(result.qualityBand.rawValue)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(atlasScoreColor(result.totalScore))
-                    Text(result.qualityBand.description)
-                        .font(.system(size: 11))
-                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                        .lineLimit(1)
-                }
-            }
-
-            Text(result.summary)
-                .font(.system(size: 13))
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .lineSpacing(2)
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(InstitutionalTheme.Colors.surface1)
-        .overlay(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous))
+        .padding(.bottom, 12)
     }
 
-    private func atlasScoreColor(_ score: Double) -> Color {
-        if score >= 65 { return InstitutionalTheme.Colors.aurora }
-        if score >= 45 { return InstitutionalTheme.Colors.titan }
+    // MARK: - Durum cümlesi
+
+    private func statusParagraph(_ r: AtlasV2Result) -> some View {
+        Text(r.summary)
+            .font(.system(size: 14))
+            .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+            .lineSpacing(3)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.bottom, 22)
+    }
+
+    // MARK: - Pozitif / Kritik link grubu
+
+    @ViewBuilder
+    private func signalsGroup(_ r: AtlasV2Result) -> some View {
+        if !r.highlights.isEmpty || !r.warnings.isEmpty {
+            VStack(spacing: 0) {
+                if !r.highlights.isEmpty {
+                    NavigationLink(destination: BilancoSinyalView(
+                        title: "Pozitif sinyaller",
+                        items: r.highlights,
+                        tone: .aurora
+                    )) {
+                        signalRow(title: "Pozitif sinyaller", count: r.highlights.count, color: InstitutionalTheme.Colors.aurora)
+                    }
+                    .buttonStyle(.plain)
+                    if !r.warnings.isEmpty {
+                        divider
+                    }
+                }
+                if !r.warnings.isEmpty {
+                    NavigationLink(destination: BilancoSinyalView(
+                        title: "Kritik notlar",
+                        items: r.warnings,
+                        tone: .crimson
+                    )) {
+                        signalRow(title: "Kritik notlar", count: r.warnings.count, color: InstitutionalTheme.Colors.crimson)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .background(InstitutionalTheme.Colors.surface1)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .padding(.bottom, 18)
+        }
+    }
+
+    private func signalRow(title: String, count: Int, color: Color) -> some View {
+        HStack(spacing: 10) {
+            Text(title)
+                .font(.system(size: 15))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+            Spacer()
+            Text("\(count)")
+                .font(.system(size: 14))
+                .foregroundColor(color)
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 13)
+        .contentShape(Rectangle())
+    }
+
+    private var divider: some View {
+        Rectangle()
+            .fill(InstitutionalTheme.Colors.borderSubtle)
+            .frame(height: 0.5)
+            .padding(.leading, 14)
+    }
+
+    // MARK: - Boyut grupları
+
+    private func boyutlarTemel(_ r: AtlasV2Result) -> some View {
+        boyutGroup(
+            title: "Temel",
+            rows: [
+                BoyutRow(title: "Değerleme", sub: "F/K · PD/DD · EV/EBITDA",
+                         score: r.valuationScore, metrics: r.valuation.allMetrics),
+                BoyutRow(title: "Karlılık", sub: "ROE · ROA · marjlar",
+                         score: r.profitabilityScore, metrics: r.profitability.allMetrics),
+                BoyutRow(title: "Sağlık", sub: "Borç/özkaynak · cari oran",
+                         score: r.healthScore, metrics: r.health.allMetrics)
+            ]
+        )
+    }
+
+    private func boyutlarGenisleme(_ r: AtlasV2Result) -> some View {
+        boyutGroup(
+            title: "Genişleme",
+            rows: [
+                BoyutRow(title: "Büyüme", sub: "Satış · net kâr · CAGR",
+                         score: r.growthScore, metrics: r.growth.allMetrics),
+                BoyutRow(title: "Nakit kalitesi", sub: "Serbest nakit · OCF/net kâr",
+                         score: r.cashScore, metrics: r.cash.allMetrics)
+            ]
+        )
+    }
+
+    private func boyutlarEk(_ r: AtlasV2Result) -> some View {
+        boyutGroup(
+            title: "Ek",
+            rows: [
+                BoyutRow(title: "Temettü", sub: "Verim · ödeme oranı · süreklilik",
+                         score: r.dividendScore, metrics: r.dividend.allMetrics),
+                BoyutRow(title: "Risk", sub: "Beta · volatilite",
+                         score: riskScore(r), metrics: r.risk.allMetrics)
+            ]
+        )
+    }
+
+    /// risk skoru AtlasV2Result'ta direct field değil; allMetrics'in
+    /// ortalaması alınır.
+    private func riskScore(_ r: AtlasV2Result) -> Double {
+        let metrics = r.risk.allMetrics
+        guard !metrics.isEmpty else { return 50 }
+        let sum = metrics.reduce(0.0) { $0 + $1.score }
+        return sum / Double(metrics.count)
+    }
+
+    private struct BoyutRow {
+        let title: String
+        let sub: String
+        let score: Double
+        let metrics: [AtlasMetric]
+    }
+
+    private func boyutGroup(title: String, rows: [BoyutRow]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 13))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                .padding(.leading, 2)
+
+            VStack(spacing: 0) {
+                ForEach(Array(rows.enumerated()), id: \.offset) { idx, row in
+                    NavigationLink(destination: BilancoBoyutView(
+                        title: row.title,
+                        score: row.score,
+                        metrics: row.metrics
+                    )) {
+                        boyutRowView(row)
+                    }
+                    .buttonStyle(.plain)
+                    if idx < rows.count - 1 {
+                        divider
+                    }
+                }
+            }
+            .background(InstitutionalTheme.Colors.surface1)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+        .padding(.bottom, 18)
+    }
+
+    private func boyutRowView(_ row: BoyutRow) -> some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(row.title)
+                    .font(.system(size: 15))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                Text(row.sub)
+                    .font(.system(size: 11))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+            }
+            Spacer()
+            Text("\(Int(row.score))")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(scoreColor(row.score))
+                .monospacedDigit()
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 13)
+        .contentShape(Rectangle())
+    }
+
+    private func scoreColor(_ value: Double) -> Color {
+        if value >= 70 { return InstitutionalTheme.Colors.aurora }
+        if value >= 50 { return InstitutionalTheme.Colors.titan }
         return InstitutionalTheme.Colors.crimson
     }
 
-    private func atlasScoreTone(_ score: Double) -> ArgusChipTone {
-        if score >= 65 { return .aurora }
-        if score >= 45 { return .titan }
-        return .crimson
-    }
-    
-    // MARK: - Highlights Card
-    
-    // 2026-04-23 V5.C: Image(systemName) + raw Circle.fill(.opacity(0.9)) →
-    // MotorLogo/ArgusSectionCaption/ArgusDot + ArgusChip yığınına geçti.
-    private func highlightsCard(_ result: AtlasV2Result) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            if !result.highlights.isEmpty {
-                highlightBlock(
-                    title: "Pozitif sinyaller",
-                    items: result.highlights,
-                    color: InstitutionalTheme.Colors.aurora
-                )
-            }
+    // MARK: - Footer
 
-            if !result.warnings.isEmpty {
-                highlightBlock(
-                    title: "Kritik notlar",
-                    items: result.warnings,
-                    color: InstitutionalTheme.Colors.titan
-                )
+    private var footerNote: some View {
+        Text("Skor 7 boyutun ağırlıklı ortalamasıdır. Veriler son finansal raporlardan çekilir.")
+            .font(.system(size: 12))
+            .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+            .lineSpacing(2)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 4)
+            .padding(.top, 4)
+    }
+
+    // MARK: - Data loading
+
+    private func loadData() async {
+        let symbolToAnalyze = symbol
+        do {
+            let r = try await withTimeout(seconds: 60) {
+                try await AtlasV2Engine.shared.analyze(symbol: symbolToAnalyze)
+            }
+            await MainActor.run {
+                self.result = r
+                self.isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                self.error = error.localizedDescription
+                self.isLoading = false
             }
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(InstitutionalTheme.Colors.surface1)
-        .overlay(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous))
     }
 
-    private func highlightBlock(title: String,
-                                 items: [String],
-                                 color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) {
-                Text(title)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(color)
-                Spacer()
-                Text("\(items.count)")
-                    .font(.system(size: 11))
-                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                    .monospacedDigit()
+    private enum TimeoutError: Error { case timeout }
+
+    private func withTimeout<T>(seconds: TimeInterval,
+                                operation: @escaping () async throws -> T) async throws -> T {
+        try await withThrowingTaskGroup(of: T.self) { group in
+            group.addTask {
+                try await operation()
             }
-            VStack(alignment: .leading, spacing: 6) {
-                ForEach(items, id: \.self) { item in
-                    HStack(alignment: .top, spacing: 8) {
-                        Circle()
-                            .fill(color)
-                            .frame(width: 4, height: 4)
-                            .padding(.top, 6)
-                        Text(item)
-                            .font(.system(size: 13))
-                            .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .lineSpacing(2)
-                    }
-                }
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                throw TimeoutError.timeout
             }
+            guard let value = try await group.next() else {
+                throw TimeoutError.timeout
+            }
+            group.cancelAll()
+            return value
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-    
-    // MARK: - Section Card
-    
-    private func sectionCard(title: String, icon: String = "", iconColor: Color = InstitutionalTheme.Colors.textPrimary, score: Double, metrics: [AtlasMetric], sectionId: String) -> some View {
-        VStack(spacing: 0) {
-            // Header
-            Button {
-                // FIX: withAnimation kaldırıldı - main thread blocking önleniyor
-                if expandedSections.contains(sectionId) {
-                    expandedSections.remove(sectionId)
-                } else {
-                    expandedSections.insert(sectionId)
-                }
-            } label: {
-                HStack {
-                    if !icon.isEmpty {
-                        Image(systemName: icon)
-                            .font(.caption.weight(.semibold))
-                            .frame(width: 24, height: 24)
-                            .background(iconColor.opacity(0.16))
-                            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                            .foregroundColor(iconColor)
-                    }
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(title)
-                            .font(.headline)
-                            .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                        Text(sectionSubtitle(sectionId))
-                            .font(.caption2)
-                            .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                    }
-                    
-                    Spacer()
-                    
-                    // Mini Progress Bar
-                    miniProgressBar(score: score)
-                    
-                    // Score
-                    Text("\(Int(score))")
-                        .font(.headline)
-                        .foregroundColor(scoreColor(score))
-                        .monospacedDigit()
-                    
-                    // Chevron
-                    Image(systemName: expandedSections.contains(sectionId) ? "chevron.up" : "chevron.down")
-                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                }
-                .padding()
-            }
-            .buttonStyle(.plain)
-
-            if let strongest = metrics.max(by: { $0.score < $1.score }),
-               let weakest = metrics.min(by: { $0.score < $1.score }) {
-                HStack(spacing: 8) {
-                    SectionMetricChip(
-                        label: "Güçlü",
-                        metric: strongest,
-                        color: InstitutionalTheme.Colors.positive
-                    )
-                    SectionMetricChip(
-                        label: "İzle",
-                        metric: weakest,
-                        color: explanationColor(weakest.status)
-                    )
-                }
-                .padding(.horizontal)
-                .padding(.bottom, expandedSections.contains(sectionId) ? 8 : 12)
-            }
-
-            let sectionDrivers = topDrivers(from: metrics, limit: 3)
-            if !sectionDrivers.isEmpty {
-                sectionDriverStrip(sectionDrivers)
-                    .padding(.horizontal)
-                    .padding(.bottom, expandedSections.contains(sectionId) ? 8 : 12)
-            }
-            
-            // Expanded Content
-            if expandedSections.contains(sectionId) {
-                VStack(spacing: 16) {
-                    ForEach(metrics) { metric in
-                        metricRow(metric)
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.bottom)
-                .padding(.top, 4)
-                // transition kaldırıldı - performans optimizasyonu
-            }
-        }
-        .background(cardBackground)
-    }
-    
-    // MARK: - Metric Row
-    
-    private func metricRow(_ metric: AtlasMetric) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // Üst satır: İsim, Değer, Durum
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(metric.name)
-                        .font(.subheadline.weight(.medium))
-                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                    Text("Skor \(Int(metric.score)) / 100")
-                        .font(.caption2)
-                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                }
-                
-                Spacer()
-                
-                Text(metric.formattedValue)
-                    .font(.subheadline.bold())
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                    .monospacedDigit()
-                
-                Text(metric.status.label)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(explanationColor(metric.status))
-            }
-
-            ArgusBar(value: max(0, min(1, metric.score / 100)),
-                     color: explanationColor(metric.status),
-                     height: 4)
-
-            // Sektör karşılaştırması
-            if let sectorAvg = metric.sectorAverage {
-                HStack(spacing: 6) {
-                    Text("Sektör ort.")
-                        .font(.system(size: 11))
-                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                    Text(AtlasMetric.format(sectorAvg))
-                        .font(.system(size: 11))
-                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                        .monospacedDigit()
-                    if let deltaText = metricDeltaText(metric) {
-                        Text(deltaText)
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(explanationColor(metric.status))
-                            .monospacedDigit()
-                    }
-                }
-            }
-            
-            // Açıklama
-            Text(metric.explanation)
-                .font(.caption)
-                .foregroundColor(explanationColor(metric.status))
-                .lineSpacing(1)
-            
-            // Eğitici not (varsa)
-            if !metric.educationalNote.isEmpty {
-                HStack(alignment: .top, spacing: 4) {
-                    Image(systemName: "book.fill")
-                        .font(.caption)
-                        .foregroundColor(InstitutionalTheme.Colors.primary)
-                    Text(metric.educationalNote)
-                        .font(.caption)
-                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                        .italic()
-                }
-                .padding(.top, 4)
-            }
-
-            if let formula = metric.formula, !formula.isEmpty {
-                HStack(spacing: 6) {
-                    Image(systemName: "function")
-                        .font(.caption2.weight(.semibold))
-                        .foregroundColor(InstitutionalTheme.Colors.primary)
-                    Text(formula)
-                        .font(.caption2)
-                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                        .lineLimit(1)
-                }
-                .padding(.top, 2)
-            }
-            
-            ArgusHair()
-        }
-        .padding(12)
-        .background(InstitutionalTheme.Colors.surface2)
-        .overlay(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
-    }
-
-    /// AtlasMetricStatus → chip tone (sade — motor tint yerine nötr).
-    private func statusTone(_ status: AtlasMetricStatus) -> ArgusChipTone {
-        switch status {
-        case .excellent, .good: return .aurora
-        case .neutral:          return .neutral
-        case .warning:          return .titan
-        case .bad, .critical:   return .crimson
-        case .noData:           return .neutral
-        }
-    }
-    
-    // MARK: - Summary Card
-    
-    private func summaryCard(_ result: AtlasV2Result) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Yatırımcı için özet")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-
-            Text(result.summary)
-                .font(.system(size: 13))
-                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                .fixedSize(horizontal: false, vertical: true)
-                .lineSpacing(2)
-
-            Rectangle()
-                .fill(InstitutionalTheme.Colors.borderSubtle)
-                .frame(height: 0.5)
-
-            LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ], spacing: 10) {
-                miniScoreCard("Karlılık", result.profitabilityScore)
-                miniScoreCard("Değerleme", result.valuationScore)
-                miniScoreCard("Sağlık", result.healthScore)
-                miniScoreCard("Büyüme", result.growthScore)
-                miniScoreCard("Nakit", result.cashScore)
-                miniScoreCard("Temettü", result.dividendScore)
-            }
-
-            if symbol.hasSuffix(".IS") {
-                BistSectorComparisonCard(symbol: symbol, result: result)
-                    .padding(.top, 4)
-            }
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(InstitutionalTheme.Colors.surface1)
-        .overlay(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous))
-    }
-    
-    // MARK: - Value Alert System (BIST-ÖZEL)
-    
-    private func valueAlertCard(_ result: AtlasV2Result) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Değer uyarıları")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-
-            if isDeepValue(result) {
-                alertLine(
-                    title: "Derin değer fırsatı",
-                    icon: "star",
-                    color: InstitutionalTheme.Colors.aurora
-                )
-            }
-            if isValueTrap(result) {
-                alertLine(
-                    title: "Value trap uyarısı",
-                    icon: "exclamationmark.triangle",
-                    color: InstitutionalTheme.Colors.crimson
-                )
-            }
-            if isHighDividendRisky(result) {
-                alertLine(
-                    title: "Sürdürülemez temettü",
-                    icon: "exclamationmark.octagon",
-                    color: InstitutionalTheme.Colors.titan
-                )
-            }
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(InstitutionalTheme.Colors.surface1)
-        .overlay(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous))
-    }
-    
-    private func isDeepValue(_ result: AtlasV2Result) -> Bool {
-        guard let pe = result.valuation.allMetrics.first(where: { $0.name.contains("F/K") }),
-              let peVal = pe.value else { return false }
-        return peVal < 5.0 && result.profitabilityScore > 60
-    }
-    
-    private func isValueTrap(_ result: AtlasV2Result) -> Bool {
-        guard let pb = result.valuation.allMetrics.first(where: { $0.name.contains("PD/DD") }),
-              let pbVal = pb.value else { return false }
-        return pbVal < 1.0 && result.profitabilityScore < 40
-    }
-    
-    private func isHighDividendRisky(_ result: AtlasV2Result) -> Bool {
-        guard let div = result.dividend.allMetrics.first(where: { $0.name.contains("Verim") }),
-              let divVal = div.value else { return false }
-        return divVal > 10.0 && result.cashScore < 40
-    }
-
-    private func hasValueAlerts(_ result: AtlasV2Result) -> Bool {
-        isDeepValue(result) || isValueTrap(result) || isHighDividendRisky(result)
-    }
-
-    private func alertLine(title: String, icon: String, color: Color) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.system(size: 12))
-                .foregroundColor(color)
-            Text(title)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-            Spacer()
-        }
-        .padding(.vertical, 4)
     }
 }
 
-// MARK: - Helpers Extension
-extension AtlasV2DetailView {
-    
-    private func miniScoreCard(_ title: String, _ score: Double) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text(title)
-                .font(.system(size: 11))
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                .lineLimit(1)
+// MARK: - BilancoBoyutView (Boyut detay sub-page)
+//
+// Hem AtlasV2 hem BIST tarafından kullanılır. AtlasMetric tipinde
+// metric listesini gösterir, üstte ortalama skor.
 
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text("\(Int(score))")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(scoreColor(score))
-                    .monospacedDigit()
-                Text(sectionGrade(score))
-                    .font(.system(size: 10))
-                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-            }
-            ArgusBar(value: max(0, min(1, score / 100)),
-                     color: scoreColor(score),
-                     height: 3)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 8)
-        .padding(.horizontal, 10)
-    }
+struct BilancoBoyutView: View {
+    let title: String
+    let score: Double
+    let metrics: [AtlasMetric]
 
-    // 2026-04-23 V5.C: metricScoreBar kaldırıldı — çağrıldığı yerlerde
-    // doğrudan `ArgusBar` kullanılıyor (ortak primitif).
+    @Environment(\.dismiss) private var dismiss
 
-    private func sectionGrade(_ score: Double) -> String {
-        switch score {
-            case 85...: return "A+"
-            case 70..<85: return "A"
-            case 55..<70: return "B"
-            case 40..<55: return "C"
-            case 25..<40: return "D"
-            default: return "F"
-        }
-    }
+    var body: some View {
+        ZStack {
+            InstitutionalTheme.Colors.background.ignoresSafeArea()
+            VStack(spacing: 0) {
+                topNav
 
-    private func metricDeltaText(_ metric: AtlasMetric) -> String? {
-        guard let value = metric.value, let sector = metric.sectorAverage, sector != 0 else { return nil }
-        let delta = ((value - sector) / abs(sector)) * 100
-        let sign = delta > 0 ? "+" : ""
-        return "\(sign)\(Int(delta.rounded()))%"
-    }
-
-    @ViewBuilder
-    private func educationalRationaleCard(_ result: AtlasV2Result) -> some View {
-        let drivers = topDrivers(from: combinedMetrics(from: result), limit: 5)
-        if !drivers.isEmpty {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Text("Skoru ne belirledi")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                    Spacer()
-                    Text("ilk \(min(3, drivers.count)) etken")
-                        .font(.system(size: 11))
-                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                }
-
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(Array(drivers.prefix(3))) { driver in
-                            AtlasDriverChip(
-                                title: driver.name,
-                                subtitle: driver.explanation,
-                                impactText: String(format: "%+.0f", driver.score - 50),
-                                tint: driverColor(for: driver.impact)
-                            )
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        if let lead = leadingMetric {
+                            statusParagraph(lead)
                         }
+                        metricsGroup
+                        evaluationGroup
+                        Color.clear.frame(height: 24)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 18)
+                }
+            }
+        }
+        .navigationBarHidden(true)
+    }
+
+    private var topNav: some View {
+        HStack(spacing: 8) {
+            Button(action: { dismiss() }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .frame(width: 36, height: 36)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            Text(title)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(InstitutionalTheme.Colors.surface1)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
+        }
+    }
+
+    /// En yüksek skorlu metrik üzerinden bir bağlam cümlesi.
+    private var leadingMetric: AtlasMetric? {
+        metrics.max(by: { $0.score < $1.score })
+    }
+
+    private func statusParagraph(_ m: AtlasMetric) -> some View {
+        Text(m.explanation)
+            .font(.system(size: 14))
+            .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+            .lineSpacing(3)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.bottom, 22)
+    }
+
+    private var metricsGroup: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Metrikler")
+                .font(.system(size: 13))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                .padding(.leading, 2)
+
+            VStack(spacing: 0) {
+                ForEach(Array(metrics.enumerated()), id: \.offset) { idx, m in
+                    metricRow(m)
+                    if idx < metrics.count - 1 {
+                        Rectangle()
+                            .fill(InstitutionalTheme.Colors.borderSubtle)
+                            .frame(height: 0.5)
+                            .padding(.leading, 14)
                     }
                 }
+            }
+            .background(InstitutionalTheme.Colors.surface1)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+        .padding(.bottom, 18)
+    }
+
+    private func metricRow(_ m: AtlasMetric) -> some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(m.name)
+                    .font(.system(size: 14))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                if let sectorAvg = m.sectorAverage {
+                    Text("Sektör ortalaması \(AtlasMetric.format(sectorAvg))")
+                        .font(.system(size: 11))
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                } else if !m.explanation.isEmpty {
+                    Text(m.explanation)
+                        .font(.system(size: 11))
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                        .lineLimit(1)
+                }
+            }
+            Spacer()
+            Text(m.formattedValue)
+                .font(.system(size: 14, design: .monospaced))
+                .foregroundColor(metricValueColor(m.status))
+                .monospacedDigit()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 11)
+    }
+
+    private func metricValueColor(_ status: AtlasMetricStatus) -> Color {
+        switch status {
+        case .excellent, .good: return InstitutionalTheme.Colors.aurora
+        case .neutral: return InstitutionalTheme.Colors.textSecondary
+        case .warning: return InstitutionalTheme.Colors.titan
+        case .bad, .critical: return InstitutionalTheme.Colors.crimson
+        case .noData: return InstitutionalTheme.Colors.textTertiary
+        }
+    }
+
+    private var evaluationGroup: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Değerlendirme")
+                .font(.system(size: 13))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                .padding(.leading, 2)
+
+            VStack(spacing: 0) {
+                HStack {
+                    Text("Özet skor")
+                        .font(.system(size: 14))
+                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    Spacer()
+                    Text("\(Int(score)) / 100")
+                        .font(.system(size: 14))
+                        .foregroundColor(scoreColor(score))
+                        .monospacedDigit()
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
 
                 Rectangle()
                     .fill(InstitutionalTheme.Colors.borderSubtle)
                     .frame(height: 0.5)
 
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Katkı dağılımı")
-                        .font(.system(size: 11))
-                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                    ForEach(Array(drivers.prefix(3))) { driver in
-                        HStack(spacing: 8) {
-                            Circle()
-                                .fill(driverColor(for: driver.impact))
-                                .frame(width: 5, height: 5)
-                            Text(driver.name)
-                                .font(.system(size: 12))
-                                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                                .lineLimit(1)
-                            Spacer(minLength: 0)
-                            Text(String(format: "%+.0f", driver.score - 50))
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(driverColor(for: driver.impact))
-                                .monospacedDigit()
-                        }
-                    }
-                }
+                Text(summarySentence)
+                    .font(.system(size: 12))
+                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                    .lineSpacing(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 11)
             }
-            .padding(14)
-            .background(cardBackground)
+            .background(InstitutionalTheme.Colors.surface1)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         }
     }
 
-    private func sectionDriverStrip(_ drivers: [AtlasDriverInsight]) -> some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(drivers) { driver in
-                    AtlasDriverChip(
-                        title: driver.name,
-                        subtitle: driver.explanation,
-                        impactText: String(format: "%+.0f", driver.score - 50),
-                        tint: driverColor(for: driver.impact)
-                    )
-                }
-            }
-            .padding(.vertical, 2)
-        }
+    private var summarySentence: String {
+        if score >= 70 { return "Bu boyutta sektör üstü bir performans var." }
+        if score >= 50 { return "Bu boyutta orta seviye, sektör ortalamasına yakın." }
+        return "Bu boyut zayıf, dikkatle izlenmesi gereken alan."
     }
 
-    private func topDrivers(from metrics: [AtlasMetric], limit: Int) -> [AtlasDriverInsight] {
-        metrics
-            .map { metric in
-                AtlasDriverInsight(
-                    id: metric.id,
-                    name: metric.name,
-                    impact: max(-1, min(1, (metric.score - 50.0) / 50.0)),
-                    score: metric.score,
-                    explanation: metric.explanation
-                )
-            }
-            .sorted { abs($0.impact) > abs($1.impact) }
-            .prefix(limit)
-            .map { $0 }
-    }
-
-    private func donutSlices(from drivers: [AtlasDriverInsight]) -> [AtlasDonutSlice] {
-        let magnitudes = drivers.map { max(abs($0.impact), 0.05) }
-        let total = max(magnitudes.reduce(0, +), 0.001)
-        var cursor = 0.0
-
-        return zip(drivers, magnitudes).map { driver, magnitude in
-            let start = cursor / total
-            cursor += magnitude
-            let end = cursor / total
-            return AtlasDonutSlice(
-                id: driver.id,
-                start: start,
-                end: end,
-                color: driverColor(for: driver.impact)
-            )
-        }
-    }
-
-    private func combinedMetrics(from result: AtlasV2Result) -> [AtlasMetric] {
-        result.valuation.allMetrics
-            + result.profitability.allMetrics
-            + result.growth.allMetrics
-            + result.health.allMetrics
-            + result.cash.allMetrics
-            + result.dividend.allMetrics
-            + result.risk.allMetrics
-    }
-
-    private func driverColor(for impact: Double) -> Color {
-        if impact > 0.08 { return InstitutionalTheme.Colors.positive }
-        if impact < -0.08 { return InstitutionalTheme.Colors.negative }
-        return InstitutionalTheme.Colors.warning
-    }
-    
-    // MARK: - Helper Views
-    
-    private var loadingView: some View {
-        VStack(spacing: 12) {
-            ProgressView()
-            Text("Bilanço analiz ediliyor")
-                .font(.system(size: 13))
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-        }
-        .frame(maxWidth: .infinity, minHeight: 240)
-        .padding()
-        .background(cardBackground)
-    }
-
-    private func errorView(_ message: String) -> some View {
-        VStack(spacing: 12) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 24))
-                .foregroundColor(InstitutionalTheme.Colors.crimson)
-            Text("Analiz hatası")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-            Text(message)
-                .font(.subheadline)
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                .multilineTextAlignment(.center)
-            
-            // Debug Info Button
-            if let detailedError = detailedError {
-                DisclosureGroup("Debug Detayları") {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(detailedError)
-                            .font(.caption)
-                            .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                            .textSelection(.enabled)
-                    }
-                    .padding(.top, 8)
-                }
-                .padding(.top, 8)
-            }
-        }
-        .frame(maxWidth: .infinity, minHeight: 300)
-        .padding()
-        .background(cardBackground)
-    }
-    
-    private func miniProgressBar(score: Double) -> some View {
-        ArgusBar(value: max(0, min(1, score / 100)),
-                 color: scoreColor(score),
-                 height: 5)
-            .frame(width: 60)
-    }
-
-    private func sectionSubtitle(_ sectionId: String) -> String {
-        switch sectionId {
-            case "valuation": return "F/K, PD/DD ve iskonto profili"
-            case "profitability": return "Marjlar, verimlilik ve getiri kalitesi"
-            case "growth": return "Gelir ve kâr büyüme ivmesi"
-            case "health": return "Borçluluk, kaldıraç ve bilanço dengesi"
-            case "cash": return "Nakit üretimi ve sürdürülebilirlik"
-            case "dividend": return "Temettü verimi ve devamlılık riski"
-            case "risk": return "Beta, oynaklık ve kırılganlık haritası"
-            default: return "Çekirdek metrikler"
-        }
-    }
-    
-    /// 2026-04-30 H-58 — sade. Motor tint border gitti, hairline borderSubtle.
-    /// Kullanıldığı yerler: section card, educational rationale card,
-    /// loadingView, errorView.
-    private var cardBackground: some View {
-        RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-            .fill(InstitutionalTheme.Colors.surface1)
-            .overlay(
-                RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                    .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
-            )
-    }
-    
-    private func scoreColor(_ score: Double) -> Color {
-        switch score {
-            case 70...: return InstitutionalTheme.Colors.positive
-            case 50..<70: return InstitutionalTheme.Colors.warning
-            case 30..<50: return InstitutionalTheme.Colors.warning.opacity(0.85)
-            default: return InstitutionalTheme.Colors.negative
-        }
-    }
-    
-    private func explanationColor(_ status: AtlasMetricStatus) -> Color {
-        switch status {
-            case .excellent, .good: return InstitutionalTheme.Colors.positive
-            case .neutral: return InstitutionalTheme.Colors.textPrimary
-            case .warning: return InstitutionalTheme.Colors.warning
-            case .bad, .critical: return InstitutionalTheme.Colors.negative
-            case .noData: return InstitutionalTheme.Colors.textSecondary
-        }
-    }
-    
-    // MARK: - Data Loading
-    
-    private func loadData() async {
-        // FIX: Timeout ekleyerek sonsuz beklemeyi önle
-        let symbolToAnalyze = symbol
-        
-        // 60 saniye timeout ile analiz yap (increased from 30 to 60)
-        print(" AtlasV2DetailView: Starting analysis for \(symbol)...")
-        let loadTask = Task { () -> Result<AtlasV2Result, Error> in
-            do {
-                // Timeout protection - increased timeout for better reliability
-                let result = try await withTimeout(seconds: 60) {
-                    try await AtlasV2Engine.shared.analyze(symbol: symbolToAnalyze)
-                }
-                print("✅ AtlasV2DetailView: Analysis completed for \(symbol)")
-                return .success(result)
-            } catch {
-                // Timeout veya diğer hatalar
-                print("❌ AtlasV2DetailView: Analysis failed for \(symbol): \(error)")
-                return .failure(error)
-            }
-        }
-        
-        let taskResult = await loadTask.value
-        
-        await MainActor.run {
-            switch taskResult {
-                case .success(let analysisResult):
-                self.result = analysisResult
-                self.isLoading = false
-                case .failure(let err):
-                self.error = err.localizedDescription
-                self.detailedError = String(describing: err)
-                self.isLoading = false
-            }
-        }
-    }
-    
-    // MARK: - Timeout Helper
-    
-    private enum TimeoutError: Error {
-        case timeout
-    }
-    
-    private func withTimeout<T>(seconds: TimeInterval, operation: @escaping () async throws -> T) async throws -> T {
-        return try await withThrowingTaskGroup(of: T.self) { group in
-            // Ana işlem
-            group.addTask {
-                try await operation()
-            }
-            
-            // Timeout task
-            group.addTask {
-                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
-                throw TimeoutError.timeout
-            }
-            
-            // İlk tamamlanan task'ı al
-            guard let result = try await group.next() else {
-                throw TimeoutError.timeout
-            }
-            
-            // Diğer task'ı iptal et
-            group.cancelAll()
-            
-            return result
-        }
+    private func scoreColor(_ value: Double) -> Color {
+        if value >= 70 { return InstitutionalTheme.Colors.aurora }
+        if value >= 50 { return InstitutionalTheme.Colors.titan }
+        return InstitutionalTheme.Colors.crimson
     }
 }
 
-private struct AtlasDriverInsight: Identifiable {
-    let id: String
-    let name: String
-    let impact: Double
-    let score: Double
-    let explanation: String
-}
+// MARK: - BilancoSinyalView (Pozitif / Kritik notlar sub-page)
 
-private struct AtlasDonutSlice: Identifiable {
-    let id: String
-    let start: CGFloat
-    let end: CGFloat
-    let color: Color
-
-    init(id: String, start: Double, end: Double, color: Color) {
-        self.id = id
-        self.start = CGFloat(start)
-        self.end = CGFloat(end)
-        self.color = color
-    }
-}
-
-private struct AtlasDriverChip: View {
+struct BilancoSinyalView: View {
     let title: String
-    let subtitle: String
-    let impactText: String
-    let tint: Color
+    let items: [String]
+    let tone: ArgusChipTone
+
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        HStack(spacing: 10) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                    .lineLimit(1)
-                Text(subtitle)
-                    .font(.system(size: 11))
-                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                    .lineLimit(1)
+        ZStack {
+            InstitutionalTheme.Colors.background.ignoresSafeArea()
+            VStack(spacing: 0) {
+                topNav
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        listGroup
+                        Color.clear.frame(height: 24)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 18)
+                }
             }
-            Text(impactText)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(tint)
-                .monospacedDigit()
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .background(InstitutionalTheme.Colors.surface2)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .navigationBarHidden(true)
     }
-}
 
-// MARK: - BIST SECTOR COMPARISON CARD (NEW)
-struct BistSectorAverage: Sendable {
-    let profitabilityAvg: Double
-    let valuationAvg: Double
-    let growthAvg: Double
-    let healthAvg: Double
-    let cashAvg: Double
-    let dividendAvg: Double
-}
+    private var topNav: some View {
+        HStack(spacing: 8) {
+            Button(action: { dismiss() }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .frame(width: 36, height: 36)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            Text(title)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(InstitutionalTheme.Colors.surface1)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(InstitutionalTheme.Colors.borderSubtle)
+                .frame(height: 0.5)
+        }
+    }
 
-// MARK: - Preview
-
-#Preview {
-    NavigationStack {
-        AtlasV2DetailView(symbol: "AAPL")
+    private var listGroup: some View {
+        VStack(spacing: 0) {
+            ForEach(Array(items.enumerated()), id: \.offset) { idx, item in
+                HStack(alignment: .top, spacing: 10) {
+                    Circle()
+                        .fill(tone.foreground)
+                        .frame(width: 6, height: 6)
+                        .padding(.top, 7)
+                    Text(item)
+                        .font(.system(size: 14))
+                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                        .lineSpacing(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 14)
+                if idx < items.count - 1 {
+                    Rectangle()
+                        .fill(InstitutionalTheme.Colors.borderSubtle)
+                        .frame(height: 0.5)
+                        .padding(.leading, 14)
+                }
+            }
+        }
+        .background(InstitutionalTheme.Colors.surface1)
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 }

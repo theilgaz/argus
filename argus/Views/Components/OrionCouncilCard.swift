@@ -451,12 +451,11 @@ struct OrionCouncilCard: View {
     }
     
     private func loadCouncilDecision() async {
+        // 2026-05-05 (Round 7B+): Eski OrionCouncil yerine OrionV2Engine + Adapter.
+        // UI hâlâ legacy CouncilDecision tipini kullanıyor; adapter sayesinde uyumlu.
         isLoading = true
-        councilDecision = await OrionCouncil.shared.convene(
-            symbol: symbol,
-            candles: candles,
-            engine: .pulse
-        )
+        let v2Result = await OrionV2Engine.shared.analyze(symbol: symbol, candles: candles)
+        councilDecision = OrionV2DecisionAdapter.adapt(v2Result)
         isLoading = false
     }
 }

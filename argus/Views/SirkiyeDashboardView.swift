@@ -2,20 +2,20 @@ import SwiftUI
 
 /// Sirkiye nabız özet kartı (ana sayfa Sirkiye tab).
 ///
-/// 2026-05-03 H-60: Global tab'daki AetherDashboardHUD ile aynı yapıya
-/// çekildi — kullanıcı sekme değiştirince zihinsel haritası bozulmuyor.
+/// 2026-05-05 H-65 — komple yeniden yazıldı.
 ///
-/// Eski yapı (3 sütun: 56pt gradient ring + Duruş bloğu + BIST 100 + delta,
-/// üstünde ayrı "Sirkiye nabzı" header + statusPill) tutarsızdı. Global
-/// tarafta sade "Bugün + sıfat + skor" 2 sütun varken Sirkiye'de her şey
-/// vardı.
+/// Eski yapı (H-60 sonrası): heroCard "Bugün + sıfat + Nabız 30pt skor"
+/// kartı + xu100Strip "BIST 100 yükleniyor" statik dikey kart. Sorunlar:
+/// hero kart V5 dilinde (synthetic sıfat phrase + büyük inline skor),
+/// xu100Strip statik (kullanıcı kayar canlı ticker bekliyordu).
 ///
 /// Yeni yapı:
-///   • Üst kart (Global'la aynı dilde): "Bugün" başlık + "mod · duruş"
-///     sıfat zinciri + sağda "Nabız" + büyük skor (skora göre tonlu)
-///   • Alt strip: BIST 100 sade satır (caption + değer + delta)
+///   • heroCard kalktı → SirkiyeMakroStatusBar tek satır status (sayfa
+///     üst nav'ının hemen altına hairline ile bağlanıyor). Plain rejim
+///     adı + skor + chevron, tap ile makro detayını açıyor.
+///   • xu100Strip kalktı → MarqueeTicker kayan canlı bant (BIST 100 +
+///     USD/TRY + EUR/TRY + BIST sektör değişimleri).
 ///
-/// Tap → SirkiyeAetherView detay sheet (mevcut davranış aynen).
 /// Public API korundu: `init(viewModel: TradingViewModel)`.
 
 struct SirkiyeDashboardView: View {
@@ -26,37 +26,34 @@ struct SirkiyeDashboardView: View {
     @State private var xu100Change: Double = 0
     @State private var fallbackMacroScore: Double = 50
     @State private var fallbackMacroReady = false
+    @State private var tickerItems: [TickerItem] = []
 
     // MARK: - Derived data
 
-    private var atmosphere: (score: Double, mode: MarketMode, reason: String) {
+    private var atmosphereScore: Double {
         if let decision = viewModel.bistAtmosphere {
-            let score = decision.netSupport * 100.0
-            let reason = decision.winningProposal?.reasoning ?? "Analiz tamamlandı"
-            return (score, decision.marketMode, reason)
-        } else {
-            return (fallbackMacroScore, modeFrom(score: fallbackMacroScore), "TCMB makro snapshot")
+            return decision.netSupport * 100.0
         }
+        return fallbackMacroScore
     }
 
-    private var xu100DisplayValue: String {
-        xu100Value > 0 ? String(format: "%.0f", xu100Value) : "—"
+    private var atmosphereMode: MarketMode {
+        viewModel.bistAtmosphere?.marketMode ?? modeFrom(score: fallbackMacroScore)
     }
 
     // MARK: - Body
 
     var body: some View {
         VStack(spacing: 12) {
-            heroCard
-            xu100Strip
+            statusBar
+            tickerStrip
         }
         .onAppear {
             Task {
-                if viewModel.bistAtmosphere == nil {
-                    await viewModel.refreshBistAtmosphere()
-                }
+                await viewModel.refreshBistAtmosphere()
                 await loadFallbackMacroScore()
                 await loadXU100()
+                await loadTickerData()
             }
         }
         .sheet(isPresented: $showDetails) {
@@ -67,96 +64,81 @@ struct SirkiyeDashboardView: View {
         }
     }
 
-    // MARK: - Hero kartı (Global AetherDashboardHUD ile aynı dil)
-
-    private var heroCard: some View {
+    // MARK: - Status bar (üst nav'a bağlı tek satır)
+    //
+    // Sayfa üst nav'ının hemen altında hairline ile bağlanan tek satır
+    // status. Solda nokta + plain rejim adı, sağda skor + chevron.
+    // Tek tap → makro detay sheet.
+    private var statusBar: some View {
         Button(action: { showDetails = true }) {
-            HStack(alignment: .firstTextBaseline, spacing: 12) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Bugün")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                        .lineLimit(1)
-                    Text(adjectivePhrase)
-                        .font(.system(size: 13))
-                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                        .lineLimit(1)
-                }
+            HStack(spacing: 10) {
+                Circle()
+                    .fill(statusDotColor)
+                    .frame(width: 6, height: 6)
 
-                Spacer(minLength: 8)
+                Text(regimeLabel)
+                    .font(.system(size: 13))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text("Nabız")
-                        .font(.system(size: 11))
-                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                    Text("\(Int(atmosphere.score))")
-                        .font(.system(size: 30, weight: .medium))
-                        .foregroundColor(scoreColor)
-                        .monospacedDigit()
-                }
+                Text("·")
+                    .font(.system(size: 13))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+
+                Text("\(Int(atmosphereScore))")
+                    .font(.system(size: 13, design: .monospaced))
+                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                    .monospacedDigit()
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 18)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(InstitutionalTheme.Colors.surface1)
-            .overlay(
-                RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                    .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous))
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity)
+            .background(InstitutionalTheme.Colors.background)
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(InstitutionalTheme.Colors.borderSubtle)
+                    .frame(height: 0.5)
+            }
+            .overlay(alignment: .top) {
+                Rectangle()
+                    .fill(InstitutionalTheme.Colors.borderSubtle)
+                    .frame(height: 0.5)
+            }
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .padding(.horizontal, 16)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilitySummary)
         .accessibilityHint(Text("Sirkiye makro detayını aç"))
     }
 
-    // MARK: - BIST 100 strip (sade tek satır)
-
-    private var xu100Strip: some View {
-        HStack(spacing: 8) {
-            Text("BIST 100")
-                .font(.system(size: 11))
-                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-            Spacer()
-            if xu100Value > 0 {
-                Text(xu100DisplayValue)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                    .monospacedDigit()
-                Text(String(format: "%+.2f%%", xu100Change))
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(xu100Change >= 0
-                                     ? InstitutionalTheme.Colors.aurora
-                                     : InstitutionalTheme.Colors.crimson)
-                    .monospacedDigit()
-            } else {
-                Text("yükleniyor")
-                    .font(.system(size: 12))
-                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-            }
+    /// Synthetic sıfat phrase yerine plain rejim adı.
+    private var regimeLabel: String {
+        switch atmosphereMode {
+        case .panic, .extremeFear: return "Sıkılaşma rejimi"
+        case .fear, .neutral:      return "Karışık rejim"
+        case .greed, .extremeGreed, .complacency: return "Genişleme rejimi"
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 11)
-        .background(InstitutionalTheme.Colors.surface1)
-        .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .padding(.horizontal, 16)
     }
 
-    // MARK: - Sıfat zinciri (mod · duruş tek satır)
+    private var statusDotColor: Color {
+        switch atmosphereMode {
+        case .panic, .extremeFear: return InstitutionalTheme.Colors.crimson
+        case .fear, .neutral:      return InstitutionalTheme.Colors.titan
+        case .greed, .extremeGreed, .complacency: return InstitutionalTheme.Colors.aurora
+        }
+    }
 
-    /// Global'da "İyimser, hareketli" gibi 2 sıfat var. Sirkiye'de mod
-    /// (Aşırı korku/Açgözlü vs) + duruş (Defansif/Risk açık vs) birleşir.
-    private var adjectivePhrase: String {
-        let mode = modeDisplayText.lowercased()
-        let stance = stanceText.lowercased()
-        if stance == "bekleniyor" { return mode }
-        return "\(mode) · \(stance)"
+    // MARK: - Kayar ticker (XU100 + döviz + sektör)
+
+    private var tickerStrip: some View {
+        MarqueeTicker(items: tickerItems)
+            .padding(.horizontal, 16)
     }
 
     // MARK: - Data Loading
@@ -168,6 +150,7 @@ struct SirkiyeDashboardView: View {
                 xu100Value = quote.last
                 xu100Change = quote.changePercent
             }
+            await loadTickerData()
         } catch {
             print("⚠️ XU100 yüklenemedi: \(error)")
         }
@@ -181,28 +164,72 @@ struct SirkiyeDashboardView: View {
         }
     }
 
-    // MARK: - Derived styling
+    /// Kayar bant items'ını oluştur. XU100 + USD/TRY + EUR/TRY +
+    /// (varsa) ilk 3 BIST sektör değişimi.
+    private func loadTickerData() async {
+        // TCMB snapshot — döviz kurları için.
+        let snapshot = await TCMBDataService.shared.getMacroSnapshot(forceRefresh: false)
+        let sectorResult = try? await BistSektorEngine.shared.analyze(forceRefresh: false)
 
-    private var scoreColor: Color {
-        if atmosphere.score >= 70 { return InstitutionalTheme.Colors.aurora }
-        if atmosphere.score >= 50 { return InstitutionalTheme.Colors.holo }
-        if atmosphere.score >= 30 { return InstitutionalTheme.Colors.titan }
-        return InstitutionalTheme.Colors.crimson
-    }
+        var items: [TickerItem] = []
 
-    /// 2026-04-30 H-49 — sade. Caps "PANİK MOD / AŞIRI KORKU" → sentence
-    /// case ifadeler.
-    private var modeDisplayText: String {
-        switch atmosphere.mode {
-        case .panic:        return "Panik"
-        case .extremeFear:  return "Aşırı korku"
-        case .fear:         return "Korku"
-        case .neutral:      return "Nötr"
-        case .greed:        return "Açgözlü"
-        case .extremeGreed: return "Aşırı açgözlü"
-        case .complacency:  return "Rehavet"
+        // 1) XU100
+        items.append(TickerItem(
+            id: "XU100",
+            label: "XU100",
+            price: xu100Value > 0 ? xu100Value : nil,
+            percentChange: xu100Value > 0 ? xu100Change : nil,
+            isSafeHavenCandidate: false,
+            status: .index
+        ))
+
+        // 2) USD/TRY (delta yok, sadece değer)
+        if let usdTry = snapshot.usdTry {
+            items.append(TickerItem(
+                id: "USDTRY",
+                label: "USD/TRY",
+                price: usdTry,
+                percentChange: nil,
+                isSafeHavenCandidate: false,
+                status: .index
+            ))
+        }
+
+        // 3) EUR/TRY
+        if let eurTry = snapshot.eurTry {
+            items.append(TickerItem(
+                id: "EURTRY",
+                label: "EUR/TRY",
+                price: eurTry,
+                percentChange: nil,
+                isSafeHavenCandidate: false,
+                status: .index
+            ))
+        }
+
+        // 4) BIST sektör değişimleri — en hareketli 3 sektör.
+        if let sectors = sectorResult?.sectors {
+            let topMovers = sectors
+                .sorted { abs($0.dailyChange) > abs($1.dailyChange) }
+                .prefix(3)
+            for sector in topMovers {
+                items.append(TickerItem(
+                    id: "SECTOR_\(sector.code)",
+                    label: sector.name.uppercased(),
+                    price: nil,
+                    percentChange: sector.dailyChange,
+                    isSafeHavenCandidate: false,
+                    status: .normal
+                ))
+            }
+        }
+
+        await MainActor.run {
+            tickerItems = items
         }
     }
+
+    // MARK: - Helpers (legacy, hâlâ kullanılan)
 
     private func modeFrom(score: Double) -> MarketMode {
         switch score {
@@ -216,26 +243,10 @@ struct SirkiyeDashboardView: View {
         }
     }
 
-    private var stanceText: String {
-        guard let decision = viewModel.bistAtmosphere else { return "Bekleniyor" }
-        switch decision.stance {
-        case .riskOff:   return "Risk kapalı"
-        case .defensive: return "Defansif"
-        case .cautious:  return "Tedbirli"
-        case .riskOn:    return "Risk açık"
-        }
-    }
-
     // MARK: - Accessibility
 
     private var accessibilitySummary: Text {
-        let changeStr = xu100Value > 0
-            ? String(format: "%+.2f yüzde", xu100Change)
-            : "endeks yükleniyor"
-        return Text(
-            "Bugün \(modeDisplayText.lowercased()), \(stanceText.lowercased()), nabız \(Int(atmosphere.score)). " +
-            "BIST 100 \(xu100DisplayValue), \(changeStr)."
-        )
+        Text("\(regimeLabel), nabız \(Int(atmosphereScore))")
     }
 }
 

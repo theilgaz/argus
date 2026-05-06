@@ -109,12 +109,9 @@ class ArgusValidator {
                   Date() >= maturityDate else {
                 continue
             }
-            
-            // "Observation": Vade tarihindeki gerçek kapanış fiyatını bul
-            // Eğer vade bugün ise, bugünün verisi (henüz kapanmadıysa son fiyat) veya dünün kapanışı.
-            // fetchHistoricalClose mantığı bunu halleder.
+
             guard let actualPrice = await marketStore.fetchHistoricalClose(symbol: forecast.symbol, targetDate: maturityDate) else {
-                // Veri henüz hazır değil veya eksik
+                ArgusLogger.info(.alkindus, "Prometheus skip — \(forecast.symbol) eventId=\(forecast.eventId) maturityDate=\(maturityDate) reason=noPriceData")
                 continue
             }
             
@@ -162,8 +159,9 @@ class ArgusValidator {
                   Date() >= maturityDate else {
                 continue
             }
-            
+
             guard let actualPrice = await marketStore.fetchHistoricalClose(symbol: decision.symbol, targetDate: maturityDate) else {
+                ArgusLogger.info(.alkindus, "Decision skip — \(decision.symbol) eventId=\(decision.eventId) action=\(decision.action) maturityDate=\(maturityDate) reason=noPriceData")
                 continue
             }
             
@@ -174,13 +172,9 @@ class ArgusValidator {
             let action = decision.action.uppercased()
             
             if ["BUY", "AGGRESSIVE_BUY", "ACCUMULATE"].contains(action) {
-                wasCorrect = actualChange > 0.5 // Komisyon vb. için minör buffer
+                wasCorrect = actualChange > 0
             } else if ["SELL", "LIQUIDATE", "TRIM"].contains(action) {
-                // Sell kararı, düşüşten kaçınmak veya kar realize etmektir.
-                // Eğer fiyat düştüyse (veya çok az arttıysa) karar doğrudur.
-                // Basitlik için: Short mantığı gibi düşünelim; düşüş = başarı
-                // Veya "Opportunity Cost" analizi gerekir ama şimdilik basit tutalım.
-                wasCorrect = actualChange < -0.5
+                wasCorrect = actualChange < 0
             } else {
                 // HOLD / NEUTRAL
                 // Fiyat yatay gittiyse (%-2 ile %+2 arası) başarılıdır

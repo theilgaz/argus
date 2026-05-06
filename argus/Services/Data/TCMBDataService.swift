@@ -794,18 +794,25 @@ extension TCMBDataService {
         // Onceki gun kapanisi: gercek quote'tan geliyorsa onu, yoksa mevcut degeri kullan.
         let previousUsdTry = (usdQuote?.previousClose ?? snapshot.usdTry ?? usdTry)
 
+        // 2026-05-05 (Round 4): newsSnapshot ve foreignFlow eklendi.
+        async let newsTask = SirkiyeNewsHelper.snapshotForTurkey()
+        async let foreignFlowTask = ForeignInvestorFlowService.shared.getMarketForeignSentiment()
+        let news = await newsTask
+        let foreignFlow = await foreignFlowTask
+
         return SirkiyeEngine.SirkiyeInput(
             usdTry: usdTry,
             usdTryPrevious: previousUsdTry,
             dxy: dxy,
             brentOil: snapshot.brentOil ?? oil,
             globalVix: vix,
-            newsSnapshot: nil,
+            newsSnapshot: news,                                                              // P0-2
             currentInflation: snapshot.inflation,
             policyRate: snapshot.policyRate,
             xu100Change: nil,
             xu100Value: snapshot.bist100 ?? xu100,
-            goldPrice: snapshot.goldPrice ?? gold
+            goldPrice: snapshot.goldPrice ?? gold,
+            foreignFlowScore: foreignFlow                                                    // P2-5
         )
     }
 }

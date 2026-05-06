@@ -1032,9 +1032,13 @@ actor BorsaPyProvider {
         let longTermDebt = val(from: balanceItems, keys: ["Uzun Vadeli", "Long Term"])
         let operatingCashFlow = val(from: incomeItems, keys: ["İşletme Faaliyet", "Operating Cash"])
         
-        let pe = ratios["pe"] as? Double
+        let pe        = ratios["pe"]        as? Double
+        let pb        = ratios["pb"]        as? Double
         let marketCap = ratios["marketCap"] as? Double
-        
+        // evEbitda ratio is read here but not stored in BistFinancials directly;
+        // AtlasBistV2Engine computes it from (marketCap + totalDebt) / ebitda.
+        // netDebt from company_metrics is also available if needed for future use.
+
         return BistFinancials(
             symbol: symbol,
             period: "latest",
@@ -1064,7 +1068,7 @@ actor BorsaPyProvider {
             netMargin: (netProfit != nil && revenue != nil && revenue! > 0)
                 ? (netProfit! / revenue!) * 100 : nil,
             pe: pe,
-            pb: nil,
+            pb: pb,
             marketCap: marketCap,
             eps: (netProfit != nil && marketCap != nil && pe != nil && pe! > 0)
                 ? marketCap! / pe! : nil,

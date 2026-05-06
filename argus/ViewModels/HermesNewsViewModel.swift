@@ -293,7 +293,15 @@ final class HermesNewsViewModel: ObservableObject {
             return
         }
 
-        // 3. Aynı gerçek input üstüne haber snapshot'ı enjekte et
+        // 3. Aynı gerçek input üstüne haber snapshot'ı + yabancı akış skoru enjekte et
+        // 2026-05-05 (Round 4): foreignFlowScore eklendi (baseInput zaten ForeignFlow
+        // kullanıyor olabilir ama hermesSnapshot override edilirken bilgi kaybolmasın diye burada da geçirilir)
+        let foreignFlow: Double?
+        if let cached = baseInput.foreignFlowScore {
+            foreignFlow = cached
+        } else {
+            foreignFlow = await ForeignInvestorFlowService.shared.getMarketForeignSentiment()
+        }
         let input = SirkiyeEngine.SirkiyeInput(
             usdTry: baseInput.usdTry,
             usdTryPrevious: baseInput.usdTryPrevious,
@@ -305,7 +313,8 @@ final class HermesNewsViewModel: ObservableObject {
             policyRate: baseInput.policyRate,
             xu100Change: baseInput.xu100Change,
             xu100Value: baseInput.xu100Value,
-            goldPrice: baseInput.goldPrice
+            goldPrice: baseInput.goldPrice,
+            foreignFlowScore: foreignFlow                  // P2-5
         )
 
         let decision = await SirkiyeEngine.shared.analyze(input: input)

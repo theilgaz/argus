@@ -194,6 +194,11 @@ extension ArgusLogger {
         case argus = "ARGUS"
         case heimdall = "HEIMDALL"
         case veri = "VERİ"
+        // 2026-05-05 (Round 12): V2 motorların structured log için modül enum'u genişletildi.
+        case hermes = "HERMES"
+        case sirkiye = "SİRKİYE"
+        case alkindus = "ALKİNDUS"
+        case konsey = "KONSEY"
     }
     
     // MARK: - Static Log Methods (DEBUG builds only)

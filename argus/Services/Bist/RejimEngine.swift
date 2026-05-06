@@ -97,13 +97,25 @@ actor RejimEngine {
         
         if symbolType == .bist {
             do {
+                // 2026-05-05 (Round 4): foreignFlow + general TR news (sembol-spesifik news yetersizse)
+                async let foreignFlowTask = ForeignInvestorFlowService.shared.getMarketForeignSentiment()
+                async let symbolNewsTask = getNewsSnapshot(symbol: cleanSymbol)
+                async let trGeneralNewsTask = SirkiyeNewsHelper.snapshotForTurkey()
+
+                let symbolNews = await symbolNewsTask
+                // Sembol-spesifik insight'lar boşsa veya çok azsa Türkiye geneline düş
+                let news = (symbolNews?.insights.count ?? 0) >= 2
+                    ? symbolNews
+                    : await trGeneralNewsTask
+
                 let input = SirkiyeEngine.SirkiyeInput(
                     usdTry: await getUSDTry(),
                     usdTryPrevious: await getUSDTryPrevious(),
                     dxy: await getDXY(),
                     brentOil: await getBrentOil(),
                     globalVix: await getGlobalVIX(),
-                    newsSnapshot: await getNewsSnapshot(symbol: cleanSymbol)
+                    newsSnapshot: news,
+                    foreignFlowScore: await foreignFlowTask
                 )
                 let sirkiyeResult = try await SirkiyeEngine.shared.analyze(input: input)
                 sirkiyeScore = sirkiyeResult.netSupport * 100.0
@@ -173,6 +185,9 @@ actor RejimEngine {
             regime: regime
         )
         
+        // 2026-05-05 (Round 4) P3-6: Score trace
+        print("[RejimEngine] \(cleanSymbol) sirkiye=\(Int(sirkiyeScore)) oracle=\(Int(oracleScore)) sektor=\(Int(sectorScore)) → total=\(Int(totalScore)) signal=\(signal) regime=\(regime)")
+
         return RejimResult(
             symbol: cleanSymbol,
             signal: signal,
@@ -257,34 +272,80 @@ actor RejimEngine {
     // MARK: - Helper Functions
     
     private func getUSDTry() async -> Double {
-        do {
-            let quote = try await HeimdallOrchestrator.shared.requestQuote(symbol: "USD/TRY")
-            return quote.currentPrice
-        } catch {
-            return 35.0
+        // 2026-05-05 (Round 4): BorsaPy primary, Heimdall fallback. Eski sürüm yalnız
+        // HeimdallOrchestrator kullanıyordu — Yahoo USD/TRY zayıf, sık fail veriyordu.
+        // BorsaPy daha hızlı ve güvenilir; Render'da çalışıyor.
+        if let fx = try? await BorsaPyProvider.shared.getFXRate(asset: "USDTRY"), fx.last > 0 {
+            return fx.last
         }
+        if let quote = try? await HeimdallOrchestrator.shared.requestQuote(symbol: "USD/TRY"), quote.currentPrice > 0 {
+            return quote.currentPrice
+        }
+        return 0  // Veri yok — caller fxChange hesabı yapmamalı (analyze() guard ile koruyor)
     }
-    
+
     private func getUSDTryPrevious() async -> Double {
-        return 35.0  // TODO: Implement cache
+        // 2026-05-05 (Round 4) FIX: Eski sürüm `return 35.0` hardcoded. Sonuç: kur değişimi
+        // hesabı her zaman 35.0 referansıyla yapılıyor → gerçek 41+ TL kuruyla bile fxChange
+        // uçuk sayılar üretiyor, Sirkiye localStress skoru saçmalıyor.
+        // Şimdi: BorsaPy FX endpoint'i `open` (günün açılışı) veya `previousClose` döndürüyor;
+        // bu intra-day değişim için doğru referans.
+        if let fx = try? await BorsaPyProvider.shared.getFXRate(asset: "USDTRY"), fx.open > 0 {
+            return fx.open
+        }
+        // MarketDataStore Yahoo cache fallback
+        if let quote = await MarketDataStore.shared.getQuote(for: "USD/TRY"),
+           let prev = quote.previousClose, prev > 0 {
+            return prev
+        }
+        // Son çare: getUSDTry() döndür (fxChange = 0 → nötr localStress, en kötü ihtimal saçma değil)
+        return await getUSDTry()
     }
-    
+
     private func getDXY() async -> Double {
-        // TODO: Implement Heimdall or external API
-        return 104.0
+        // 2026-05-05 (Round 4) FIX: Eski sürüm `return 104.0` hardcoded → globalScore'da
+        // dolar gücü hiç oynamıyordu. MarketDataStore (Yahoo) DX-Y.NYB endeksini destekliyor.
+        let dataValue = await MarketDataStore.shared.ensureQuote(symbol: "DX-Y.NYB")
+        if let price = dataValue.value?.currentPrice, price > 0 {
+            return price
+        }
+        // Heimdall fallback
+        if let q = try? await HeimdallOrchestrator.shared.requestQuote(symbol: "DX-Y.NYB"), q.currentPrice > 0 {
+            return q.currentPrice
+        }
+        return 100.0  // DXY uzun-vadeli ortalama — fallback nadiren tetiklenir
     }
-    
+
     private func getBrentOil() async -> Double? {
-        // TODO: Implement Heimdall or external API
-        return nil
+        // 2026-05-05 (Round 4) FIX: Eski sürüm `return nil` → SirkiyeEngine globalScore'da
+        // oil bloğu (line 113-116) hiç çalışmıyordu. BorsaPy /gold/BRENT endpoint'i mevcut.
+        if let fx = try? await BorsaPyProvider.shared.getBrentPrice(), fx.last > 0 {
+            return fx.last
+        }
+        // MarketDataStore Yahoo "BZ=F" (Brent) veya "CL=F" (WTI) fallback
+        let dataValue = await MarketDataStore.shared.ensureQuote(symbol: "BZ=F")
+        if let price = dataValue.value?.currentPrice, price > 0 {
+            return price
+        }
+        return nil  // Veri yoksa nil — SirkiyeEngine'in oil bloğu pas geçer (mevcut nil-aware mantık)
     }
-    
+
     private func getGlobalVIX() async -> Double? {
-        // TODO: Implement Heimdall or external API
+        // 2026-05-05 (Round 4) FIX: Eski sürüm `return nil` → korku indeksi yok.
+        // MarketDataStore Yahoo "^VIX" sembolünü destekliyor.
+        let dataValue = await MarketDataStore.shared.ensureQuote(symbol: "^VIX")
+        if let price = dataValue.value?.currentPrice, price > 0 {
+            return price
+        }
+        // Heimdall fallback
+        if let q = try? await HeimdallOrchestrator.shared.requestQuote(symbol: "^VIX"), q.currentPrice > 0 {
+            return q.currentPrice
+        }
         return nil
     }
-    
+
     private func getNewsSnapshot(symbol: String) async -> HermesNewsSnapshot? {
+        // BIST sembolü için sembol-spesifik haber snapshot'ı
         if let payload = try? await BISTSentimentEngine.shared.analyzeSentimentPayload(for: symbol) {
             return BISTSentimentAdapter.adapt(result: payload.result, articles: payload.articles)
         }

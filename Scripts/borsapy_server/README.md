@@ -182,4 +182,36 @@ pip install -r requirements.txt
 → `requirements.txt`'teki `borsapy` sürümü Python 3.12 ile uyumlu değilse build fail eder. `render.yaml`'da `PYTHON_VERSION` değerini 3.11'e indir.
 
 **BIST sembolleri iOS'ta hiç çalışmıyor**
-→ `BORSAPY_URL` boşsa iOS cihazda hardcoded fallback yok; BIST Yahoo'ya düşer. `Secrets.xcconfig`'e kendi backend URL'ini ekle ve Xcode'da clean build yap.
+→ Üç noktayı sırayla doğrula:
+
+1. **Backend canlı mı?** Browser'dan veya curl ile:
+   ```bash
+   curl https://your-backend.onrender.com/health
+   # Beklenen: {"status":"ok",...}
+   curl https://your-backend.onrender.com/ticker/THYAO.IS/quote
+   # Beklenen: {"symbol":"THYAO.IS","last":...}
+   ```
+   Render dashboard'da service "Live" olmalı, "Suspended" değil.
+
+2. **`Secrets.xcconfig`'te URL düzgün mü?** Önemli: `https://` içindeki `//` xcconfig'te yorum sayılır → URL `https:` diye kesilir. `$()` ile kaç:
+   ```
+   BORSAPY_URL = https:/$()/argus-borsapy-XXXX.onrender.com
+   ```
+   (`http://localhost:8899` için `://` zaten geçer çünkü tek satırda; ama HTTPS public URL için `$()` şart.)
+
+3. **Info.plist'te placeholder var mı?** En sık unutulan adım. Repo root'taki `Info.plist`'e şu key'ler EKLİ olmalı:
+   ```xml
+   <key>BORSAPY_URL</key>
+   <string>$(BORSAPY_URL)</string>
+   <key>BORSAPY_KEY</key>
+   <string>$(BORSAPY_KEY)</string>
+   ```
+   `pbxproj`'daki `INFOPLIST_KEY_BORSAPY_URL = "$(BORSAPY_URL)";` satırı **custom key'ler için işlemiyor** — sadece Apple-defined sistem key'leri (orientations, usage descriptions) için inject olur. Custom key'ler manuel placeholder şart. Aksi halde `Secrets.borsaPyURL` runtime'da boş döner, `BorsaPyProvider` URL bulamaz, BIST sessizce Yahoo fallback'e geçer.
+
+4. **Doğrulama:** Build sonrası built Info.plist'i incele:
+   ```bash
+   /usr/libexec/PlistBuddy -c "Print :BORSAPY_URL" \
+     ~/Library/Developer/Xcode/DerivedData/argus-*/Build/Products/Debug-iphonesimulator/argus.app/Info.plist
+   # Beklenen: https://argus-borsapy-XXXX.onrender.com (değer literal görünmeli)
+   ```
+   Eğer `$(BORSAPY_URL)` literal string olarak çıkıyorsa xcconfig include sorunu var; "Does Not Exist" çıkıyorsa Info.plist'te placeholder yok.

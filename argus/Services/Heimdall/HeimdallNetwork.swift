@@ -175,14 +175,14 @@ enum HeimdallNetwork {
             // Y3-HOTFIX Phase 3+4: Wait-and-serve + inflight cap.
             // Phase 3: Slot açılana kadar bounded bekle (sliding window cap).
             // Phase 4 (2026-04-29): Burst freni — `acquireSlot` artık önce inflight
-            // semaphore'a giriyor (Yahoo: 6 paralel max). 50+ task aynı anda gelirse
-            // adil FIFO kuyruğa girip sırayla geçiyor; 30sn timeout artık nadir.
-            //
-            // Slot acquire'dan sonra hangi yoldan çıksak çıkalım (success / throw /
-            // cancel) inflight slot'u **mutlaka** release edilmeli; Task.detached
-            // çağrılarında Swift bu defer'i async olarak çalıştırır → fire-and-forget
-            // ama eninde sonunda actor metodu çalışır, kayıp yok.
-            try await HeimdallRateLimiter.shared.acquireSlot(for: provider, timeout: 30)
+            // semaphore'a giriyor (Yahoo: 4 paralel max).
+            // Phase 5 (2026-05-05, Round 13): Timeout 30 → 15sn. AutoPilot batch tarama
+            // sırasında 304 sembol × 2 endpoint = 608 istek Yahoo cap'ini saturate
+            // ediyor. Eski 30sn timeout sonrası cache fallback'e geçiyordu — kullanıcı
+            // tarama bitişini boşa bekliyordu. 15sn timeout daha hızlı cache fallback
+            // → toplam scan süresi yarıya iner. Cache fallback zaten "hot data" sağlar
+            // (180sn TTL, runtime'da en yeni veri).
+            try await HeimdallRateLimiter.shared.acquireSlot(for: provider, timeout: 15)
             defer {
                 Task.detached {
                     await HeimdallRateLimiter.shared.releaseSlot(for: provider)

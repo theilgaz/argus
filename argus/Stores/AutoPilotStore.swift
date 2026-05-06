@@ -28,7 +28,11 @@ final class AutoPilotStore: ObservableObject {
         let scannedCount: Int
         let signalCount: Int
         let skippedCount: Int
-        let topSkipReasons: [String]  // Örn: "12x düşük güven", "8x cooldown", "4x likidite"
+        let topSkipReasons: [String]  // Scan-level RED'ler. Örn: "12x düşük güven", "8x cooldown"
+        // 2026-05-05 FIX A: Execution-level RED'ler (TradeBrainExecutor.executeBuy guard return'leri).
+        // Eski sürümde bu yalnızca log'a düşüyordu, kullanıcı UI'da "scan'de geçti ama execution'da
+        // niye reddedildi" sorusunun cevabını göremiyordu. Artık scan özeti tarafından sızdırılır.
+        let executionBlockedReasons: [String]  // Örn: "5x Yetersiz allocation", "3x Rejim bloğu"
         let globalBalance: Double
         let bistBalance: Double
         let openPositions: Int
@@ -37,6 +41,7 @@ final class AutoPilotStore: ObservableObject {
             timestamp: Date.distantPast,
             scannedCount: 0, signalCount: 0, skippedCount: 0,
             topSkipReasons: [],
+            executionBlockedReasons: [],
             globalBalance: 0, bistBalance: 0, openPositions: 0
         )
 
@@ -248,6 +253,10 @@ final class AutoPilotStore: ObservableObject {
         ArgusLogger.info("AutoPilotStore: runAutoPilot başlatılıyor...", category: "OTOPİLOT")
         ArgusLogger.warn("🚨 runAutoPilot TRIGGERED @ \(Date())", category: "OTOPİLOT")
 
+        // 2026-05-05 FIX A: Yeni scan turunda eski execution RED'lerini temizle.
+        // Aksi takdirde önceki scan'in skip kayıtları bu turun summary'sine sızar.
+        await TradeBrainExecutionTracker.shared.clearForNewScan()
+
         // Onarım 4: Günlük öğrenme döngüsü hook'u. 24h+ geçtiyse veya hiç
         // çalışmadıysa background'da tetikle. Mevcut scan loop'u beklemiyor.
         let needsLearning: Bool = {
@@ -343,6 +352,11 @@ final class AutoPilotStore: ObservableObject {
                 .map { $0 }
         }()
 
+        // 2026-05-05 FIX A: TradeBrainExecutor.executeBuy guard return'lerinden toplanan
+        // execution-level RED'leri summary'ye merge et. Scan'de geçip execution'da düşen
+        // semboller artık UI'dan görünür.
+        let executionReasons = await TradeBrainExecutionTracker.shared.topReasons(limit: 5)
+
         // Tarama özetini her iterasyonda güncelle (boş sonuçta da — "hiç sinyal yok" bilgisi bile değerli)
         let summary = ScanSummary(
             timestamp: Date(),
@@ -350,12 +364,19 @@ final class AutoPilotStore: ObservableObject {
             signalCount: signals.count,
             skippedCount: skipLogs.count,
             topSkipReasons: topReasonsArray,
+            executionBlockedReasons: executionReasons,
             globalBalance: balance,
             bistBalance: bistBalance,
             openPositions: portfolioMap.count
         )
         await MainActor.run {
             self.lastScanSummary = summary
+        }
+        if !executionReasons.isEmpty {
+            ArgusLogger.warn(
+                "AUTOPILOT-EXEC-SKIP-SUMMARY: \(executionReasons.joined(separator: " | "))",
+                category: "OTOPİLOT"
+            )
         }
 
         // 🚨 TRACE: scan return edildi, processSignals'a geçilecek
@@ -552,49 +573,22 @@ final class AutoPilotStore: ObservableObject {
     // MARK: - Helpers
     
     private func prepareSirkiyeInput(macro: MacroSnapshot) async -> SirkiyeEngine.SirkiyeInput? {
+        // 2026-05-05 (Round 4) FIX: Eski sürüm 3 yolda da `newsSnapshot: nil` ve
+        // hardcoded `45.0` enflasyon, `50.0` faiz, `35.0` USD/TRY fallback kullanıyordu.
+        // Sonuç: Türkiye'de TL %5 düşse, faiz şoku gelse bile sistem 35.0 referansıyla
+        // 45/50 default'larıyla hesap yapıyor → skor sahte stabil ~58 dönüyor.
+        // Şimdi: gerçek veri yoksa nil dön (Sirkiye analizini atla), false-positive
+        // skor üretmek yerine "veri yetersiz" tutumunu üst katmana bildir.
+
         let quotes = MarketDataStore.shared.liveQuotes
-        // USD/TRY birden fazla sembol adıyla gelebilir: "USD/TRY", "USDTRY=X" (Yahoo), "USDTRY"
+        // USD/TRY birden fazla sembol adıyla gelebilir
         var usdQuoteResolved = quotes["USD/TRY"] ?? quotes["USDTRY=X"] ?? quotes["USDTRY"]
 
-        // 2026-04-22: MarketDataStore'da genelde USD/TRY yok (watchlist'te
-        // değil). BorsaPy'den direct çek — hızlı + güvenilir. Fallback'e
-        // geçmeden önce bu yolu dene.
-        if usdQuoteResolved == nil {
-            if let fx = try? await BorsaPyProvider.shared.getFXRate(asset: "USDTRY") {
-                ArgusLogger.info("💱 USD/TRY BorsaPy'den alındı: ₺\(String(format: "%.2f", fx.last))", category: "OTOPİLOT")
-                return SirkiyeEngine.SirkiyeInput(
-                    usdTry: fx.last,
-                    usdTryPrevious: fx.open > 0 ? fx.open : fx.last,
-                    dxy: macro.dxy,
-                    brentOil: macro.brent,
-                    globalVix: macro.vix,
-                    newsSnapshot: nil,
-                    currentInflation: 45.0,
-                    policyRate: 50.0,
-                    xu100Change: nil,
-                    xu100Value: nil,
-                    goldPrice: nil
-                )
-            }
-        }
+        // Türkiye haber snapshot'ı — political cortex için (P0-2)
+        async let newsTask = SirkiyeNewsHelper.snapshotForTurkey()
 
-        guard let usdQuote = usdQuoteResolved else {
-            // Fallback: bilinen sabit kur ile devam et (Sirkiye analizi degraded ama çalışır)
-            print("⚠️ AutoPilotStore: USD/TRY kuru bulunamadı, varsayılan kur ile devam ediliyor")
-            return SirkiyeEngine.SirkiyeInput(
-                usdTry: 35.0,
-                usdTryPrevious: 35.0,
-                dxy: macro.dxy,
-                brentOil: macro.brent,
-                globalVix: macro.vix,
-                newsSnapshot: nil,
-                currentInflation: 45.0,
-                policyRate: 50.0,
-                xu100Change: nil,
-                xu100Value: nil,
-                goldPrice: nil
-            )
-        }
+        // Yabancı yatırımcı akış skoru (P2-5)
+        async let foreignFlowTask = ForeignInvestorFlowService.shared.getMarketForeignSentiment()
 
         // BorsaPy'den canlı makro verileri paralel çek
         async let brentTask = { try? await BorsaPyProvider.shared.getBrentPrice() }()
@@ -603,6 +597,48 @@ final class AutoPilotStore: ObservableObject {
         async let xu100Task = { try? await BorsaPyProvider.shared.getXU100() }()
         async let goldTask = { try? await BorsaPyProvider.shared.getGoldPrice() }()
 
+        // MarketDataStore'da USD/TRY yoksa BorsaPy'den dene
+        if usdQuoteResolved == nil {
+            if let fx = try? await BorsaPyProvider.shared.getFXRate(asset: "USDTRY") {
+                ArgusLogger.info("💱 USD/TRY BorsaPy'den alındı: ₺\(String(format: "%.2f", fx.last))", category: "OTOPİLOT")
+                let news = await newsTask
+                let foreignFlow = await foreignFlowTask
+                let (brent, inflation, policyRate, xu100, gold) = await (brentTask, inflationTask, policyRateTask, xu100Task, goldTask)
+                var xu100Change: Double? = nil
+                var xu100Value: Double? = nil
+                if let xu = xu100 {
+                    xu100Value = xu.last
+                    if xu.open > 0 {
+                        xu100Change = ((xu.last - xu.open) / xu.open) * 100
+                    }
+                }
+                return SirkiyeEngine.SirkiyeInput(
+                    usdTry: fx.last,
+                    usdTryPrevious: fx.open > 0 ? fx.open : fx.last,
+                    dxy: macro.dxy,
+                    brentOil: brent?.last ?? macro.brent,
+                    globalVix: macro.vix,
+                    newsSnapshot: news,
+                    currentInflation: inflation?.yearlyInflation,
+                    policyRate: policyRate,
+                    xu100Change: xu100Change,
+                    xu100Value: xu100Value,
+                    goldPrice: gold?.last,
+                    foreignFlowScore: foreignFlow
+                )
+            }
+        }
+
+        guard let usdQuote = usdQuoteResolved else {
+            // 2026-05-05 FIX: Eski sürüm `35.0` hardcoded fallback ile devam ediyordu.
+            // Artık: USD/TRY yok ise nil dön, Sirkiye analizi atlansın. Üst katman
+            // (caller) "veri yetersiz" durumunu görsün.
+            print("⚠️ AutoPilotStore: USD/TRY kuru bulunamadı (MarketDataStore + BorsaPy başarısız), Sirkiye analizi atlanıyor")
+            return nil
+        }
+
+        let news = await newsTask
+        let foreignFlow = await foreignFlowTask
         let (brent, inflation, policyRate, xu100, gold) = await (brentTask, inflationTask, policyRateTask, xu100Task, goldTask)
 
         var xu100Change: Double? = nil
@@ -620,12 +656,13 @@ final class AutoPilotStore: ObservableObject {
             dxy: macro.dxy,
             brentOil: brent?.last ?? macro.brent,
             globalVix: macro.vix,
-            newsSnapshot: nil,
-            currentInflation: inflation?.yearlyInflation ?? 45.0,
-            policyRate: policyRate ?? 50.0,
+            newsSnapshot: news,                            // P0-2: nil → Türkiye news
+            currentInflation: inflation?.yearlyInflation,  // hardcoded 45.0 kaldırıldı
+            policyRate: policyRate,                         // hardcoded 50.0 kaldırıldı
             xu100Change: xu100Change,
             xu100Value: xu100Value,
-            goldPrice: gold?.last
+            goldPrice: gold?.last,
+            foreignFlowScore: foreignFlow                  // P2-5
         )
     }
     

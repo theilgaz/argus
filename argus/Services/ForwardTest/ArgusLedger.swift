@@ -1075,7 +1075,7 @@ extension ArgusLedger {
                           let payload = try? JSONSerialization.jsonObject(with: payloadData) as? [String: Any] else { continue }
                     
                     let currentPrice = payload["current_price"] as? Double ?? 0
-                    let predictedPrice = payload["predicted_price_5d"] as? Double ?? 0
+                    let predictedPrice = payload["predicted_price"] as? Double ?? 0
                     
                     results.append(ForecastEventData(
                         eventId: eventId,
@@ -1135,7 +1135,7 @@ extension ArgusLedger {
                     
                     // Module scores
                     var moduleScores: [String: Double]? = nil
-                    if let scores = payload["module_scores"] as? [String: Double] {
+                    if let scores = payload["scores"] as? [String: Double] {
                         moduleScores = scores
                     }
                     
