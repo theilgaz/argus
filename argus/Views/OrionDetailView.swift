@@ -43,15 +43,16 @@ struct BistTrendIndicator: View {
         .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md, style: .continuous))
     }
 
+    /// 2026-05-05 H-67: caps mono tracking 0.6 → sentence sade.
     private func miniStat(_ title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(title)
-                .font(.system(size: 8, weight: .bold, design: .monospaced))
-                .tracking(0.6)
+                .font(.system(size: 10))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Text(value)
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                .font(.system(size: 11, weight: .medium, design: .monospaced))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                .monospacedDigit()
         }
     }
 
@@ -583,23 +584,20 @@ struct OrionCommandCard<Content: View>: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            // 2026-05-05 H-67: caps başlık tracking 1 + caps status →
+            // sentence başlık + sade renkli status text (capsule kalktı).
             HStack {
                 Image(systemName: icon)
                     .font(.caption2)
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Text(title)
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                    .tracking(1)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Spacer()
                 if let status {
-                    Text(status.uppercased())
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                    Text(status)
+                        .font(.system(size: 11, weight: .medium))
                         .foregroundColor(statusColor ?? InstitutionalTheme.Colors.textSecondary)
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 4)
-                        .background((statusColor ?? InstitutionalTheme.Colors.textSecondary).opacity(0.18))
-                        .clipShape(Capsule())
                 }
             }
             
@@ -751,44 +749,6 @@ struct StructureLinearMap: View {
                 Text("R").font(.system(size: 8, weight: .black)).foregroundColor(InstitutionalTheme.Colors.negative)
             }
         }
-    }
-}
-
-struct PatternCommandCard: View {
-    let pattern: OrionChartPattern
-    
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading) {
-                Text("FORMASYON UYARISI")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                    .tracking(1)
-                
-                Text(pattern.type.rawValue)
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-            }
-            Spacer()
-            
-            VStack(alignment: .trailing) {
-                Text("GÜVEN")
-                    .font(.system(size: 8))
-                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                Text("%\(Int(pattern.confidence))")
-                    .font(.system(size: 14, weight: .bold, design: .monospaced))
-                    .foregroundColor(pattern.type.isBullish ? InstitutionalTheme.Colors.positive : InstitutionalTheme.Colors.negative)
-            }
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(pattern.type.isBullish ? InstitutionalTheme.Colors.positive.opacity(0.12) : InstitutionalTheme.Colors.negative.opacity(0.12))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(pattern.type.isBullish ? InstitutionalTheme.Colors.positive.opacity(0.3) : InstitutionalTheme.Colors.negative.opacity(0.3), lineWidth: 1)
-        )
     }
 }
 
