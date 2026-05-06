@@ -6,7 +6,37 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		477929EC5673401646E6E7DA /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 10BBE2B6F9DCE47D31CFCEA1 /* Foundation.framework */; };
+		582DF28CCE5F7663336DF001 /* SymbolMapperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CCB955EFD419A811E067DCF /* SymbolMapperTests.swift */; };
+		64E7EA0BAC54B67230EB7812 /* RiskEscapePolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1492F29D86376D1C4CC546B0 /* RiskEscapePolicyTests.swift */; };
+		81D696466A0111B912D68DAD /* CachePolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0283C4A3BA0D41C0B5F480C /* CachePolicyTests.swift */; };
+		8AFF37EAA21CE2182ACD8D6F /* V2AdapterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55DA450A3FA73951B71CD5C /* V2AdapterTests.swift */; };
+		AB436D70FE7B5F8B78356C03 /* TradeValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35ED3317CB184C016BF90764 /* TradeValidatorTests.swift */; };
+		AEFF607FFE088E82CFBB7DE7 /* PulsingFABViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E351BA28975EDAC0E1BA62 /* PulsingFABViewTests.swift */; };
+		C20B1CCD02CAE1503C8FD35D /* PrometheusOrderingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B65C2FD8FD8E1AFDAC1D27EE /* PrometheusOrderingTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		F587A5C52FDFFB45B38CFE4E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D965BC152F2CB3E20051704D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D965BC1C2F2CB3E20051704D;
+			remoteInfo = argus;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		10BBE2B6F9DCE47D31CFCEA1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		1492F29D86376D1C4CC546B0 /* RiskEscapePolicyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RiskEscapePolicyTests.swift; sourceTree = "<group>"; };
+		35ED3317CB184C016BF90764 /* TradeValidatorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TradeValidatorTests.swift; sourceTree = "<group>"; };
+		3CCB955EFD419A811E067DCF /* SymbolMapperTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SymbolMapperTests.swift; sourceTree = "<group>"; };
+		578DC6BD61064A0B294EF85D /* argusTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = argusTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A6E351BA28975EDAC0E1BA62 /* PulsingFABViewTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PulsingFABViewTests.swift; sourceTree = "<group>"; };
+		B0283C4A3BA0D41C0B5F480C /* CachePolicyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CachePolicyTests.swift; sourceTree = "<group>"; };
+		B55DA450A3FA73951B71CD5C /* V2AdapterTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = V2AdapterTests.swift; sourceTree = "<group>"; };
+		B65C2FD8FD8E1AFDAC1D27EE /* PrometheusOrderingTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PrometheusOrderingTests.swift; sourceTree = "<group>"; };
 		D965BC1D2F2CB3E20051704D /* argus.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = argus.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D9A0C0C62F2D000100000001 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -14,12 +44,22 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		D965BC1F2F2CB3E20051704D /* argus */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = argus;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		3CC8AD6D46CA04D22DCE769C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				477929EC5673401646E6E7DA /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		D965BC1A2F2CB3E20051704D /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -30,12 +70,72 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0FA665EE064B37CF5AD801AE /* argusTests */ = {
+			isa = PBXGroup;
+			children = (
+				C913988B9F15B35614DF2A3E /* Council */,
+				B65C2FD8FD8E1AFDAC1D27EE /* PrometheusOrderingTests.swift */,
+				A6E351BA28975EDAC0E1BA62 /* PulsingFABViewTests.swift */,
+				5AB74A7131971BE9B1067DCD /* Utilities */,
+				C9EEADD1CC91A09D5A2BE819 /* ViewModels */,
+			);
+			name = argusTests;
+			path = argusTests;
+			sourceTree = "<group>";
+		};
+		5AB74A7131971BE9B1067DCD /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				B0283C4A3BA0D41C0B5F480C /* CachePolicyTests.swift */,
+				1492F29D86376D1C4CC546B0 /* RiskEscapePolicyTests.swift */,
+				3CCB955EFD419A811E067DCF /* SymbolMapperTests.swift */,
+				35ED3317CB184C016BF90764 /* TradeValidatorTests.swift */,
+			);
+			name = Utilities;
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		A4B526AE8E2578CCE8EA56A9 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				10BBE2B6F9DCE47D31CFCEA1 /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		A6271C2D5BB63F63FD1C8E28 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				A4B526AE8E2578CCE8EA56A9 /* iOS */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		C913988B9F15B35614DF2A3E /* Council */ = {
+			isa = PBXGroup;
+			children = (
+				B55DA450A3FA73951B71CD5C /* V2AdapterTests.swift */,
+			);
+			name = Council;
+			path = Council;
+			sourceTree = "<group>";
+		};
+		C9EEADD1CC91A09D5A2BE819 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = ViewModels;
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
 		D965BC142F2CB3E20051704D = {
 			isa = PBXGroup;
 			children = (
 				D9A0C0C62F2D000100000001 /* Secrets.xcconfig */,
 				D965BC1F2F2CB3E20051704D /* argus */,
 				D965BC1E2F2CB3E20051704D /* Products */,
+				A6271C2D5BB63F63FD1C8E28 /* Frameworks */,
+				0FA665EE064B37CF5AD801AE /* argusTests */,
 			);
 			sourceTree = "<group>";
 		};
@@ -43,6 +143,7 @@
 			isa = PBXGroup;
 			children = (
 				D965BC1D2F2CB3E20051704D /* argus.app */,
+				578DC6BD61064A0B294EF85D /* argusTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -50,6 +151,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		3A9E72DB5DA4E8338CF9645E /* argusTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9922F34002442955BA1D5C2B /* Build configuration list for PBXNativeTarget "argusTests" */;
+			buildPhases = (
+				FA1DD39F932FABCE8739F74F /* Sources */,
+				3CC8AD6D46CA04D22DCE769C /* Frameworks */,
+				1152C35CC5DBD98A03BCC8F1 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AEF83D640D3BB58F11299AD7 /* PBXTargetDependency */,
+			);
+			name = argusTests;
+			productName = argusTests;
+			productReference = 578DC6BD61064A0B294EF85D /* argusTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		D965BC1C2F2CB3E20051704D /* argus */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = D965BC2D2F2CB3E30051704D /* Build configuration list for PBXNativeTarget "argus" */;
@@ -66,8 +185,6 @@
 				D965BC1F2F2CB3E20051704D /* argus */,
 			);
 			name = argus;
-			packageProductDependencies = (
-			);
 			productName = argus;
 			productReference = D965BC1D2F2CB3E20051704D /* argus.app */;
 			productType = "com.apple.product-type.application";
@@ -102,11 +219,19 @@
 			projectRoot = "";
 			targets = (
 				D965BC1C2F2CB3E20051704D /* argus */,
+				3A9E72DB5DA4E8338CF9645E /* argusTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		1152C35CC5DBD98A03BCC8F1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		D965BC1B2F2CB3E20051704D /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -124,9 +249,81 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FA1DD39F932FABCE8739F74F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8AFF37EAA21CE2182ACD8D6F /* V2AdapterTests.swift in Sources */,
+				C20B1CCD02CAE1503C8FD35D /* PrometheusOrderingTests.swift in Sources */,
+				AEFF607FFE088E82CFBB7DE7 /* PulsingFABViewTests.swift in Sources */,
+				81D696466A0111B912D68DAD /* CachePolicyTests.swift in Sources */,
+				64E7EA0BAC54B67230EB7812 /* RiskEscapePolicyTests.swift in Sources */,
+				582DF28CCE5F7663336DF001 /* SymbolMapperTests.swift in Sources */,
+				AB436D70FE7B5F8B78356C03 /* TradeValidatorTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		AEF83D640D3BB58F11299AD7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = argus;
+			target = D965BC1C2F2CB3E20051704D /* argus */;
+			targetProxy = F587A5C52FDFFB45B38CFE4E /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		851F3921DD8FBF91927A226B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 366VVLKN2U;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = ArgusTeam.argusTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/argus.app/argus";
+			};
+			name = Debug;
+		};
+		B630E6A93AB23A5E9D7A2AF6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 366VVLKN2U;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = ArgusTeam.argusTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/argus.app/argus";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		D965BC2B2F2CB3E30051704D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -362,6 +559,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		9922F34002442955BA1D5C2B /* Build configuration list for PBXNativeTarget "argusTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B630E6A93AB23A5E9D7A2AF6 /* Release */,
+				851F3921DD8FBF91927A226B /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		D965BC182F2CB3E20051704D /* Build configuration list for PBXProject "argus" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
