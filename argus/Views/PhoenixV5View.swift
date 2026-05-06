@@ -128,8 +128,10 @@ struct PhoenixV5View: View {
 
             // Mini grafik
             if let candles = viewModel.candles[advice.symbol], candles.count >= 2 {
-                MiniLineChart(candles: candles.suffix(60).map { $0 },
-                              positive: (advice.status == .active))
+                SanctumMiniChart(candles: candles.suffix(60).map { $0 },
+                               color: advice.status == .active
+                                   ? InstitutionalTheme.Colors.positive
+                                   : InstitutionalTheme.Colors.negative)
                     .frame(height: 66)
             }
 

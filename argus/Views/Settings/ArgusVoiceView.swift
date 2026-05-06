@@ -38,7 +38,10 @@ struct ArgusVoiceView: View {
                                     )
                                 )
                                 .frame(width: 40, height: 40)
-                            MotorLogo(.argus, size: 28)
+                            // 2026-05-05 H-67: MotorLogo(.argus) → SF Symbol sade.
+                            Image(systemName: "waveform")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundColor(InstitutionalTheme.Colors.holo)
                         }
 
                         VStack(alignment: .leading, spacing: 2) {
@@ -96,11 +99,14 @@ struct ArgusVoiceView: View {
                                             Circle()
                                                 .stroke(InstitutionalTheme.Colors.holo.opacity(0.25), lineWidth: 1)
                                                 .frame(width: 96, height: 96)
-                                            MotorLogo(.argus, size: 60)
+                                            // 2026-05-05 H-67: MotorLogo argus → SF Symbol sade.
+                                            Image(systemName: "waveform")
+                                                .font(.system(size: 38, weight: .medium))
+                                                .foregroundColor(.white)
                                         }
 
                                         Text("Merhaba, ben Argus.")
-                                            .font(.system(size: 22, weight: .black))
+                                            .font(.system(size: 22, weight: .medium))
                                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
                                         Text("Piyasalar, portföyün veya hisseler hakkında bana soru sorabilirsin.")
@@ -142,10 +148,13 @@ struct ArgusVoiceView: View {
                         }
                     }
                     
-                    // V5 ÖNERİLER — boş state'te 4 büyük kart (motor ikonlu)
+                    // 2026-05-05 H-67: ArgusSectionCaption "ÖNERİLER" caps mono
+                    // → sentence "Öneriler" sade label.
                     if viewModel.messages.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
-                            ArgusSectionCaption("ÖNERİLER")
+                            Text("Öneriler")
+                                .font(.system(size: 13))
+                                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                                 .padding(.horizontal, 16)
 
                             VStack(spacing: 8) {
@@ -270,18 +279,18 @@ struct SpeechButton: View {
 // MARK: - V5 Suggestion Card
 
 private extension ArgusVoiceView {
+    /// 2026-05-05 H-67: motor ikon + tinted halka → sade SF Symbol.
+    /// MotorLogo (Argus motor system'inden) yerine basit semantic ikon.
     func v5SuggestionCard(motor: MotorEngine, tone: ArgusChipTone, text: String) -> some View {
         Button {
             viewModel.inputMessage = text
             viewModel.sendMessage()
         } label: {
             HStack(spacing: 12) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(tone.foreground.opacity(0.15))
-                        .frame(width: 28, height: 28)
-                    MotorLogo(motor, size: 16)
-                }
+                Image(systemName: motorIconName(motor))
+                    .font(.system(size: 14))
+                    .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                    .frame(width: 28, height: 28)
                 Text(text)
                     .font(.system(size: 13))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
@@ -294,12 +303,33 @@ private extension ArgusVoiceView {
             .frame(maxWidth: .infinity)
             .background(InstitutionalTheme.Colors.surface1)
             .overlay(
-                RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                    .stroke(InstitutionalTheme.Colors.border, lineWidth: 1)
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
             )
-            .clipShape(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         }
         .buttonStyle(.plain)
+    }
+
+    func motorIconName(_ motor: MotorEngine) -> String {
+        switch motor {
+        case .orion:      return "waveform.path.ecg"
+        case .atlas:      return "building.columns"
+        case .aether:     return "globe"
+        case .hermes:     return "newspaper"
+        case .athena:     return "scope"
+        case .demeter:    return "chart.pie"
+        case .chiron:     return "arrow.triangle.2.circlepath"
+        case .prometheus: return "chart.line.uptrend.xyaxis"
+        case .phoenix:    return "shield"
+        case .argus:      return "eye"
+        case .alkindus:   return "brain.head.profile"
+        case .poseidon:   return "drop"
+        case .titan:      return "mountain.2"
+        case .chronos:    return "clock"
+        case .hephaestus: return "hammer"
+        case .council:    return "person.3"
+        }
     }
 }
 
@@ -311,11 +341,14 @@ struct ChatMessageBubble: View {
         HStack(alignment: .bottom, spacing: 12) {
             if !isUser {
                 // V5 Bot Avatar — Argus göz mini
+                // 2026-05-05 H-67: MotorLogo argus avatar → SF Symbol sade.
                 ZStack {
                     Circle()
                         .fill(InstitutionalTheme.Colors.holo.opacity(0.15))
                         .frame(width: 28, height: 28)
-                    MotorLogo(.argus, size: 18)
+                    Image(systemName: "waveform")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(InstitutionalTheme.Colors.holo)
                 }
             } else {
                 Spacer()
@@ -335,7 +368,15 @@ struct ChatMessageBubble: View {
             .padding(12)
             .padding(.horizontal, 4)
             .background(isUser ? InstitutionalTheme.Colors.holo : InstitutionalTheme.Colors.surface1)
-            .cornerRadius(20, corners: isUser ? [.topLeft, .topRight, .bottomLeft] : [.topLeft, .topRight, .bottomRight])
+            .clipShape(
+                // 2026-05-06: özel `.cornerRadius(_:corners:)` extension yoktu, UnevenRoundedRectangle ile asymmetric corner
+                UnevenRoundedRectangle(
+                    topLeadingRadius: 20,
+                    bottomLeadingRadius: isUser ? 20 : 4,
+                    bottomTrailingRadius: isUser ? 4 : 20,
+                    topTrailingRadius: 20
+                )
+            )
             .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
             .frame(maxWidth: 280, alignment: isUser ? .trailing : .leading)
             

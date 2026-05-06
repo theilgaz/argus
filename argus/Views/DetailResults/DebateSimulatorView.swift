@@ -159,7 +159,15 @@ struct DebateBubble: View {
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .padding(10)
                     .background(InstitutionalTheme.Colors.surface1)
-                    .cornerRadius(12, corners: [.topRight, .bottomLeft, .bottomRight])
+                    .clipShape(
+                        // 2026-05-06: özel `.cornerRadius(_:corners:)` extension yoktu
+                        UnevenRoundedRectangle(
+                            topLeadingRadius: 4,
+                            bottomLeadingRadius: 12,
+                            bottomTrailingRadius: 12,
+                            topTrailingRadius: 12
+                        )
+                    )
             }
         }
     }
