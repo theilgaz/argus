@@ -37,10 +37,6 @@ extension NavigationRouter {
         case .kasa(let symbol):
             BISTBilancoDetailView(sembol: symbol)
 
-        case .kulis(let symbol):
-            // Hermes view for news/sentiment
-            HermesFeedView(viewModel: viewModel)
-
         case .rejim(let symbol):
             RejimView(symbol: symbol)
 
@@ -81,9 +77,6 @@ extension NavigationRouter {
         case .analystReport(let symbol):
             ArgusAnalystReportView(symbol: symbol, viewModel: viewModel)
 
-        case .reports:
-            PortfolioReportsView(viewModel: viewModel)
-
         case .debateSimulator:
             DebateSimulatorRouterView()
 
@@ -111,9 +104,6 @@ extension NavigationRouter {
         case .observatory:
             ObservatoryContainerView()
 
-        case .observatoryContainer:
-            ObservatoryContainerView()
-
         case .observatoryHealth:
             ObservatoryHealthView()
 
@@ -125,9 +115,6 @@ extension NavigationRouter {
             DebugPersistenceView()
 
         // MARK: - Settings Sub-views
-        case .settingsSignals:
-            SettingsView(settingsViewModel: SettingsViewModel())
-
         case .priceAlerts:
             PriceAlertSettingsView()
 
@@ -137,16 +124,10 @@ extension NavigationRouter {
         case .voice:
             ArgusVoiceView()
 
-        case .widgetSettings:
-            SettingsView(settingsViewModel: SettingsViewModel())
-
         case .serviceHealth:
             ServiceHealthView()
 
         // MARK: - Portfolio Management
-        case .portfolioReports:
-            PortfolioReportsView(viewModel: viewModel)
-
         case .chronosDetail(let id):
             ChronosDetailView(symbol: id)
 
@@ -175,9 +156,6 @@ extension NavigationRouter {
         case .disclaimer:
             DisclaimerView()
 
-        case .argusSanctum(let symbol):
-            ArgusSanctumView(symbol: symbol, viewModel: viewModel)
-
         case .expectationsEntry:
             ExpectationsEntryView()
 
@@ -197,9 +175,6 @@ extension NavigationRouter {
         case .fundList:
             FundListView()
 
-        case .expectationsList:
-            ExpectationsEntryView() // List alternative
-
         // MARK: - Heimdall/Admin Views
         case .heimdallDashboard:
             HeimdallDashboardView()
@@ -217,9 +192,6 @@ extension NavigationRouter {
         case .sirkiyeAether:
             SirkiyeAetherView()
 
-        // MARK: - Radar/Cockpit
-        case .cockpit:
-            ArgusCockpitView()
         }
     }
 }

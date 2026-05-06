@@ -20,7 +20,6 @@ enum NavigationRoute: Hashable, Identifiable {
     case bistPortfolio
     case tahta(symbol: String)
     case kasa(symbol: String)
-    case kulis(symbol: String)
     case rejim(symbol: String)
 
     // MARK: - Market Tools
@@ -36,7 +35,6 @@ enum NavigationRoute: Hashable, Identifiable {
     // MARK: - Analysis Views
     case marketReport
     case analystReport(symbol: String)
-    case reports
     case debateSimulator
 
     // MARK: - Discovery & Signals
@@ -49,7 +47,6 @@ enum NavigationRoute: Hashable, Identifiable {
 
     // MARK: - Observatory & History
     case observatory
-    case observatoryContainer
     case observatoryHealth
     case tradeHistory
 
@@ -57,15 +54,12 @@ enum NavigationRoute: Hashable, Identifiable {
     case debugPersistence
 
     // MARK: - Settings Sub-views
-    case settingsSignals
     case priceAlerts
     case guide
     case voice
-    case widgetSettings
     case serviceHealth
 
     // MARK: - Portfolio Management
-    case portfolioReports
     case chronosDetail(id: String)
 
     // MARK: - Watchlist & Aether
@@ -82,7 +76,6 @@ enum NavigationRoute: Hashable, Identifiable {
     case splash
     case intro
     case disclaimer
-    case argusSanctum(symbol: String)
     case expectationsEntry
     case myPredictions  // 2026-05-06: Tahminlerim — drawer'dan doğrudan erişim
     case roadmap
@@ -91,7 +84,6 @@ enum NavigationRoute: Hashable, Identifiable {
     // MARK: - Components/Detail Sheets
     case intelligenceCards(symbol: String)
     case fundList
-    case expectationsList
 
     // MARK: - Heimdall/Admin Views
     case heimdallDashboard
@@ -101,9 +93,6 @@ enum NavigationRoute: Hashable, Identifiable {
     // MARK: - Sirkiye Views
     case sirkiyeDashboard
     case sirkiyeAether
-
-    // MARK: - Radar/Cockpit
-    case cockpit
 }
 
 @MainActor
