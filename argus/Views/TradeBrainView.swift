@@ -1,12 +1,14 @@
 import SwiftUI
 
 struct TradeBrainView: View {
-    @EnvironmentObject var viewModel: TradingViewModel
     @EnvironmentObject private var router: NavigationRouter
     @Environment(\.dismiss) private var dismiss
     @StateObject private var planStore = PositionPlanStore.shared
     @StateObject private var executor = TradeBrainExecutor.shared
     @StateObject private var executionState = ExecutionStateViewModel.shared
+    @ObservedObject private var market = MarketViewModel.shared
+    @ObservedObject private var riskVM = RiskViewModel.shared
+    @ObservedObject private var signalState = SignalStateViewModel.shared
 
     @State private var selectedPlan: PositionPlan?
     @State private var selectedPlanCurrentPrice: Double = 0
@@ -32,11 +34,11 @@ struct TradeBrainView: View {
     private var filteredPortfolio: [Trade] {
         switch marketMode {
         case .all:
-            return viewModel.portfolio
+            return riskVM.portfolio
         case .global:
-            return viewModel.portfolio.filter { !SymbolResolver.shared.isBistSymbol($0.symbol) }
+            return riskVM.portfolio.filter { !SymbolResolver.shared.isBistSymbol($0.symbol) }
         case .bist:
-            return viewModel.portfolio.filter { SymbolResolver.shared.isBistSymbol($0.symbol) }
+            return riskVM.portfolio.filter { SymbolResolver.shared.isBistSymbol($0.symbol) }
         }
     }
 
@@ -46,15 +48,15 @@ struct TradeBrainView: View {
 
     private var filteredBalance: Double {
         switch marketMode {
-        case .all: return viewModel.balance + viewModel.bistBalance
-        case .global: return viewModel.balance
-        case .bist: return viewModel.bistBalance
+        case .all: return riskVM.balance + riskVM.bistBalance
+        case .global: return riskVM.balance
+        case .bist: return riskVM.bistBalance
         }
     }
 
     private var filteredEquity: Double {
         let portfolioValue = filteredOpenTrades.reduce(0.0) { sum, trade in
-            let price = viewModel.quotes[trade.symbol]?.currentPrice ?? trade.entryPrice
+            let price = market.quotes[trade.symbol]?.currentPrice ?? trade.entryPrice
             return sum + (trade.quantity * price)
         }
         return filteredBalance + portfolioValue
@@ -63,11 +65,11 @@ struct TradeBrainView: View {
     private var filteredAlerts: [TradeBrainAlert] {
         switch marketMode {
         case .all:
-            return viewModel.planAlerts
+            return executionState.planAlerts
         case .global:
-            return viewModel.planAlerts.filter { !SymbolResolver.shared.isBistSymbol($0.symbol) }
+            return executionState.planAlerts.filter { !SymbolResolver.shared.isBistSymbol($0.symbol) }
         case .bist:
-            return viewModel.planAlerts.filter { SymbolResolver.shared.isBistSymbol($0.symbol) }
+            return executionState.planAlerts.filter { SymbolResolver.shared.isBistSymbol($0.symbol) }
         }
     }
 
@@ -76,7 +78,7 @@ struct TradeBrainView: View {
             portfolio: filteredPortfolio,
             cashBalance: filteredBalance,
             totalEquity: max(filteredEquity, 1),
-            quotes: viewModel.quotes
+            quotes: market.quotes
         )
     }
 
@@ -152,7 +154,7 @@ struct TradeBrainView: View {
             if isPushed {
                 Button(action: { dismiss() }) {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 16, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 16, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         .frame(width: 32, height: 32)
                         .contentShape(Rectangle())
@@ -162,10 +164,10 @@ struct TradeBrainView: View {
             }
             VStack(alignment: .leading, spacing: 1) {
                 Text("Trade Brain")
-                    .font(.system(size: 17, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 17, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text("Otomatik karar merkezi")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             }
             Spacer()
@@ -176,7 +178,7 @@ struct TradeBrainView: View {
                     }
                 }) {
                     Image(systemName: "line.3.horizontal")
-                        .font(.system(size: 16, weight: .regular))
+                        .font(DesignTokens.Fonts.custom(size: 16, weight: .regular))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .frame(width: 32, height: 32)
                         .contentShape(Rectangle())
@@ -210,7 +212,7 @@ struct TradeBrainView: View {
         Button(action: action) {
             VStack(spacing: 4) {
                 Text(label)
-                    .font(.system(size: 13, weight: selected ? .medium : .regular))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: selected ? .medium : .regular))
                     .foregroundColor(selected
                                      ? InstitutionalTheme.Colors.textPrimary
                                      : InstitutionalTheme.Colors.textSecondary)
@@ -238,10 +240,10 @@ struct TradeBrainView: View {
                 .frame(width: 8, height: 8)
             VStack(alignment: .leading, spacing: 1) {
                 Text(active ? "Otopilot aktif" : "Otopilot pasif")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text(summary)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .lineLimit(1)
             }
@@ -286,10 +288,10 @@ struct TradeBrainView: View {
             }
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Text(value)
-                    .font(.system(size: 15, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 15, weight: .medium))
                     .foregroundColor(tone)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
@@ -316,18 +318,18 @@ struct TradeBrainView: View {
         return VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 Text("Bekleyen aksiyonlar")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 if !alerts.isEmpty {
                     Text("\(alerts.count)")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
                 Spacer()
             }
             if alerts.isEmpty {
                 Text("Şu an aktif uyarı yok. Plan tetiklenmeleri ve konsey değişiklikleri burada görünür.")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .padding(.vertical, 4)
             } else {
@@ -357,14 +359,14 @@ struct TradeBrainView: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(alert.symbol)
-                        .font(.system(size: 13, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     Text(humanAlertType(alert.type))
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
                 Text(alert.actionDescription)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .lineLimit(2)
             }
@@ -372,7 +374,7 @@ struct TradeBrainView: View {
             .padding(.vertical, 9)
             .frame(maxWidth: .infinity, alignment: .leading)
             Image(systemName: "chevron.right")
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 .padding(.trailing, 11)
         }
@@ -394,16 +396,16 @@ struct TradeBrainView: View {
         return VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 Text("Yakın olaylar")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text("7 gün")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Spacer()
             }
             if events.isEmpty {
                 Text("Önümüzdeki 7 günde planlı bilanço, faiz kararı ya da makro veri yok.")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .padding(.vertical, 4)
             } else {
@@ -433,33 +435,33 @@ struct TradeBrainView: View {
         return HStack(spacing: 12) {
             VStack(spacing: 0) {
                 Text(eventDay(event.date))
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                     .foregroundColor(isPosition
                                      ? InstitutionalTheme.Colors.warning
                                      : InstitutionalTheme.Colors.textPrimary)
                 Text(eventMonth(event.date))
-                    .font(.system(size: 9))
+                    .font(DesignTokens.Fonts.custom(size: 9))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             .frame(width: 32)
             VStack(alignment: .leading, spacing: 1) {
                 Text(event.title)
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .lineLimit(1)
                 Text(eventSubtitle(event))
-                    .font(.system(size: 10))
+                    .font(DesignTokens.Fonts.custom(size: 10))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .lineLimit(1)
             }
             Spacer(minLength: 6)
             if isPosition {
                 Text("Pozisyon")
-                    .font(.system(size: 10))
+                    .font(DesignTokens.Fonts.custom(size: 10))
                     .foregroundColor(InstitutionalTheme.Colors.warning)
             } else if event.symbol == nil {
                 Text("Makro")
-                    .font(.system(size: 10))
+                    .font(DesignTokens.Fonts.custom(size: 10))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             }
         }
@@ -493,18 +495,18 @@ struct TradeBrainView: View {
         let logs = sortedExecutionLogs
         return VStack(alignment: .leading, spacing: 10) {
             Text("Son işlemler")
-                .font(.system(size: 14, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             if logs.isEmpty {
                 Text("Henüz otomatik işlem yok.")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .padding(.vertical, 4)
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(logs.enumerated()), id: \.offset) { idx, log in
                         Text(log)
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 11)
@@ -527,10 +529,10 @@ struct TradeBrainView: View {
     private var learnLink: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Trade Brain'i öğren")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Text("Otopilot nasıl çalışır, plan adımları ve risk eşikleri →")
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.holo)
         }
         .padding(.vertical, 6)
@@ -541,7 +543,7 @@ struct TradeBrainView: View {
     private var riskBreakdownSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Risk dağılımı")
-                .font(.system(size: 14, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             VStack(spacing: 0) {
                 riskRow(label: "Nakit oranı",
@@ -582,14 +584,14 @@ struct TradeBrainView: View {
         return VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(label)
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Spacer()
                 Text(hint)
-                    .font(.system(size: 10))
+                    .font(DesignTokens.Fonts.custom(size: 10))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Text(valueText)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                     .foregroundColor(tone)
                     .monospacedDigit()
             }
@@ -615,18 +617,18 @@ struct TradeBrainView: View {
         return VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 Text("Açık pozisyonlar")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 if !positions.isEmpty {
                     Text("\(positions.count)")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
                 Spacer()
             }
             if positions.isEmpty {
                 Text("Açık pozisyon yok. Yeni alım yapıldığında plan burada görünür.")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .padding(.vertical, 4)
             } else {
@@ -648,7 +650,7 @@ struct TradeBrainView: View {
     }
 
     private func openPositionRow(_ trade: Trade) -> some View {
-        let price = viewModel.quotes[trade.symbol]?.currentPrice ?? trade.entryPrice
+        let price = market.quotes[trade.symbol]?.currentPrice ?? trade.entryPrice
         let pnlPct = (price - trade.entryPrice) / trade.entryPrice * 100
         let pnlPositive = pnlPct >= 0
         let pnlColor: Color = pnlPositive
@@ -656,7 +658,7 @@ struct TradeBrainView: View {
             : InstitutionalTheme.Colors.negative
         let plan = planStore.getPlan(for: trade.id)
         let nextStep = plan?.nextPendingStep?.description ?? "Plan tanımlı değil"
-        let decision = viewModel.grandDecisions[trade.symbol]
+        let decision = signalState.grandDecisions[trade.symbol]
         let actionLabel = decision.map { humanAction($0.action) } ?? ""
 
         return Button(action: {
@@ -664,7 +666,7 @@ struct TradeBrainView: View {
             selectedPlan = plan
             selectedPlanCurrentPrice = price
             selectedPlanDecision = decision
-            selectedPlanCandles = viewModel.candles[trade.symbol] ?? []
+            selectedPlanCandles = market.candles[trade.symbol] ?? []
             selectedPlanEventRisk = EventCalendarService.shared.assessPositionRisk(symbol: trade.symbol)
             showPlanDetail = true
         }) {
@@ -675,21 +677,21 @@ struct TradeBrainView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
                         Text(trade.symbol)
-                            .font(.system(size: 13, weight: .medium))
+                            .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         if !actionLabel.isEmpty {
                             Text(actionLabel)
-                                .font(.system(size: 11))
+                                .font(DesignTokens.Fonts.custom(size: 11))
                                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         }
                         Spacer()
                         Text("\(pnlPositive ? "+" : "")\(String(format: "%.2f", pnlPct))%")
-                            .font(.system(size: 12, weight: .medium))
+                            .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                             .foregroundColor(pnlColor)
                             .monospacedDigit()
                     }
                     Text(nextStep)
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .lineLimit(2)
                 }
@@ -697,7 +699,7 @@ struct TradeBrainView: View {
                 .padding(.vertical, 9)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     .padding(.trailing, 11)
             }
@@ -731,10 +733,10 @@ struct TradeBrainView: View {
         return VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 Text("Konsey çelişkisi")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text("\(array.count)")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Spacer()
             }
@@ -766,20 +768,20 @@ struct TradeBrainView: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(symbol)
-                        .font(.system(size: 13, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     Text(modules)
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .lineLimit(1)
                     Spacer()
                     Text("güven −%\(Int(analysis.suggestedConfidenceDrop * 100))")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 11, weight: .medium))
                         .foregroundColor(tone)
                         .monospacedDigit()
                 }
                 Text(analysis.recommendation)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .lineLimit(2)
             }
@@ -819,7 +821,7 @@ struct TradeBrainView: View {
     private var maxPositionWeight: Double {
         let equity = max(filteredEquity, 1)
         let maxWeight = filteredOpenTrades.reduce(0.0) { currentMax, trade in
-            let price = viewModel.quotes[trade.symbol]?.currentPrice ?? trade.entryPrice
+            let price = market.quotes[trade.symbol]?.currentPrice ?? trade.entryPrice
             let weight = (trade.quantity * price) / equity
             return max(currentMax, weight)
         }

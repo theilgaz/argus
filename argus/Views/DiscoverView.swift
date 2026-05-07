@@ -4,10 +4,10 @@ import SwiftUI
 /// 2026-04-22 Sprint 3 — üst chrome `ArgusNavHeader`'a alındı (bars3 deco +
 /// menu/refresh action). Yükselenler/Düşenler/En Hareketliler bölümleri ve
 /// card/row bileşenleri zaten V5 tokenize olduğundan korunur.
-/// Veri imzası değişmez: `viewModel.topGainers/topLosers/mostActive` +
-/// `viewModel.loadDiscoverData()`; drawer + deep link akışı dokunulmadı.
+/// Veri imzası değişmez: `market.topGainers/topLosers/mostActive` +
+/// `market.loadDiscoverData()`; drawer + deep link akışı dokunulmadı.
 struct DiscoverView: View {
-    @ObservedObject var viewModel: TradingViewModel
+    @ObservedObject private var market = MarketViewModel.shared
     @StateObject private var deepLinkManager = DeepLinkManager.shared
     @EnvironmentObject private var router: NavigationRouter
     @Environment(\.dismiss) private var dismiss
@@ -30,10 +30,10 @@ struct DiscoverView: View {
                         leadingDeco: isPushed ? .back(onTap: { dismiss() }) : .none,
                         actions: isPushed
                             ? [.custom(sfSymbol: "arrow.clockwise",
-                                       action: { viewModel.loadDiscoverData() })]
+                                       action: { market.loadDiscoverData() })]
                             : [.menu({ withAnimation(ArgusDrawerView.toggleAnimation) { showDrawer = true } }),
                                .custom(sfSymbol: "arrow.clockwise",
-                                       action: { viewModel.loadDiscoverData() })]
+                                       action: { market.loadDiscoverData() })]
                     )
 
                     ScrollView {
@@ -50,13 +50,13 @@ struct DiscoverView: View {
                             
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 12) {
-                                    ForEach(viewModel.topGainers, id: \.symbol) { quote in
-                                        NavigationLink(destination: ArgusSanctumView(symbol: quote.symbol ?? "---", viewModel: viewModel)) {
+                                    ForEach(market.topGainers, id: \.symbol) { quote in
+                                        NavigationLink(destination: ArgusSanctumView(symbol: quote.symbol ?? "---")) {
                                             DiscoverMarketCard(
                                                 quote: quote,
                                                 type: .gainer,
                                                 onAddToWatchlist: { symbol in
-                                                    viewModel.addToWatchlist(symbol: symbol)
+                                                    market.addToWatchlist(symbol: symbol)
                                                 }
                                             )
                                         }
@@ -72,13 +72,13 @@ struct DiscoverView: View {
                             
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 12) {
-                                    ForEach(viewModel.topLosers, id: \.symbol) { quote in
-                                        NavigationLink(destination: ArgusSanctumView(symbol: quote.symbol ?? "---", viewModel: viewModel)) {
+                                    ForEach(market.topLosers, id: \.symbol) { quote in
+                                        NavigationLink(destination: ArgusSanctumView(symbol: quote.symbol ?? "---")) {
                                             DiscoverMarketCard(
                                                 quote: quote,
                                                 type: .loser,
                                                 onAddToWatchlist: { symbol in
-                                                    viewModel.addToWatchlist(symbol: symbol)
+                                                    market.addToWatchlist(symbol: symbol)
                                                 }
                                             )
                                         }
@@ -94,8 +94,8 @@ struct DiscoverView: View {
                                 .padding(.bottom, 4)
                             
                             LazyVStack(spacing: 0) {
-                                ForEach(viewModel.mostActive, id: \.symbol) { quote in
-                                    NavigationLink(destination: ArgusSanctumView(symbol: quote.symbol ?? "---", viewModel: viewModel)) {
+                                ForEach(market.mostActive, id: \.symbol) { quote in
+                                    NavigationLink(destination: ArgusSanctumView(symbol: quote.symbol ?? "---")) {
                                         DiscoverMarketRow(quote: quote)
                                     }
                                     Divider()
@@ -121,10 +121,10 @@ struct DiscoverView: View {
             }
         .navigationBarHidden(true)
         .onAppear {
-            viewModel.loadDiscoverData()
+            market.loadDiscoverData()
         }
         .refreshable {
-            viewModel.loadDiscoverData()
+            market.loadDiscoverData()
         }
         .overlay {
             if showDrawer {
@@ -145,7 +145,7 @@ struct DiscoverView: View {
                 title: "Keşfet",
                 items: [
                     ArgusDrawerView.DrawerItem(title: "Yenile", subtitle: "Listeyi güncelle", icon: "arrow.clockwise") {
-                        viewModel.loadDiscoverData()
+                        market.loadDiscoverData()
                         dismiss()
                     }
                 ]
@@ -191,13 +191,13 @@ struct DiscoverMarketCard: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Image(systemName: type == .gainer ? "arrow.up.right" : "arrow.down.right")
-                    .font(.system(size: 11, weight: .bold))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .bold))
                     .foregroundColor(cardColor)
                     .frame(width: 24, height: 24)
                     .background(Circle().fill(cardColor.opacity(0.18)))
                 Spacer()
                 Text(String(format: "%+.2f%%", quote.percentChange))
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 10, weight: .bold, design: .monospaced))
                     .foregroundColor(cardColor)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
@@ -211,11 +211,11 @@ struct DiscoverMarketCard: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(quote.symbol ?? "---")
-                    .font(.system(size: 15, weight: .black, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 15, weight: .black, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 let isBist = (quote.symbol ?? "").uppercased().hasSuffix(".IS")
                 Text(String(format: isBist ? "₺%.0f" : "$%.2f", quote.currentPrice))
-                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .semibold, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             }
         }
@@ -264,11 +264,11 @@ struct DiscoverMarketRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(quote.symbol ?? "---")
-                    .font(.system(size: 14, weight: .black, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .black, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 if let name = quote.shortName, !name.isEmpty {
                     Text(name)
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         .lineLimit(1)
                 }
@@ -279,11 +279,11 @@ struct DiscoverMarketRow: View {
             VStack(alignment: .trailing, spacing: 4) {
                 let isBist = (quote.symbol ?? "").uppercased().hasSuffix(".IS")
                 Text(String(format: isBist ? "₺%.0f" : "$%.2f", quote.currentPrice))
-                    .font(.system(size: 14, weight: .black, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .black, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
                 Text(String(format: "%+.2f%%", quote.percentChange))
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 10, weight: .bold, design: .monospaced))
                     .foregroundColor(changeColor)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)

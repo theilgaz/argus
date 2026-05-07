@@ -39,13 +39,13 @@ struct ContentView: View {
                     case .kokpit:
                         ArgusCockpitView()
                     case .portfolio:
-                        PortfolioView(viewModel: viewModel)
+                        PortfolioView()
                     case .settings:
                         SettingsView(settingsViewModel: settingsViewModel)
                     }
                 }
                 .navigationDestination(for: NavigationRoute.self) { route in
-                    router.destinationView(for: route, viewModel: viewModel)
+                    router.destinationView(for: route)
                 }
                 .environmentObject(viewModel)
                 // İçerik alt tab bar + FAB yüksekliği kadar padding
@@ -91,11 +91,11 @@ struct ContentView: View {
             showVoiceSheet = true
         }
         .sheet(item: $router.presentedSheet) { route in
-            router.destinationView(for: route, viewModel: viewModel)
+            router.destinationView(for: route)
                 .environmentObject(viewModel)
         }
         .fullScreenCover(item: $router.presentedFullScreen) { route in
-            router.destinationView(for: route, viewModel: viewModel)
+            router.destinationView(for: route)
                 .environmentObject(viewModel)
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ArgusNotificationTapped"))) { notification in

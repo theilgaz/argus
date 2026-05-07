@@ -2,7 +2,7 @@ import SwiftUI
 
 extension NavigationRouter {
     @ViewBuilder
-    func destinationView(for route: NavigationRoute, viewModel: TradingViewModel) -> some View {
+    func destinationView(for route: NavigationRoute) -> some View {
         switch route {
         // MARK: - Main Tabs
         case .kokpit:
@@ -76,14 +76,13 @@ extension NavigationRouter {
 
         // MARK: - Discovery & Signals
         case .discover:
-            DiscoverView(viewModel: viewModel)
+            DiscoverView()
 
         case .notifications:
             NotificationsView()
 
         case .tradeBrain:
             TradeBrainView()
-                .environmentObject(viewModel)
 
         case .signals:
             SignalsView()

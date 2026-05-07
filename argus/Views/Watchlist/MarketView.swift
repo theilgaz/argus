@@ -10,8 +10,9 @@ import SwiftUI
 //   • BistCrystalRow/OrionSignalBadge görsel olarak tokenize edildi, logic değişmedi.
 
 struct MarketView: View {
-    @EnvironmentObject var viewModel: TradingViewModel       // Legacy (geçiş döneminde korunuyor)
-    @EnvironmentObject var watchlistVM: WatchlistViewModel   // FAZ 2: Modüler sistem
+    @EnvironmentObject var watchlistVM: WatchlistViewModel
+    @ObservedObject private var market = MarketViewModel.shared
+    @ObservedObject private var analysis = AnalysisViewModel.shared
     @ObservedObject var notificationStore = NotificationStore.shared
     @StateObject private var deepLinkManager = DeepLinkManager.shared
 
@@ -55,7 +56,6 @@ struct MarketView: View {
                             switch selectedMarket {
                             case .global:
                                 GlobalCockpitView(
-                                    viewModel: viewModel,
                                     watchlist: filteredWatchlist,
                                     showAetherDetail: $showAetherDetail,
                                     showEducation: $showEducation,
@@ -63,7 +63,6 @@ struct MarketView: View {
                                 )
                             case .bist:
                                 BistCockpitView(
-                                    viewModel: viewModel,
                                     watchlist: filteredWatchlist,
                                     deleteAction: { symbol in deleteSymbol(symbol) }
                                 )
@@ -107,7 +106,7 @@ struct MarketView: View {
                 // Tahminlerim / Tüm göstergeler" NavigationLink'leri
                 // push yapamıyordu çünkü sheet'te NavigationStack yoktu.
                 NavigationStack {
-                    if let macro = viewModel.macroRating {
+                    if let macro = analysis.macroRating {
                         ArgusAetherDetailView(rating: macro)
                     }
                 }
@@ -118,7 +117,7 @@ struct MarketView: View {
                     .preferredColorScheme(.dark)
             }
             .sheet(isPresented: $showDiscover) {
-                DiscoverView(viewModel: viewModel)
+                DiscoverView()
                     .preferredColorScheme(.dark)
             }
             .sheet(isPresented: $showNotifications) {
@@ -258,8 +257,8 @@ struct MarketView: View {
     private func deleteSymbol(_ symbol: String) {
         // HER İKİ SİSTEMDEN DE SİL (geçiş dönemi senkronizasyonu)
         watchlistVM.removeSymbol(symbol)
-        if let index = viewModel.watchlist.firstIndex(of: symbol) {
-            viewModel.deleteFromWatchlist(at: IndexSet(integer: index))
+        if let index = market.watchlist.firstIndex(of: symbol) {
+            market.deleteFromWatchlist(at: IndexSet(integer: index))
         }
     }
 
@@ -307,8 +306,10 @@ struct MarketView: View {
 // MARK: - GLOBAL COCKPIT
 
 struct GlobalCockpitView: View {
-    @ObservedObject var viewModel: TradingViewModel
     @EnvironmentObject var watchlistVM: WatchlistViewModel
+    @ObservedObject private var market = MarketViewModel.shared
+    @ObservedObject private var analysis = AnalysisViewModel.shared
+    @ObservedObject private var signalVM = SignalViewModel.shared
     let watchlist: [String]
     @Binding var showAetherDetail: Bool
     @Binding var showEducation: Bool
@@ -322,13 +323,13 @@ struct GlobalCockpitView: View {
             // duruyor, detay sayfası ya da ileriki bir kullanım için
             // hazır kalıyor; sadece anasayfa render'ından çıktı.
             AetherDashboardHUD(
-                rating: viewModel.macroRating,
+                rating: analysis.macroRating,
                 onTap: { showAetherDetail = true }
             )
             .onAppear {
-                if viewModel.macroRating == nil {
+                if analysis.macroRating == nil {
                     Task(priority: .background) {
-                        viewModel.loadMacroEnvironment(forceRefresh: false)
+                        market.loadMacroEnvironment()
                     }
                 }
             }
@@ -354,9 +355,9 @@ struct GlobalCockpitView: View {
                             CrystalWatchlistRow(
                                 symbol: symbol,
                                 quote: watchlistVM.quotes[symbol],
-                                candles: viewModel.candles[symbol],
-                                forecast: viewModel.prometheusForecastBySymbol[symbol],
-                                signal: viewModel.aiSignals.first(where: { $0.symbol == symbol })
+                                candles: market.candles[symbol],
+                                forecast: signalVM.prometheusForecastBySymbol[symbol],
+                                signal: analysis.aiSignals.first(where: { $0.symbol == symbol })
                             )
                             .padding(.horizontal, 16)
                             .padding(.vertical, 4)
@@ -377,8 +378,8 @@ struct GlobalCockpitView: View {
 // MARK: - BIST COCKPIT (SİRKİYE)
 
 struct BistCockpitView: View {
-    @ObservedObject var viewModel: TradingViewModel
     @EnvironmentObject var watchlistVM: WatchlistViewModel
+    @ObservedObject private var signalState = SignalStateViewModel.shared
     let watchlist: [String]
     let deleteAction: (String) -> Void
 
@@ -409,13 +410,13 @@ struct BistCockpitView: View {
                             BistCrystalRow(
                                 symbol: symbol,
                                 quote: watchlistVM.quotes[symbol],
-                                orionResult: viewModel.orionScores[symbol]
+                                orionResult: signalState.orionScores[symbol]
                             )
                             .padding(.horizontal, 16)
                             .padding(.vertical, 4)
                             .onAppear {
-                                if viewModel.orionScores[symbol] == nil {
-                                    Task { await viewModel.loadOrionScore(for: symbol) }
+                                if signalState.orionScores[symbol] == nil {
+                                    Task { await signalState.ensureOrionAnalysis(for: symbol) }
                                 }
                             }
                         }
@@ -465,7 +466,7 @@ private struct LiveStatusPill: View {
 
 struct AddSymbolSheet: View {
     @EnvironmentObject var watchlistVM: WatchlistViewModel
-    @EnvironmentObject var viewModel: TradingViewModel
+    @ObservedObject private var market = MarketViewModel.shared
     @Environment(\.presentationMode) var presentationMode
     @State private var symbol: String = ""
     @FocusState private var isFocused: Bool
@@ -608,9 +609,8 @@ struct AddSymbolSheet: View {
 
     private func addAndDismiss(_ symbolToAdd: String) {
         if !symbolToAdd.isEmpty {
-            // HER İKİ SİSTEME DE EKLE (geçiş dönemi senkronizasyonu)
             watchlistVM.addSymbol(symbolToAdd)
-            viewModel.addSymbol(symbolToAdd)
+            market.addToWatchlist(symbol: symbolToAdd)
             presentationMode.wrappedValue.dismiss()
         }
     }
