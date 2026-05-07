@@ -4,7 +4,7 @@ import XCTest
 final class RiskEscapePolicyTests: XCTestCase {
 
     func testDeepRiskOffPolicy() {
-        let policy = RiskEscapePolicy.from(aetherScore: 23)
+        let policy = RiskEscapePolicy.from(aetherScore: 10)
 
         XCTAssertEqual(policy.mode, .deepRiskOff)
         XCTAssertTrue(policy.blockRiskyBuys)
@@ -13,7 +13,7 @@ final class RiskEscapePolicyTests: XCTestCase {
     }
 
     func testRiskOffPolicy() {
-        let policy = RiskEscapePolicy.from(aetherScore: 35)
+        let policy = RiskEscapePolicy.from(aetherScore: 20)
 
         XCTAssertEqual(policy.mode, .riskOff)
         XCTAssertTrue(policy.blockRiskyBuys)
@@ -31,8 +31,8 @@ final class RiskEscapePolicyTests: XCTestCase {
     }
 
     func testDynamicMaxRiskRByAetherScore() {
-        XCTAssertEqual(RiskBudgetConfig.dynamicMaxRiskR(aetherScore: 23), 0.8, accuracy: 0.0001)
-        XCTAssertEqual(RiskBudgetConfig.dynamicMaxRiskR(aetherScore: 35), 1.5, accuracy: 0.0001)
-        XCTAssertEqual(RiskBudgetConfig.dynamicMaxRiskR(aetherScore: 55), 20.0, accuracy: 0.0001)
+        XCTAssertEqual(RiskBudgetConfig.dynamicMaxRiskR(aetherScore: 10), 1.0, accuracy: 0.0001)
+        XCTAssertEqual(RiskBudgetConfig.dynamicMaxRiskR(aetherScore: 30), 3.0, accuracy: 0.0001)
+        XCTAssertEqual(RiskBudgetConfig.dynamicMaxRiskR(aetherScore: 80), 20.0, accuracy: 0.0001)
     }
 }
