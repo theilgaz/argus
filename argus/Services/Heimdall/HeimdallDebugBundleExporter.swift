@@ -77,6 +77,7 @@ actor HeimdallDebugBundleExporter {
             case .massive: argusProvider = .fred // Map to fred for now to avoid breaking ArgusProvider enum if it doesn't have massive yet
             case .groq: argusProvider = .gemini
             case .deepSeek: argusProvider = .gemini
+            case .finnhub: argusProvider = .fred // finnhub maps to fred as closest available ArgusProvider
             }
             
             return APIKeyMetadata(

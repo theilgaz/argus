@@ -156,6 +156,8 @@ final class APIKeyStore: ObservableObject, @unchecked Sendable {
             return Secrets.deepSeekKey
         case .pinecone:
             return Secrets.pineconeKey
+        case .finnhub:
+            return Secrets.finnhubKey
         case .massive:
             return ""
         }
