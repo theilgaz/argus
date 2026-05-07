@@ -78,4 +78,36 @@ final class AnalysisViewModel: ObservableObject {
         // binding kullan: `SignalStateViewModel.shared.$orionAnalysis
         //   .sink { ... }`. Tek property için tek emit, tüm chain için değil.
     }
+
+    func generateAISignals() async {
+        let market = MarketViewModel.shared
+        let signals = await AISignalService.shared.generateSignals(quotes: market.quotes, candles: market.candles)
+        await MainActor.run { self.aiSignals = signals }
+    }
+
+    func refreshReports() async {
+        let trades = PortfolioStore.shared.transactions
+        let decisions = Array(ExecutionStateViewModel.shared.agoraTraces.values)
+        let atmosphere = (aether: macroRating?.numericScore, demeter: demeterMatrix)
+
+        let bistTrades = trades.filter { $0.symbol.uppercased().hasSuffix(".IS") }
+        let bistDecisions = decisions.filter { $0.symbol.uppercased().hasSuffix(".IS") }
+        let globalTrades = trades.filter { !$0.symbol.uppercased().hasSuffix(".IS") }
+        let globalDecisions = decisions.filter { !$0.symbol.uppercased().hasSuffix(".IS") }
+
+        let engine = ReportEngine.shared
+
+        dailyReport = await engine.generateDailyReport(
+            date: Date(), trades: globalTrades, decisions: globalDecisions, atmosphere: atmosphere
+        )
+        weeklyReport = await engine.generateWeeklyReport(
+            date: Date(), trades: globalTrades, decisions: globalDecisions
+        )
+        bistDailyReport = await engine.generateDailyReport(
+            date: Date(), trades: bistTrades, decisions: bistDecisions, atmosphere: atmosphere
+        )
+        bistWeeklyReport = await engine.generateWeeklyReport(
+            date: Date(), trades: bistTrades, decisions: bistDecisions
+        )
+    }
 }

@@ -23,7 +23,7 @@ extension NavigationRouter {
             ArgusSanctumView(symbol: symbol)
 
         case .etfDetail(let symbol):
-            ArgusEtfDetailView(symbol: symbol, viewModel: viewModel)
+            ArgusEtfDetailView(symbol: symbol)
 
         case .bistMarket:
             BistMarketView()
@@ -79,17 +79,17 @@ extension NavigationRouter {
             DiscoverView(viewModel: viewModel)
 
         case .notifications:
-            NotificationsView(viewModel: viewModel)
+            NotificationsView()
 
         case .tradeBrain:
             TradeBrainView()
                 .environmentObject(viewModel)
 
         case .signals:
-            SignalsView(viewModel: viewModel)
+            SignalsView()
 
         case .hermesFeed:
-            HermesFeedView(viewModel: viewModel)
+            HermesFeedView()
 
         case .journalSignals:
             SignalJournalView()

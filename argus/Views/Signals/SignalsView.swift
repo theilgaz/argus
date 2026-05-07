@@ -5,7 +5,9 @@ import SwiftUI
 /// gösterir). SignalJournal rotası gizli NavigationLink ile korundu; tarama
 /// akışı ve `AISignal` filter mantığı değiştirilmedi.
 struct SignalsView: View {
-    @ObservedObject var viewModel: TradingViewModel
+    @ObservedObject private var analysis = AnalysisViewModel.shared
+    @ObservedObject private var signalState = SignalStateViewModel.shared
+    @ObservedObject private var market = MarketViewModel.shared
     @State private var isScanning = false
     @State private var showJournal = false
 
@@ -32,30 +34,30 @@ struct SignalsView: View {
                     ScrollView {
                         VStack(spacing: 20) {
                             // ── Makro durum bandı ────────────────────────────────
-                            if let macro = viewModel.macroRating {
+                            if let macro = analysis.macroRating {
                                 MacroStatusBanner(macro: macro)
                                     .padding(.horizontal)
                             }
 
-                            if viewModel.aiSignals.isEmpty {
+                            if analysis.aiSignals.isEmpty {
                                 SignalsEmptyStateView(action: scan, isScanning: isScanning)
                             } else {
                                 // Güçlü Al
-                                let strongBuy = viewModel.aiSignals.filter { $0.action == .buy && $0.confidenceScore >= 85 }
+                                let strongBuy = analysis.aiSignals.filter { $0.action == .buy && $0.confidenceScore >= 85 }
                                 if !strongBuy.isEmpty {
-                                    SignalSection(title: "Güçlü Al", signals: strongBuy, color: .green, viewModel: viewModel)
+                                    SignalSection(title: "Güçlü Al", signals: strongBuy, color: .green)
                                 }
 
                                 // Al
-                                let buy = viewModel.aiSignals.filter { $0.action == .buy && $0.confidenceScore < 85 }
+                                let buy = analysis.aiSignals.filter { $0.action == .buy && $0.confidenceScore < 85 }
                                 if !buy.isEmpty {
-                                    SignalSection(title: "Al", signals: buy, color: Color(red: 0.3, green: 0.85, blue: 0.4), viewModel: viewModel)
+                                    SignalSection(title: "Al", signals: buy, color: Color(red: 0.3, green: 0.85, blue: 0.4))
                                 }
 
                                 // Sat
-                                let sell = viewModel.aiSignals.filter { $0.action == .sell }
+                                let sell = analysis.aiSignals.filter { $0.action == .sell }
                                 if !sell.isEmpty {
-                                    SignalSection(title: "Sat", signals: sell, color: InstitutionalTheme.Colors.crimson, viewModel: viewModel)
+                                    SignalSection(title: "Sat", signals: sell, color: InstitutionalTheme.Colors.crimson)
                                 }
                             }
                         }
@@ -72,7 +74,7 @@ struct SignalsView: View {
             SignalJournalView()
         }
         .onAppear {
-            if viewModel.aiSignals.isEmpty { scan() }
+            if analysis.aiSignals.isEmpty { scan() }
         }
     }
 
@@ -82,8 +84,8 @@ struct SignalsView: View {
                            label: "Taranıyor",
                            trailing: "Sinyal akışı")
         }
-        let total = viewModel.aiSignals.count
-        let strongBuy = viewModel.aiSignals.filter { $0.action == .buy && $0.confidenceScore >= 85 }.count
+        let total = analysis.aiSignals.count
+        let strongBuy = analysis.aiSignals.filter { $0.action == .buy && $0.confidenceScore >= 85 }.count
         if total == 0 {
             return .custom(dotColor: InstitutionalTheme.Colors.textTertiary,
                            label: "Sinyal yok",
@@ -97,7 +99,10 @@ struct SignalsView: View {
     private func scan() {
         isScanning = true
         Task {
-            await viewModel.generateAISignals()
+            let signals = await AISignalService.shared.generateSignals(
+                quotes: market.quotes, candles: market.candles
+            )
+            analysis.aiSignals = signals
             isScanning = false
         }
     }
@@ -111,16 +116,16 @@ private struct MacroStatusBanner: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: bannerIcon)
-                .font(.system(size: 14))
+                .font(DesignTokens.Fonts.custom(size: 14))
                 .foregroundColor(tone.foreground)
                 .frame(width: 22)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(regimeLabel)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                     .foregroundColor(tone.foreground)
                 Text(macro.summary)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .lineLimit(2)
             }
@@ -167,19 +172,18 @@ struct SignalSection: View {
     let title: String
     let signals: [AISignal]
     let color: Color
-    @ObservedObject var viewModel: TradingViewModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 ArgusDot(color: color, size: 6)
                 Text(title.uppercased())
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 10, weight: .bold, design: .monospaced))
                     .tracking(1.2)
                     .foregroundColor(color)
                 Spacer()
                 Text("\(signals.count)")
-                    .font(.system(size: 10, weight: .black, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 10, weight: .black, design: .monospaced))
                     .foregroundColor(color)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
@@ -190,8 +194,8 @@ struct SignalSection: View {
             .padding(.horizontal, 16)
 
             ForEach(signals) { signal in
-                NavigationLink(destination: ArgusSanctumView(symbol: signal.symbol, viewModel: viewModel)) {
-                    AISignalCard(signal: signal, orion: viewModel.orionScores[signal.symbol])
+                NavigationLink(destination: ArgusSanctumView(symbol: signal.symbol)) {
+                    AISignalCard(signal: signal, orion: SignalStateViewModel.shared.orionScores[signal.symbol])
                 }
                 .buttonStyle(.plain)
             }
@@ -212,26 +216,26 @@ struct AISignalCard: View {
             VStack(alignment: .leading, spacing: 5) {
                 HStack(spacing: 8) {
                     Text(signal.symbol)
-                        .font(.system(size: 14, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     Text(localizedAction)
-                        .font(.system(size: 12, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                         .foregroundColor(actionTone.foreground)
                     Spacer()
                     Text(timeAgo(signal.timestamp))
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
 
                 Text(primaryReason)
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
             }
 
             Image(systemName: "chevron.right")
-                .font(.system(size: 10, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 10, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
         .padding(14)
@@ -295,18 +299,18 @@ struct SignalsEmptyStateView: View {
                 ProgressView()
             } else {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 28))
+                    .font(DesignTokens.Fonts.custom(size: 28))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
 
             VStack(spacing: 4) {
                 Text(isScanning ? "Taranıyor" : "Sinyal bulunamadı")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text(isScanning
                      ? "İzleme listendeki hisseler analiz ediliyor."
                      : "Şu an güçlü bir sinyal yok. Tekrar taramayı deneyebilirsin.")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
@@ -316,9 +320,9 @@ struct SignalsEmptyStateView: View {
                 Button(action: action) {
                     HStack(spacing: 6) {
                         Image(systemName: "magnifyingglass")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                         Text("Tara")
-                            .font(.system(size: 13, weight: .medium))
+                            .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                     }
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .padding(.horizontal, 14)

@@ -3,7 +3,8 @@ import SwiftUI
 // MARK: - 3. Argus Etf Detail View (Full Page Container)
 struct ArgusEtfDetailView: View {
     let symbol: String
-    @ObservedObject var viewModel: TradingViewModel
+    @ObservedObject private var marketVM = MarketViewModel.shared
+    @ObservedObject private var analysisVM = AnalysisViewModel.shared
     
     @State private var profile: ETFProfile?
     @State private var titanResult: ArgusEtfEngine.TitanResult?
@@ -21,7 +22,7 @@ struct ArgusEtfDetailView: View {
                         Button(action: { presentationMode.wrappedValue.dismiss() }) {
                             Image(systemName: "arrow.left")
                                 .font(.title2)
-                                .foregroundColor(.white)
+                                .foregroundColor(DesignTokens.Colors.textPrimary)
                                 .padding(10)
                                 .background(Circle().fill(InstitutionalTheme.Colors.surface1))
                         }
@@ -29,7 +30,7 @@ struct ArgusEtfDetailView: View {
                         Text(symbol)
                             .font(.title2)
                             .bold()
-                            .foregroundColor(.white)
+                            .foregroundColor(DesignTokens.Colors.textPrimary)
                         
                         Text("ETF")
                             .font(.caption)
@@ -45,12 +46,12 @@ struct ArgusEtfDetailView: View {
                     .padding(.top, 8)
                     
                     // 1. Price
-                    if let quote = viewModel.quotes[symbol] {
+                    if let quote = marketVM.quotes[symbol] {
                         let isBist = symbol.uppercased().hasSuffix(".IS")
                         HStack(alignment: .lastTextBaseline) {
                             Text(String(format: isBist ? "₺%.0f" : "$%.2f", quote.currentPrice))
-                                .font(.system(size: 36, weight: .bold))
-                                .foregroundColor(.white)
+                                .font(DesignTokens.Fonts.custom(size: 36, weight: .bold))
+                                .foregroundColor(DesignTokens.Colors.textPrimary)
                             
                             HStack(spacing: 4) {
                                 Image(systemName: quote.change >= 0 ? "arrow.up" : "arrow.down")
@@ -74,7 +75,7 @@ struct ArgusEtfDetailView: View {
                             .padding(.horizontal)
                         
                         // 4. Chart Placeholder (Reusing existing or simple)
-                        if let candles = viewModel.candles[symbol], !candles.isEmpty {
+                        if let candles = marketVM.candles[symbol], !candles.isEmpty {
                             // Using standard chart but wrapped
                             ZStack {
                                 InstitutionalTheme.Colors.surface1.cornerRadius(16)
@@ -99,7 +100,7 @@ struct ArgusEtfDetailView: View {
                         
                     } else {
                         Text("Veri Alınamadı")
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                     }
                     
                     Spacer(minLength: 100)
@@ -117,25 +118,25 @@ struct ArgusEtfDetailView: View {
         print(" Titan: loadData started for \(symbol)")
         
         // 1. Ensure Quote is available
-        if viewModel.quotes[symbol] == nil {
+        if marketVM.quotes[symbol] == nil {
             print(" Titan: Fetching quote for \(symbol)...")
-            await viewModel.fetchQuote(for: symbol)
+            await marketVM.fetchQuote(for: symbol)
         }
         
         // 2. Ensure Candles are available (Critical for Titan)
-        var candles = viewModel.candles[symbol] ?? []
+        var candles = marketVM.candles[symbol] ?? []
         
         if candles.isEmpty {
             print(" Titan: Candles empty. Fetching candles for \(symbol)...")
-            await viewModel.loadCandles(for: symbol, timeframe: "1G")
-            candles = viewModel.candles[symbol] ?? []
+            await marketVM.loadCandles(for: symbol, timeframe: "1G")
+            candles = marketVM.candles[symbol] ?? []
             print(" Titan: Fetched \(candles.count) candles")
         } else {
             print(" Titan: Using cached \(candles.count) candles")
         }
         
         // 3. Ensure Macro data if possible
-        if viewModel.macroRating == nil {
+        if analysisVM.macroRating == nil {
             print(" Titan: Macro rating missing, using nil")
         }
         
@@ -153,7 +154,7 @@ struct ArgusEtfDetailView: View {
         let res = ArgusEtfEngine.shared.analyze(
             symbol: symbol,
             quotes: candles,
-            macro: viewModel.macroRating,
+            macro: analysisVM.macroRating,
             profile: self.profile
         )
         

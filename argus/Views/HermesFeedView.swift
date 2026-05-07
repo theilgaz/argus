@@ -7,7 +7,7 @@ import Combine
 /// gösteriyor). Scope toggle, feed içerikleri ve `HermesFeedState` veri akışı
 /// dokunulmadı.
 struct HermesFeedView: View {
-    @ObservedObject var viewModel: TradingViewModel
+    @ObservedObject private var market = MarketViewModel.shared
     @StateObject private var feedState = HermesFeedState()
     @State private var selectedScope = 0
     @Environment(\.dismiss) private var dismiss
@@ -25,7 +25,7 @@ struct HermesFeedView: View {
                     actions: [
                         .custom(sfSymbol: "arrow.clockwise",
                                 action: {
-                                    Task { await feedState.loadFeed(scope: selectedScope, watchlist: viewModel.watchlist) }
+                                    Task { await feedState.loadFeed(scope: selectedScope, watchlist: market.watchlist) }
                                 })
                     ],
                     status: headerStatus
@@ -35,18 +35,18 @@ struct HermesFeedView: View {
                     .padding(.vertical, 12)
                     .background(InstitutionalTheme.Colors.background)
                     .onChange(of: selectedScope) { _, newValue in
-                        Task { await feedState.loadFeed(scope: newValue, watchlist: viewModel.watchlist) }
+                        Task { await feedState.loadFeed(scope: newValue, watchlist: market.watchlist) }
                     }
 
                 if feedState.isLoading {
                     LoadingStateView()
                 } else if let error = feedState.errorMessage {
                     ErrorStateView(message: error) {
-                        Task { await feedState.loadFeed(scope: selectedScope, watchlist: viewModel.watchlist) }
+                        Task { await feedState.loadFeed(scope: selectedScope, watchlist: market.watchlist) }
                     }
                 } else if feedState.insights.isEmpty && feedState.events.isEmpty && feedState.rawArticles.isEmpty {
                     EmptyFeedView(scope: selectedScope) {
-                        Task { await feedState.loadFeed(scope: selectedScope, watchlist: viewModel.watchlist) }
+                        Task { await feedState.loadFeed(scope: selectedScope, watchlist: market.watchlist) }
                     }
                 } else {
                     feedContent
@@ -55,7 +55,7 @@ struct HermesFeedView: View {
         }
         .navigationBarHidden(true)
         .task {
-            await feedState.loadFeed(scope: selectedScope, watchlist: viewModel.watchlist)
+            await feedState.loadFeed(scope: selectedScope, watchlist: market.watchlist)
         }
     }
 
@@ -98,7 +98,7 @@ struct HermesFeedView: View {
                 if !feedState.insights.isEmpty && feedState.events.isEmpty {
                     ForEach(feedState.insights) { insight in
                         if insight.symbol != "MARKET" && insight.symbol != "GENERAL" {
-                            NavigationLink(destination: ArgusSanctumView(symbol: insight.symbol, viewModel: viewModel)) {
+                            NavigationLink(destination: ArgusSanctumView(symbol: insight.symbol)) {
                                 HermesInsightCard(insight: insight)
                             }
                             .buttonStyle(PlainButtonStyle())
@@ -119,7 +119,7 @@ struct HermesFeedView: View {
             .padding(.bottom, 100)
         }
         .refreshable {
-            await feedState.loadFeed(scope: selectedScope, watchlist: viewModel.watchlist)
+            await feedState.loadFeed(scope: selectedScope, watchlist: market.watchlist)
         }
     }
 }
@@ -277,7 +277,7 @@ struct HermesEventCompactCard: View {
                 ArgusChip(event.symbol.uppercased(), tone: tone)
                 Spacer()
                 Text(timeAgo(event.publishedAt))
-                    .font(.system(size: 9, weight: .medium, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 9, weight: .medium, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
 
@@ -288,14 +288,14 @@ struct HermesEventCompactCard: View {
 
             HStack(spacing: 8) {
                 Text(event.eventType.displayTitleTR.uppercased())
-                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 9, weight: .bold, design: .monospaced))
                     .tracking(0.7)
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Spacer()
                 HStack(spacing: 5) {
                     ArgusDot(color: tone.foreground, size: 5)
                     Text(sentimentLabel())
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 9, weight: .bold, design: .monospaced))
                         .tracking(0.7)
                         .foregroundColor(tone.foreground)
                 }
@@ -351,7 +351,7 @@ struct HermesInsightCard: View {
                 ArgusChip(insight.symbol.uppercased(), tone: .motor(.hermes), icon: .hermes)
                 Spacer()
                 Text(timeAgo(insight.createdAt))
-                    .font(.system(size: 9, weight: .medium, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 9, weight: .medium, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
 
@@ -371,13 +371,13 @@ struct HermesInsightCard: View {
                 HStack(spacing: 5) {
                     ArgusDot(color: sentimentTone(insight.sentiment).foreground, size: 5)
                     Text(insight.sentiment.displayTitle.uppercased())
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 9, weight: .bold, design: .monospaced))
                         .tracking(0.7)
                         .foregroundColor(sentimentTone(insight.sentiment).foreground)
                 }
                 Spacer()
                 Text("ETKİ · %\(Int(insight.impactScore))")
-                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 9, weight: .bold, design: .monospaced))
                     .tracking(0.6)
                     .foregroundColor(impactColor(insight.impactScore))
                     .padding(.horizontal, 6)
@@ -430,7 +430,7 @@ struct RawNewsCard: View {
                 ArgusChip(article.symbol.uppercased(), tone: .motor(.hermes))
                 Spacer()
                 Text(timeAgo(article.publishedAt))
-                    .font(.system(size: 9, weight: .medium, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 9, weight: .medium, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
 
@@ -441,10 +441,10 @@ struct RawNewsCard: View {
 
             HStack(spacing: 6) {
                 Image(systemName: "dot.radiowaves.left.and.right")
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 10, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Text(article.source.uppercased())
-                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 9, weight: .bold, design: .monospaced))
                     .tracking(0.6)
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
@@ -472,7 +472,7 @@ struct LoadingStateView: View {
             Spacer()
             ProgressView()
             Text("Haber akışı taranıyor")
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Spacer()
         }
@@ -488,11 +488,11 @@ struct ErrorStateView: View {
             Spacer()
 
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28))
+                .font(DesignTokens.Fonts.custom(size: 28))
                 .foregroundColor(InstitutionalTheme.Colors.crimson)
 
             Text(message)
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
@@ -515,16 +515,16 @@ struct EmptyFeedView: View {
             Spacer()
 
             Image(systemName: "newspaper")
-                .font(.system(size: 28))
+                .font(DesignTokens.Fonts.custom(size: 28))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
 
             VStack(spacing: 4) {
                 Text(scope == 0 ? "Takip listesi boş" : "Haber bulunamadı")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text(scope == 0 ? "Takip listenizdeki hisseler için haber bulunamadı."
                                 : "Genel piyasa haberi bulunamadı.")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
@@ -549,9 +549,9 @@ private struct sadeFeedActionButton: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 Image(systemName: icon)
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                 Text(label)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
             }
             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             .padding(.horizontal, 14)
@@ -591,7 +591,7 @@ struct ScopeButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 13, weight: isSelected ? .medium : .regular))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: isSelected ? .medium : .regular))
                 .foregroundColor(isSelected
                                  ? InstitutionalTheme.Colors.textPrimary
                                  : InstitutionalTheme.Colors.textSecondary)

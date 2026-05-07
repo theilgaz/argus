@@ -8,7 +8,7 @@ import SwiftUI
 struct NotificationsView: View {
     @ObservedObject var store = NotificationStore.shared
     @State private var selectedNotification: ArgusNotification?
-    @ObservedObject var viewModel: TradingViewModel
+    @ObservedObject private var market = MarketViewModel.shared
     var deepLinkID: String? = nil
     @StateObject private var deepLinkManager = DeepLinkManager.shared
     @EnvironmentObject private var router: NavigationRouter
@@ -73,14 +73,14 @@ struct NotificationsView: View {
                         Spacer()
                         VStack(spacing: 12) {
                             Image(systemName: "bell.slash")
-                                .font(.system(size: 28))
+                                .font(DesignTokens.Fonts.custom(size: 28))
                                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                             VStack(spacing: 4) {
                                 Text("Henüz bildirim yok")
-                                    .font(.system(size: 14, weight: .medium))
+                                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                 Text("Arka planda fırsat aranıyor.")
-                                    .font(.system(size: 12))
+                                    .font(DesignTokens.Fonts.custom(size: 12))
                                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                                     .multilineTextAlignment(.center)
                             }
@@ -114,7 +114,7 @@ struct NotificationsView: View {
         }
         .navigationBarHidden(true)
         .sheet(item: $selectedNotification) { note in
-            ArgusReportDetailView(notification: note, viewModel: viewModel)
+            ArgusReportDetailView(notification: note)
         }
         .overlay {
             if showDrawer {
@@ -194,7 +194,7 @@ struct NotificationRow: View {
                     .fill(tone.foreground.opacity(0.18))
                     .frame(width: 40, height: 40)
                 Image(systemName: iconName(for: notification.type))
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .semibold))
                     .foregroundColor(tone.foreground)
             }
 
@@ -219,7 +219,7 @@ struct NotificationRow: View {
                     ArgusChip(categoryLabel(notification.type), tone: tone)
                     Spacer(minLength: 4)
                     Text(notification.timestamp.formatted(date: .abbreviated, time: .shortened))
-                        .font(.system(size: 9, weight: .medium, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 9, weight: .medium, design: .monospaced))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
                 .padding(.top, 2)
@@ -268,7 +268,7 @@ struct NotificationRow: View {
 
 struct ArgusReportDetailView: View {
     let notification: ArgusNotification
-    @ObservedObject var viewModel: TradingViewModel
+    @ObservedObject private var market = MarketViewModel.shared
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
@@ -313,7 +313,7 @@ struct ArgusReportDetailView: View {
                                 .font(InstitutionalTheme.Typography.bodyStrong)
                                 .bold()
                         }
-                        .foregroundColor(.white)
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(notification.type == .buyOpportunity ? InstitutionalTheme.Colors.positive : InstitutionalTheme.Colors.negative)
@@ -329,15 +329,24 @@ struct ArgusReportDetailView: View {
     
     private func executeAction() {
         if notification.type == .buyOpportunity {
-            if let quote = viewModel.quotes[notification.symbol] {
+            if let quote = market.quotes[notification.symbol] {
                 let price = quote.currentPrice
                 if price > 0 {
                     let qty = 1000.0 / price
-                    viewModel.buy(symbol: notification.symbol, quantity: qty, source: .autoPilot, rationale: "Argus Raporu Onayı (\(notification.headline))")
+                    ExecutionStateViewModel.shared.buy(
+                        symbol: notification.symbol,
+                        quantity: qty,
+                        source: .autoPilot,
+                        rationale: "Argus Raporu Onayı (\(notification.headline))"
+                    )
                 }
             }
         } else if notification.type == .sellWarning {
-            viewModel.closeAllPositions(for: notification.symbol)
+            let openTrades = PortfolioStore.shared.trades.filter { $0.symbol == notification.symbol && $0.isOpen }
+            for trade in openTrades {
+                let price = market.quotes[trade.symbol]?.currentPrice ?? trade.entryPrice
+                PortfolioStore.shared.sell(tradeId: trade.id, currentPrice: price, reason: "Sinyal uyarısı kapatma")
+            }
         }
         
         let generator = UINotificationFeedbackGenerator()

@@ -94,8 +94,7 @@ struct MarketView: View {
                 )
             ) {
                 ArgusSanctumView(
-                    symbol: deepLinkManager.selectedStockSymbol ?? "",
-                    viewModel: viewModel
+                    symbol: deepLinkManager.selectedStockSymbol ?? ""
                 )
             }
             .sheet(isPresented: $showSearch) {
@@ -123,7 +122,7 @@ struct MarketView: View {
                     .preferredColorScheme(.dark)
             }
             .sheet(isPresented: $showNotifications) {
-                NotificationsView(viewModel: viewModel)
+                NotificationsView()
                     .preferredColorScheme(.dark)
             }
             .onAppear { applyLaunchOverrideIfNeeded() }
@@ -335,7 +334,7 @@ struct GlobalCockpitView: View {
             }
 
             // SmartTicker Strip
-            SmartTickerStrip(viewModel: viewModel)
+            SmartTickerStrip()
                 .padding(.top, 16)
 
             // 2026-05-05 H-65: "İzleme listesi" header silindi. Sayfa zaten
@@ -351,7 +350,7 @@ struct GlobalCockpitView: View {
             } else {
                 LazyVStack(spacing: 0) {
                     ForEach(watchlist, id: \.self) { symbol in
-                        NavigationLink(destination: ArgusSanctumView(symbol: symbol, viewModel: viewModel)) {
+                        NavigationLink(destination: ArgusSanctumView(symbol: symbol)) {
                             CrystalWatchlistRow(
                                 symbol: symbol,
                                 quote: watchlistVM.quotes[symbol],
@@ -406,7 +405,7 @@ struct BistCockpitView: View {
             } else {
                 LazyVStack(spacing: 0) {
                     ForEach(watchlist, id: \.self) { symbol in
-                        NavigationLink(destination: ArgusSanctumView(symbol: symbol, viewModel: viewModel)) {
+                        NavigationLink(destination: ArgusSanctumView(symbol: symbol)) {
                             BistCrystalRow(
                                 symbol: symbol,
                                 quote: watchlistVM.quotes[symbol],
