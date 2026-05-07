@@ -147,7 +147,7 @@ struct ArgusCockpitView: View {
                                     .padding(.top, 16)
                                 } else {
                                     ForEach(terminalData) { item in
-                                        NavigationLink(destination: ArgusSanctumView(symbol: item.symbol, viewModel: viewModel)) {
+                                        NavigationLink(destination: ArgusSanctumView(symbol: item.symbol)) {
                                             TerminalStockRow(
                                                 item: item,
                                                 onOrionTap: { openModule(.orion, for: item.symbol) },
@@ -182,7 +182,6 @@ struct ArgusCockpitView: View {
             if let module = selectedModuleType, let symbol = selectedSymbolForModule {
                 ModuleHoloSheet(
                     module: module,
-                    viewModel: viewModel,
                     symbol: symbol,
                     onClose: {
                         withAnimation {
@@ -283,7 +282,7 @@ struct ArgusCockpitView: View {
                 }
             }) {
                 Image(systemName: "line.3.horizontal")
-                    .font(.system(size: 16, weight: .regular))
+                    .font(DesignTokens.Fonts.custom(size: 16, weight: .regular))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .frame(width: 32, height: 32)
                     .contentShape(Rectangle())
@@ -292,7 +291,7 @@ struct ArgusCockpitView: View {
             .accessibilityLabel("Menü")
 
             Text(toolbarTitle)
-                .font(.system(size: 17, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 17, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .accessibilityAddTraits(.isHeader)
 
@@ -307,7 +306,7 @@ struct ArgusCockpitView: View {
                 }
             }) {
                 Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 16, weight: .regular))
+                    .font(DesignTokens.Fonts.custom(size: 16, weight: .regular))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .frame(width: 32, height: 32)
                     .contentShape(Rectangle())
@@ -329,7 +328,7 @@ struct ArgusCockpitView: View {
         Button(action: { withAnimation(.easeInOut(duration: 0.18)) { selectedMarket = tab } }) {
             VStack(spacing: 4) {
                 Text(title)
-                    .font(.system(size: 13, weight: isSelected ? .medium : .regular))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: isSelected ? .medium : .regular))
                     .foregroundColor(isSelected
                                      ? InstitutionalTheme.Colors.textPrimary
                                      : InstitutionalTheme.Colors.textSecondary)
@@ -396,7 +395,7 @@ struct TerminalControlBar: View {
     var body: some View {
         HStack(spacing: 10) {
             Text("\(count) hisse")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .monospacedDigit()
 
@@ -411,10 +410,10 @@ struct TerminalControlBar: View {
             } label: {
                 HStack(spacing: 4) {
                     Text(sortLabel(for: sortOption))
-                        .font(.system(size: 12, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     Image(systemName: "chevron.down")
-                        .font(.system(size: 9))
+                        .font(DesignTokens.Fonts.custom(size: 9))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
                 .padding(.horizontal, 4)
@@ -425,7 +424,7 @@ struct TerminalControlBar: View {
 
             Toggle(isOn: $hideLowQualityData) {
                 Text("Kalite")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             }
             .toggleStyle(SwitchToggleStyle(tint: InstitutionalTheme.Colors.aurora))
@@ -467,7 +466,7 @@ struct TerminalStockRow: View {
                 actionBlock
             } else {
                 Text("Henüz analiz yok")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -500,12 +499,12 @@ struct TerminalStockRow: View {
     private var symbolBlock: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(item.symbol.replacingOccurrences(of: ".IS", with: ""))
-                .font(.system(size: 15, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 15, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .lineLimit(1)
 
             Text(priceText)
-                .font(.system(size: 11, weight: .regular, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 11, weight: .regular, design: .monospaced))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .lineLimit(1)
         }
@@ -533,10 +532,10 @@ struct TerminalStockRow: View {
             if council > 0 {
                 HStack(spacing: 6) {
                     Text(councilLabel(item.action))
-                        .font(.system(size: 14, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                         .foregroundColor(actionColor(item.action))
                     Text("\(Int(council * 100))%")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .monospacedDigit()
                 }
@@ -568,10 +567,10 @@ struct TerminalStockRow: View {
     private func inlineScore(prefix: String, score: Double, tone: Color) -> some View {
         HStack(spacing: 3) {
             Text(prefix)
-                .font(.system(size: 11, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 11, weight: .semibold))
                 .foregroundColor(tone)
             Text("\(Int(score))")
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .monospacedDigit()
         }
@@ -587,12 +586,12 @@ struct TerminalStockRow: View {
         return Group {
             if let c = change {
                 Text(String(format: "%+.1f%%", c))
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .medium, design: .monospaced))
                     .foregroundColor(color)
                     .monospacedDigit()
             } else {
                 Text("—")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
         }

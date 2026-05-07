@@ -14,7 +14,6 @@ struct PortfolioView: View {
     @ObservedObject private var execution = ExecutionStateViewModel.shared
     @ObservedObject private var portfolioStore = PortfolioStore.shared
     @ObservedObject private var autoPilotStore = AutoPilotStore.shared
-    @EnvironmentObject private var legacyVM: TradingViewModel
     @State private var selectedEngine: AutoPilotEngineFilter = .all
     @State private var showNewTradeSheet = false
     @State private var showHistory = false
@@ -138,7 +137,6 @@ struct PortfolioView: View {
             }
             .sheet(isPresented: $showTradeBrain) {
                 TradeBrainView()
-                    .environmentObject(legacyVM)
                     .preferredColorScheme(.dark)
             }
             .sheet(item: $tradeToEdit) { trade in
