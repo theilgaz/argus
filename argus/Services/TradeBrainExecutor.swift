@@ -83,8 +83,56 @@ class TradeBrainExecutor: ObservableObject {
         let notes: [String]
     }
     
+    // MARK: - Add-On Gate
+
+    private func shouldAllowAddOn(
+        symbol: String,
+        currentPrice: Double,
+        globalAetherScore: Double,
+        bistAetherScore: Double,
+        portfolio: [Trade],
+        balance: Double,
+        bistBalance: Double,
+        quotes: [String: Quote],
+        policy: RiskEscapePolicy,
+        isSafeSymbol: Bool
+    ) -> Bool {
+        let isBist = SymbolResolver.shared.isBistSymbol(symbol)
+        let effectiveAether = isBist ? bistAetherScore : globalAetherScore
+
+        guard effectiveAether >= 65 else {
+            debugSkip(symbol: symbol, reason: "ekleme reddedildi: Aether \(Int(effectiveAether)) < 65")
+            return false
+        }
+
+        if policy.blockRiskyBuys && !isSafeSymbol {
+            debugSkip(symbol: symbol, reason: "ekleme reddedildi: policy riskli alım kapalı")
+            return false
+        }
+
+        let tradesForSymbol = portfolio.filter { $0.isOpen && $0.symbol == symbol }
+        let existingValue = tradesForSymbol.reduce(0.0) { $0 + ($1.quantity * currentPrice) }
+
+        let marketPortfolio = portfolio.filter { $0.isOpen && SymbolResolver.shared.isBistSymbol($0.symbol) == isBist }
+        let portfolioValue = marketPortfolio.reduce(0.0) { sum, t in
+            let price = quotes[t.symbol]?.currentPrice ?? t.entryPrice
+            return sum + (t.quantity * price)
+        }
+        let availableBalance = isBist ? bistBalance : balance
+        let totalEquity = availableBalance + portfolioValue
+        let currentWeight = totalEquity > 0 ? (existingValue / totalEquity) : 1.0
+
+        guard currentWeight < 0.12 else {
+            debugSkip(symbol: symbol, reason: "ekleme reddedildi: pozisyon ağırlığı %\(Int(currentWeight * 100)) >= %12")
+            return false
+        }
+
+        ArgusLogger.info("TradeBrainExecutor: \(symbol) ekleme onaylandı (Aether: \(Int(effectiveAether)), ağırlık: %\(Int(currentWeight * 100)))", category: "TRADEBRAIN")
+        return true
+    }
+
     // MARK: - Main Execution Loop
-    
+
     /// Council kararlarını değerlendir ve gerekirse işlem yap
     func evaluateDecisions(
         decisions: [String: ArgusGrandDecision],
@@ -102,7 +150,7 @@ class TradeBrainExecutor: ObservableObject {
 
         let openTrades = portfolio.filter { $0.isOpen }
         let openSymbols = Set(openTrades.map { $0.symbol })
-        let openTradeMap = Dictionary(uniqueKeysWithValues: openTrades.map { ($0.symbol, $0) })
+        let openTradeMap = Dictionary(openTrades.map { ($0.symbol, $0) }, uniquingKeysWith: { first, _ in first })
         let aetherScore = macroScore ?? 50
         let policy = RiskEscapePolicy.from(aetherScore: aetherScore)
 
@@ -269,108 +317,134 @@ class TradeBrainExecutor: ObservableObject {
             }
             
             // ALIM KARARLARI
+            let isBuyAction = decision.action == .aggressiveBuy || decision.action == .accumulate
+            let isBistSym = SymbolResolver.shared.isBistSymbol(symbol)
+            let isAddOn: Bool
             if !hasOpenPosition {
-                if decision.action == .aggressiveBuy || decision.action == .accumulate {
-                    if policy.blockRiskyBuys && !isSafeSymbol {
-                        // ── YENİ: Velocity override — kriz'den çıkış başlıyorsa küçük giriş izni
-                        let velocityAllowsEntry = velocityAnalysis.signal == .recoveringFast ||
-                                                  velocityAnalysis.signal == .recovering
-                        if !velocityAllowsEntry {
-                            await OpportunityCostTracker.shared.recordSkip(
-                                symbol: symbol, price: currentPrice,
-                                reason: .aetherTooLow, aetherScore: aetherScore
-                            )
-                            debugSkip(symbol: symbol, reason: "policy riskli alimi kapatti (\(policy.mode.rawValue))")
-                            continue
-                        }
-                        ArgusLogger.info("⚡ Velocity override: \(symbol) kriz'de ama Aether iyileşiyor (\(velocityAnalysis.signal.rawValue))", category: "TRADEBRAIN")
-                    }
-
-                    // ── YENİ: Korelasyon kontrolü
-                    if correlResult.concentrationRisk == .critical {
-                        await OpportunityCostTracker.shared.recordSkip(
-                            symbol: symbol, price: currentPrice,
-                            reason: .portfolioHot, aetherScore: aetherScore
-                        )
-                        debugSkip(symbol: symbol, reason: "korelasyon kritik: portföy tek risk faktörüne bağlı")
-                        continue
-                    }
-
-                    // Faz 3.3: BorsaPy circuit açıkken BIST sinyallerinin confidence'ı %30 düşürülür.
-                    // Yahoo fallback aktif ama veri 5+ dakika gecikmeli olabilir → karar kalitesi düşük.
-                    let isBistSymForConf = SymbolResolver.shared.isBistSymbol(symbol)
-                    let dataQualityPenalty: Double = (isBistSymForConf && BorsaPyProvider.shared.isCircuitOpen()) ? 0.70 : 1.0
-
-                    // Faz 3.4: Horizon çakışma çözümü. Core (uzun) ve Pulse (kısa) skorlar
-                    // aynı yönü gösteriyorsa teyit bonusu; çelişiyorlarsa ceza.
-                    //   her ikisi de >=50 veya her ikisi <50 → uyum (1.10× — teyit)
-                    //   biri >60 diğer <40 (büyük çelişki) → 0.65× (ciddi ceza)
-                    //   küçük çelişki (uyumsuz ama uçlarda değil) → 0.85×
-                    let coreScore = decision.finalScoreCore
-                    let pulseScore = decision.finalScorePulse
-                    let bothBullish = coreScore >= 50 && pulseScore >= 50
-                    let bothBearish = coreScore < 50 && pulseScore < 50
-                    let conflictBig = (coreScore >= 60 && pulseScore < 40) || (pulseScore >= 60 && coreScore < 40)
-                    let horizonAgreementMultiplier: Double
-                    if bothBullish || bothBearish { horizonAgreementMultiplier = 1.10 }
-                    else if conflictBig { horizonAgreementMultiplier = 0.65 }
-                    else { horizonAgreementMultiplier = 0.85 }
-
-                    let effectiveConfidence = min(0.99, decision.confidence * dataQualityPenalty * horizonAgreementMultiplier)
-                    if dataQualityPenalty < 1.0 {
-                        debugSkip(symbol: symbol, reason: "BorsaPy circuit açık → BIST confidence %30 düşürüldü")
-                    }
-                    if horizonAgreementMultiplier != 1.10 && horizonAgreementMultiplier != 1.0 {
-                        ArgusLogger.info("TradeBrainExecutor: \(symbol) horizon \(horizonAgreementMultiplier < 0.85 ? "ÇELİŞKİ" : "uyumsuzluk") (Core=\(Int(coreScore)) Pulse=\(Int(pulseScore)) → ×\(String(format: "%.2f", horizonAgreementMultiplier)))", category: "TRADEBRAIN")
-                    } else if horizonAgreementMultiplier == 1.10 {
-                        ArgusLogger.info("TradeBrainExecutor: \(symbol) horizon teyidi (Core=\(Int(coreScore)) Pulse=\(Int(pulseScore)) → ×1.10)", category: "TRADEBRAIN")
-                    }
-
-                    if effectiveConfidence < profile.minDecisionConfidence {
-                        skippedLowConfidence += 1
-                        await OpportunityCostTracker.shared.recordSkip(
-                            symbol: symbol, price: currentPrice,
-                            reason: .lowConfidence, aetherScore: aetherScore
-                        )
-                        debugSkip(
-                            symbol: symbol,
-                            reason: "güven düşük (\(String(format: "%.2f", effectiveConfidence)) < \(String(format: "%.2f", profile.minDecisionConfidence)))"
-                        )
-                        continue
-                    }
-                    ArgusLogger.info("TradeBrainExecutor: ALIM yapılıyor: \(symbol)", category: "TRADEBRAIN")
-                    let isBistSym = SymbolResolver.shared.isBistSymbol(symbol)
-                    await executeBuy(
-                        symbol: symbol,
-                        decision: decision,
-                        currentPrice: currentPrice,
-                        balance: balance,
-                        bistBalance: bistBalance,
-                        portfolio: portfolio,
-                        quotes: quotes,
-                        orionScore: orionScores[symbol]?.score ?? 50,
-                        candles: symbolCandles,
-                        profile: profile,
-                        kellyProfile: kellyProfile,
-                        verdicts: allVerdicts,
-                        velocityAnalysis: velocityAnalysis,
-                        correlMultiplier: correlResult.positionMultiplier,
-                        aetherOverride: isBistSym ? bistAetherScore : nil,
-                        momentumFloor: isBistSym ? bistMomentum.aetherFloor : globalMomentum.aetherFloor
-                    )
-                } else {
-                    ArgusLogger.warn("TradeBrainExecutor: \(symbol) - Action \(decision.action.rawValue) alım için değil", category: "TRADEBRAIN")
-                    debugSkip(symbol: symbol, reason: "aksiyon alım değil (\(decision.action.rawValue))")
-                }
-            } else {
-                ArgusLogger.warn("TradeBrainExecutor: \(symbol) - Zaten açık pozisyon var, alım yapılmayacak", category: "TRADEBRAIN")
-                debugSkip(symbol: symbol, reason: "zaten açık pozisyon var")
-                if decision.action == .aggressiveBuy || decision.action == .accumulate {
+                isAddOn = false
+            } else if isBuyAction {
+                let addOnAllowed = shouldAllowAddOn(
+                    symbol: symbol,
+                    currentPrice: currentPrice,
+                    globalAetherScore: aetherScore,
+                    bistAetherScore: bistAetherScore,
+                    portfolio: portfolio,
+                    balance: balance,
+                    bistBalance: bistBalance,
+                    quotes: quotes,
+                    policy: policy,
+                    isSafeSymbol: isSafeSymbol
+                )
+                if !addOnAllowed {
                     await OpportunityCostTracker.shared.recordSkip(
                         symbol: symbol, price: currentPrice,
                         reason: .portfolioHot, aetherScore: aetherScore
                     )
                 }
+                isAddOn = addOnAllowed
+            } else {
+                isAddOn = false
+            }
+
+            let canProceedBuy = isBuyAction && (!hasOpenPosition || isAddOn)
+
+            if canProceedBuy {
+                if policy.blockRiskyBuys && !isSafeSymbol {
+                    let velocityAllowsEntry = velocityAnalysis.signal == .recoveringFast ||
+                                              velocityAnalysis.signal == .recovering
+                    if !velocityAllowsEntry {
+                        await OpportunityCostTracker.shared.recordSkip(
+                            symbol: symbol, price: currentPrice,
+                            reason: .aetherTooLow, aetherScore: aetherScore
+                        )
+                        debugSkip(symbol: symbol, reason: "policy riskli alimi kapatti (\(policy.mode.rawValue))")
+                        continue
+                    }
+                    ArgusLogger.info("⚡ Velocity override: \(symbol) kriz'de ama Aether iyileşiyor (\(velocityAnalysis.signal.rawValue))", category: "TRADEBRAIN")
+                }
+
+                if correlResult.concentrationRisk == .critical {
+                    await OpportunityCostTracker.shared.recordSkip(
+                        symbol: symbol, price: currentPrice,
+                        reason: .portfolioHot, aetherScore: aetherScore
+                    )
+                    debugSkip(symbol: symbol, reason: "korelasyon kritik: portföy tek risk faktörüne bağlı")
+                    continue
+                }
+
+                let dataQualityPenalty: Double = (isBistSym && BorsaPyProvider.shared.isCircuitOpen()) ? 0.70 : 1.0
+
+                let coreScore = decision.finalScoreCore
+                let pulseScore = decision.finalScorePulse
+                let bothBullish = coreScore >= 50 && pulseScore >= 50
+                let bothBearish = coreScore < 50 && pulseScore < 50
+                let conflictBig = (coreScore >= 60 && pulseScore < 40) || (pulseScore >= 60 && coreScore < 40)
+                let horizonAgreementMultiplier: Double
+                if bothBullish || bothBearish { horizonAgreementMultiplier = 1.10 }
+                else if conflictBig { horizonAgreementMultiplier = 0.65 }
+                else { horizonAgreementMultiplier = 0.85 }
+
+                let effectiveConfidence = min(0.99, decision.confidence * dataQualityPenalty * horizonAgreementMultiplier)
+                if dataQualityPenalty < 1.0 {
+                    debugSkip(symbol: symbol, reason: "BorsaPy circuit açık → BIST confidence %30 düşürüldü")
+                }
+                if horizonAgreementMultiplier != 1.10 && horizonAgreementMultiplier != 1.0 {
+                    ArgusLogger.info("TradeBrainExecutor: \(symbol) horizon \(horizonAgreementMultiplier < 0.85 ? "ÇELİŞKİ" : "uyumsuzluk") (Core=\(Int(coreScore)) Pulse=\(Int(pulseScore)) → ×\(String(format: "%.2f", horizonAgreementMultiplier)))", category: "TRADEBRAIN")
+                } else if horizonAgreementMultiplier == 1.10 {
+                    ArgusLogger.info("TradeBrainExecutor: \(symbol) horizon teyidi (Core=\(Int(coreScore)) Pulse=\(Int(pulseScore)) → ×1.10)", category: "TRADEBRAIN")
+                }
+
+                if effectiveConfidence < profile.minDecisionConfidence {
+                    skippedLowConfidence += 1
+                    await OpportunityCostTracker.shared.recordSkip(
+                        symbol: symbol, price: currentPrice,
+                        reason: .lowConfidence, aetherScore: aetherScore
+                    )
+                    debugSkip(
+                        symbol: symbol,
+                        reason: "güven düşük (\(String(format: "%.2f", effectiveConfidence)) < \(String(format: "%.2f", profile.minDecisionConfidence)))"
+                    )
+                    continue
+                }
+
+                let buyProfile: SymbolExecutionProfile
+                if isAddOn {
+                    let addOnCap = min(0.5, decision.allocationMultiplier)
+                    buyProfile = SymbolExecutionProfile(
+                        symbol: profile.symbol,
+                        tier: profile.tier,
+                        allocationMultiplier: profile.allocationMultiplier * addOnCap,
+                        cooldownMultiplier: profile.cooldownMultiplier,
+                        minDecisionConfidence: profile.minDecisionConfidence,
+                        notes: profile.notes + ["pozisyon ekleme"]
+                    )
+                    ArgusLogger.info("TradeBrainExecutor: EKLEME yapılıyor: \(symbol) (cap: ×\(String(format: "%.2f", addOnCap)))", category: "TRADEBRAIN")
+                } else {
+                    buyProfile = profile
+                    ArgusLogger.info("TradeBrainExecutor: ALIM yapılıyor: \(symbol)", category: "TRADEBRAIN")
+                }
+
+                await executeBuy(
+                    symbol: symbol,
+                    decision: decision,
+                    currentPrice: currentPrice,
+                    balance: balance,
+                    bistBalance: bistBalance,
+                    portfolio: portfolio,
+                    quotes: quotes,
+                    orionScore: orionScores[symbol]?.score ?? 50,
+                    candles: symbolCandles,
+                    profile: buyProfile,
+                    kellyProfile: kellyProfile,
+                    verdicts: allVerdicts,
+                    velocityAnalysis: velocityAnalysis,
+                    correlMultiplier: correlResult.positionMultiplier,
+                    aetherOverride: isBistSym ? bistAetherScore : nil,
+                    momentumFloor: isBistSym ? bistMomentum.aetherFloor : globalMomentum.aetherFloor,
+                    isAddOn: isAddOn
+                )
+            } else if !isBuyAction && !hasOpenPosition {
+                debugSkip(symbol: symbol, reason: "aksiyon alım değil (\(decision.action.rawValue))")
             }
             
             // SATIM KARARLARI (Plan bazlı - Trade Brain)
@@ -494,7 +568,8 @@ class TradeBrainExecutor: ObservableObject {
         correlMultiplier: Double = 1.0,
         isCrisisAlpha: Bool = false,
         aetherOverride: Double? = nil,    // BIST: SirkiyeAether; Global: nil → MacroRegimeService
-        momentumFloor: Double = 0         // MarketMomentumGate'den gelen breadth tabanı
+        momentumFloor: Double = 0,        // MarketMomentumGate'den gelen breadth tabanı
+        isAddOn: Bool = false
     ) async {
         ArgusLogger.info("executeBuy: \(symbol) - Fiyat: \(currentPrice)", category: "TRADEBRAIN")
 
@@ -835,11 +910,14 @@ class TradeBrainExecutor: ObservableObject {
         // Not: TradingViewModel.shared kullanılamıyor, NotificationCenter ile çözüyoruz
         ArgusLogger.info("executeBuy: Notification gönderiliyor - Symbol: \(symbol), Qty: \(proposedQuantity), Price: \(currentPrice)", category: "TRADEBRAIN")
         
-        // Momentum floor ile açılan girişleri "MOMENTUM:" önekiyle işaretle.
-        // Bu rationale, fade exit logiğinde pozisyonu tanımlamak için kullanılır.
-        let rationale = momentumFloor > 0
-            ? "MOMENTUM: \(decision.reasoning)"
-            : decision.reasoning
+        let rationale: String
+        if isAddOn {
+            rationale = "EKLEME: \(decision.reasoning)"
+        } else if momentumFloor > 0 {
+            rationale = "MOMENTUM: \(decision.reasoning)"
+        } else {
+            rationale = decision.reasoning
+        }
 
         NotificationCenter.default.post(
             name: .tradeBrainBuyOrder,
@@ -854,7 +932,7 @@ class TradeBrainExecutor: ObservableObject {
             ]
         )
 
-        log("✅ \(symbol): ALIM - \(String(format: "%.2f", proposedQuantity)) adet @ \(String(format: "%.2f", currentPrice))\(momentumFloor > 0 ? " [MOMENTUM]" : "")")
+        log("✅ \(symbol): \(isAddOn ? "EKLEME" : "ALIM") - \(String(format: "%.2f", proposedQuantity)) adet @ \(String(format: "%.2f", currentPrice))\(isAddOn ? " [EKLEME]" : momentumFloor > 0 ? " [MOMENTUM]" : "")")
         log("   📋 Karar: \(decision.action.rawValue) (\(String(format: "%.0f", decision.confidence * 100))%)")
         
         ArgusLogger.info("executeBuy: ALIM EMRİ GÖNDERİLDİ - \(symbol): \(proposedQuantity) @ \(currentPrice)", category: "TRADEBRAIN")
