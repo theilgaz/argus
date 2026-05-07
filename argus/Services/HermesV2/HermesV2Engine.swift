@@ -161,15 +161,14 @@ actor HermesV2Engine {
     private func analyzeFreshness(news: HermesNewsSnapshot) -> (Double?, [String]) {
         guard !news.articles.isEmpty else { return (nil, ["Tazelik için article yok"]) }
         let now = Date()
-        let ages = news.articles.map { now.timeIntervalSince($0.publishedAt) / 3600.0 }  // Hours
+        let ages = news.articles.map { now.timeIntervalSince($0.publishedAt) / 3600.0 }
         let avgAge = ages.reduce(0, +) / Double(ages.count)
 
-        let s: Double
-        if avgAge < 6        { s = 90 }   // 6 saat içinde
-        else if avgAge < 24  { s = 75 }   // Günlük taze
-        else if avgAge < 72  { s = 55 }   // 3 günlük
-        else if avgAge < 168 { s = 35 }   // Haftalık
-        else                  { s = 20 }   // Eski
+        // Üstel bozunma: yarı ömür 77 saat (~3.2 gün), taban 15.
+        // 0h≈95  6h≈90  24h≈76  72h≈50  168h≈21  336h+→15
+        let halfLife: Double = 77.0
+        let lambda = 0.693147 / halfLife
+        let s = max(15.0, 95.0 * exp(-lambda * avgAge))
 
         return (s, [
             "Ortalama yaş: \(String(format: "%.1f", avgAge)) saat",

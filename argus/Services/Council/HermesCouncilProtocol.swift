@@ -76,6 +76,84 @@ struct HermesNewsSnapshot: Sendable, Codable {
     static func empty(symbol: String) -> HermesNewsSnapshot {
         HermesNewsSnapshot(symbol: symbol, timestamp: Date(), insights: [], articles: [])
     }
+
+    // MARK: - Cache-Based Factory
+
+    /// Mevcut cache'lerden (HermesNewsViewModel + HermesEventStore) sembol için
+    /// HermesNewsSnapshot üretir. Watchlist refresh'leri sırasında dolan verileri
+    /// kullanır — yeni fetch tetiklemez.
+    /// Cache boşsa nil döner (graceful degradation).
+    @MainActor
+    static func fromCache(symbol: String) -> HermesNewsSnapshot? {
+        let vm = HermesNewsViewModel.shared
+        let insights = vm.newsInsightsBySymbol[symbol] ?? []
+        let articles = vm.newsBySymbol[symbol] ?? []
+
+        // Insight varsa doğrudan snapshot oluştur
+        if !insights.isEmpty {
+            return HermesNewsSnapshot(
+                symbol: symbol,
+                timestamp: insights.first?.createdAt ?? Date(),
+                insights: insights,
+                articles: articles
+            )
+        }
+
+        // Insight yoksa HermesEventStore'dan event-based fallback dene.
+        // Event'ler LLM analizinden geliyor, insight'a dönüştürülebilir.
+        let events = HermesEventStore.shared.getEvents(for: symbol)
+        let recentEvents = events.filter {
+            Date().timeIntervalSince($0.publishedAt) < 24 * 3600 // Son 24 saat
+        }
+        guard !recentEvents.isEmpty else { return nil }
+
+        let eventInsights: [NewsInsight] = recentEvents.prefix(10).map { event in
+            NewsInsight(
+                symbol: event.symbol,
+                articleId: event.articleId,
+                headline: event.headline,
+                summaryTRLong: event.summaryTRShort ?? event.rationaleShort,
+                impactSentenceTR: event.rationaleShort,
+                sentiment: event.sentimentLabel ?? sentimentFromPolarity(event.polarity),
+                confidence: event.confidence,
+                impactScore: event.finalScore
+            )
+        }
+
+        return HermesNewsSnapshot(
+            symbol: symbol,
+            timestamp: recentEvents.first?.publishedAt ?? Date(),
+            insights: eventInsights,
+            articles: articles
+        )
+    }
+
+    /// BIST sembolleri için BISTSentimentEngine cache'inden snapshot üretir.
+    /// Actor-isolated olduğu için async. Cache boşsa nil döner.
+    /// Yeni fetch tetiklemez — yalnızca mevcut cache verisi kullanılır.
+    static func fromBistCache(symbol: String) async -> HermesNewsSnapshot? {
+        // Önce standart cache'i dene (BIST haberleri de HermesNewsViewModel'e akıyor)
+        let standard = await MainActor.run { fromCache(symbol: symbol) }
+        if standard != nil { return standard }
+
+        // BISTSentimentEngine actor-isolated cache'i (cache-only, fetch yok)
+        let engine = BISTSentimentEngine.shared
+        guard let payload = await engine.getCachedPayload(for: symbol) else {
+            return nil
+        }
+        // BISTSentimentAdapter zaten BISTSentimentResult → HermesNewsSnapshot dönüşümü yapıyor
+        let snapshot = BISTSentimentAdapter.adapt(result: payload.result, articles: payload.articles)
+        guard !snapshot.insights.isEmpty else { return nil }
+        return snapshot
+    }
+
+    private static func sentimentFromPolarity(_ polarity: HermesEventPolarity) -> NewsSentiment {
+        switch polarity {
+        case .positive: return .weakPositive
+        case .negative: return .weakNegative
+        case .mixed: return .neutral
+        }
+    }
 }
 
 // MARK: - Hermes News Proposal

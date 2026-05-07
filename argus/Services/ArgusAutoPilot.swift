@@ -67,16 +67,22 @@ final class ArgusAutoPilot {
         if score >= realTradeThreshold {
             // A. REAL SNIPER MODE
             // Safety gate: earnings/event guard (AutoPilotConfig.earningsGuardEnabled)
-            guard await ArgusAutoPilotEngine.shared.checkSafety(symbol: symbol) else {
-                logger.logSystemEvent("⛔ AutoPilot Rejection: \(symbol) - Safety Guard (earnings)")
+            let safetyResult = await ArgusAutoPilotEngine.shared.checkSafety(symbol: symbol)
+            guard safetyResult.passed else {
+                logger.logSystemEvent("⛔ AutoPilot Rejection: \(symbol) - Safety Guard (earnings hard block)")
                 Task { @MainActor in
                     LearningPersistenceManager.shared.logMissedOpportunity(
                         symbol: symbol,
                         score: score,
-                        reason: "Safety Guard (earnings)"
+                        reason: "Safety Guard (earnings hard block)"
                     )
                 }
                 return
+            }
+            // Earnings penalty varsa loga yaz (evaluate path'i kendi penalty'sini uygular;
+            // bu yol legacy sniper path — burada penalty score'a yansımaz ama log kalır)
+            if safetyResult.confidenceMultiplier < 1.0 {
+                logger.logSystemEvent("⚠️ Earnings guard penalty aktif: \(symbol) ×\(safetyResult.confidenceMultiplier)")
             }
             print("🦅 SNIPER ENTRY: \(symbol) Score: \(Int(score))")
             let size = await calculatePositionSize(score: score, macro: aether, symbol: symbol)

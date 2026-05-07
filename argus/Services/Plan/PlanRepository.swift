@@ -84,10 +84,12 @@ final class PlanRepository: ObservableObject {
                         timestamp: Date()
                     ),
                     hermesDecision: nil,
+                    phoenixAdvice: nil,
                     orionDetails: nil,
                     financialDetails: nil,
                     bistDetails: nil,
                     patterns: nil,
+                    kellyMultiplier: 1.0,
                     timestamp: Date()
                 )
             }

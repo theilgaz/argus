@@ -240,8 +240,236 @@ final class AtlasExplanationFactory {
         }
     }
     
+    // MARK: - EV/EBITDA Açıklamaları
+
+    func explainEVEBITDA(value: Double?) -> (status: AtlasMetricStatus, score: Double, explanation: String, educational: String) {
+        guard let ev = value, ev > 0 else {
+            return (.noData, 0, "EV/EBITDA hesaplanamıyor — veri yok veya EBITDA negatif.",
+                    "EV/EBITDA, şirketin toplam değerinin operasyonel karına oranıdır. Borç yapısından bağımsız değerleme sağlar.")
+        }
+
+        switch ev {
+        case ..<6:
+            return (.excellent, 90,
+                    "Derin değer! EV/EBITDA çok düşük — piyasa bu şirketi görmezden geliyor olabilir.",
+                    "EV/EBITDA < 6, şirketin operasyonel karına göre çok ucuz olduğunu gösterir. Yapısal sorun yoksa fırsat.")
+        case 6..<10:
+            return (.good, 75,
+                    "Ucuz değerleme. Operasyonel kara göre makul fiyat.",
+                    "Bu aralık değer yatırımcıları için cazip. Olgun, nakit üreten şirketlerde sık görülür.")
+        case 10..<15:
+            return (.neutral, 60,
+                    "Orta düzey değerleme. Çoğu sektör için normal.",
+                    "Piyasa ortalamasına yakın bir çarpan. Ne ucuz ne pahalı.")
+        case 15..<20:
+            return (.neutral, 45,
+                    "Biraz pahalı. Büyüme beklentisi fiyata kısmen yansımış.",
+                    "Bu seviye büyüyen şirketler için kabul edilebilir, olgun şirketler için yüksek.")
+        case 20..<30:
+            return (.warning, 30,
+                    "Pahalı! Operasyonel kara göre yüksek fiyatlanmış.",
+                    "EV/EBITDA > 20, ya çok güçlü büyüme beklentisi ya da aşırı değerleme işareti.")
+        default:
+            return (.bad, 15,
+                    "Çok pahalı! EV/EBITDA > 30 nadiren sürdürülebilir.",
+                    "Bu çarpanla yatırım yapmak çok yüksek büyüme varsayımı gerektirir.")
+        }
+    }
+
+    // MARK: - PEG Oranı Açıklamaları
+
+    func explainPEG(value: Double?) -> (status: AtlasMetricStatus, score: Double, explanation: String, educational: String) {
+        guard let peg = value else {
+            return (.noData, 0, "PEG oranı hesaplanamıyor — veri yok.",
+                    "PEG, F/K oranının büyüme hızına bölünmesiyle bulunur. Büyümeyi de hesaba katan bir değerleme ölçüsüdür.")
+        }
+
+        if peg < 0 {
+            return (.warning, 25,
+                    "Negatif PEG — büyüme beklentisi negatif veya şirket zarar ediyor.",
+                    "Negatif PEG, ya kar düşüyor ya da büyüme negatif demektir. Her iki durumda da dikkat gerekir.")
+        }
+
+        switch peg {
+        case ..<0.5:
+            return (.excellent, 90,
+                    "Aşırı ucuz! Büyümesine göre çok düşük fiyatlanmış.",
+                    "PEG < 0.5, piyasanın şirketin büyüme potansiyelini fiyatlayamadığını gösterebilir.")
+        case 0.5..<1.0:
+            return (.good, 80,
+                    "Ucuz. Büyüme hızına göre cazip değerleme.",
+                    "PEG < 1 geleneksel olarak 'ucuz' kabul edilir. Peter Lynch'in favori metriği!")
+        case 1.0..<1.5:
+            return (.good, 65,
+                    "Makul. Büyümeyle uyumlu fiyatlama.",
+                    "PEG ≈ 1, şirketin büyüme hızıyla orantılı fiyatlandığını gösterir.")
+        case 1.5..<2.0:
+            return (.neutral, 50,
+                    "Orta seviye. Büyümeye göre biraz pahalı.",
+                    "Bu aralık kaliteli şirketler için kabul edilebilir, ama premium ödüyorsun.")
+        case 2.0..<3.0:
+            return (.warning, 35,
+                    "Pahalı. Büyüme hızı bu fiyatı haklı çıkarmakta zorlanır.",
+                    "PEG > 2, şirketin büyümesine göre fazla fiyatlandığını gösterir.")
+        default:
+            return (.bad, 20,
+                    "Çok pahalı! Büyümeye rağmen aşırı fiyatlanmış.",
+                    "PEG > 3 ciddi aşırı değerleme sinyali. Büyüme ya çok yavaş ya da fiyat çok yüksek.")
+        }
+    }
+
+    // MARK: - İleriye Dönük F/K Açıklamaları
+
+    func explainForwardPE(value: Double?) -> (status: AtlasMetricStatus, score: Double, explanation: String, educational: String) {
+        guard let fpe = value, fpe > 0 else {
+            return (.noData, 0, "İleriye dönük F/K hesaplanamıyor — analist tahmini yok veya zarar bekleniyor.",
+                    "Forward P/E, hisse fiyatının gelecek yıl beklenen karına bölünmesiyle bulunur. Piyasa beklentisini yansıtır.")
+        }
+
+        switch fpe {
+        case ..<8:
+            return (.excellent, 90,
+                    "Çok ucuz! Gelecek yıl beklenen kara göre derin değer.",
+                    "Forward F/K < 8, ya piyasa kötümser ya da gerçek bir değer fırsatı. Neden bu kadar ucuz, araştır.")
+        case 8..<12:
+            return (.good, 80,
+                    "Ucuz. Analist tahminlerine göre cazip fiyat.",
+                    "Bu aralık, gelecek karın makul bir çarpanla fiyatlandığını gösterir.")
+        case 12..<18:
+            return (.good, 65,
+                    "Makul fiyatlanmış. Beklentiler dengeli.",
+                    "Çoğu sağlıklı şirket için normal forward F/K aralığı.")
+        case 18..<25:
+            return (.neutral, 50,
+                    "Orta seviye. Büyüme primi fiyata yansımış.",
+                    "Piyasa bu şirketten ortalamanın üstünde kar büyümesi bekliyor.")
+        case 25..<35:
+            return (.warning, 35,
+                    "Pahalı. Gelecek kara göre yüksek fiyatlanmış.",
+                    "Bu seviyede, analist tahminleri tutmazsa ciddi düzeltme riski var.")
+        default:
+            return (.bad, 20,
+                    "Çok pahalı! Forward F/K > 35, spekülatif fiyatlama.",
+                    "Bu çarpan ancak hiper-büyüme şirketlerinde haklı çıkabilir.")
+        }
+    }
+
+    // MARK: - ROA Açıklamaları
+
+    func explainROA(value: Double?) -> (status: AtlasMetricStatus, score: Double, explanation: String, educational: String) {
+        guard let roa = value else {
+            return (.noData, 0, "ROA hesaplanamıyor — veri yok.",
+                    "ROA (Aktif Karlılığı), şirketin toplam varlıklarından ne kadar kar ürettiğini gösterir.")
+        }
+
+        switch roa {
+        case ..<0:
+            return (.critical, 10,
+                    "Negatif ROA! Şirket varlıklarıyla zarar üretiyor.",
+                    "Negatif ROA, şirketin operasyonlarının karsız olduğu anlamına gelir. Acil müdahale gerektirir.")
+        case 0..<2:
+            return (.bad, 30,
+                    "Çok düşük aktif karlılığı. Varlıklar verimsiz kullanılıyor.",
+                    "ROA < %2, şirketin varlıklarını kara dönüştürmekte zorlandığını gösterir.")
+        case 2..<5:
+            return (.warning, 45,
+                    "Düşük-orta karlılık. Sektöre göre değerlendirilmeli.",
+                    "Bankalar ve ağır sanayi için normal olabilir, teknoloji için düşük.")
+        case 5..<10:
+            return (.neutral, 60,
+                    "Orta düzey aktif karlılığı. Kabul edilebilir.",
+                    "Çoğu sektörde bu aralık sağlıklı kabul edilir.")
+        case 10..<15:
+            return (.good, 75,
+                    "İyi aktif karlılığı. Varlıklar verimli kullanılıyor.",
+                    "ROA > %10, şirketin sermaye-yoğun bir yapıda bile iyi kar ürettiğini gösterir.")
+        default:
+            return (.excellent, 90,
+                    "Mükemmel! Her 100₺ varlık \(String(format: "%.0f", roa))₺ kar üretiyor.",
+                    "ROA > %15 nadirdir. Asset-light (düşük varlıklı) iş modeli veya güçlü operasyonel verimlilik işareti.")
+        }
+    }
+
+    // MARK: - Net Kar Marjı Açıklamaları
+
+    func explainNetMargin(value: Double?) -> (status: AtlasMetricStatus, score: Double, explanation: String, educational: String) {
+        guard let margin = value else {
+            return (.noData, 0, "Net kar marjı hesaplanamıyor — veri yok.",
+                    "Net kar marjı, gelirin yüzde kaçının net kar olarak kaldığını gösterir. Tüm giderler çıktıktan sonraki karlılık.")
+        }
+
+        // profitMargin Yahoo'da 0-1 arası gelebilir, ama FinancialsData'da nasıl tutulduğunu kontrol et
+        // Genel olarak yüzde cinsinden varsayıyoruz (ör: 15 = %15)
+        let m = abs(margin) < 1 ? margin * 100 : margin  // 0.15 → 15 dönüşümü
+
+        switch m {
+        case ..<0:
+            return (.critical, 10,
+                    "Negatif net marj! Şirket satışlarından zarar ediyor.",
+                    "Negatif marj, gelirin giderleri karşılayamadığı anlamına gelir. Büyüme aşamasında olabilir ama uzun vadede sürdürülemez.")
+        case 0..<5:
+            return (.warning, 35,
+                    "Çok ince marj (%\(String(format: "%.1f", m))). Küçük bir maliyet artışı karı silebilir.",
+                    "Düşük marjlı şirketler hacim odaklıdır. Perakende ve lojistikte yaygın, ama risk taşır.")
+        case 5..<10:
+            return (.neutral, 50,
+                    "Orta düzey marj (%\(String(format: "%.1f", m))). Sektöre göre değerlendirilmeli.",
+                    "Sanayi ve perakende için normal. Teknoloji ve finans için düşük.")
+        case 10..<15:
+            return (.good, 65,
+                    "İyi net marj (%\(String(format: "%.1f", m))). Sağlıklı karlılık.",
+                    "Şirket gelirini kara dönüştürmekte başarılı. Gider kontrolü iyi.")
+        case 15..<20:
+            return (.good, 80,
+                    "Güçlü marj (%\(String(format: "%.1f", m))). Fiyatlama gücü var.",
+                    "Bu seviye, şirketin rekabet avantajı ve fiyatlama gücü olduğunu gösterir.")
+        default:
+            return (.excellent, 90,
+                    "Mükemmel marj (%\(String(format: "%.1f", m)))! Her 100₺ satıştan \(String(format: "%.0f", m))₺ kalıyor.",
+                    "Bu kadar yüksek marj güçlü marka, patent veya ağ etkisini işaret eder. Yazılım ve ilaç sektöründe yaygın.")
+        }
+    }
+
+    // MARK: - Brüt Kar Marjı Açıklamaları
+
+    func explainGrossMargin(value: Double?) -> (status: AtlasMetricStatus, score: Double, explanation: String, educational: String) {
+        guard let margin = value else {
+            return (.noData, 0, "Brüt kar marjı hesaplanamıyor — veri yok.",
+                    "Brüt kar marjı, üretim maliyetleri çıktıktan sonra kalan karın gelire oranıdır. Temel fiyatlama gücünü gösterir.")
+        }
+
+        let m = abs(margin) < 1 ? margin * 100 : margin
+
+        switch m {
+        case ..<5:
+            return (.bad, 15,
+                    "Çok düşük brüt marj (%\(String(format: "%.1f", m))). Fiyatlama gücü yok.",
+                    "Bu kadar düşük brüt marj, ürünün neredeyse maliyetine satıldığını gösterir. Rekabet çok yoğun.")
+        case 5..<15:
+            return (.warning, 30,
+                    "Düşük brüt marj (%\(String(format: "%.1f", m))). Hacimle telafi edilmeli.",
+                    "Perakende ve dağıtım sektörlerinde bu aralık görülür. Operasyonel verimlilik kritik.")
+        case 15..<25:
+            return (.neutral, 45,
+                    "Orta-alt brüt marj (%\(String(format: "%.1f", m))). Sektöre bağlı.",
+                    "Sanayi ve gıda için normal. Ölçek avantajı marjı koruyabilir.")
+        case 25..<40:
+            return (.neutral, 60,
+                    "İyi brüt marj (%\(String(format: "%.1f", m))). Üretim maliyetleri kontrol altında.",
+                    "Çoğu sektör için sağlıklı bir brüt marj. Fiyatlama gücü var.")
+        case 40..<60:
+            return (.good, 75,
+                    "Güçlü brüt marj (%\(String(format: "%.1f", m))). Belirgin rekabet avantajı.",
+                    "Bu seviye marka gücü, patent koruması veya ağ etkisini yansıtır.")
+        default:
+            return (.excellent, 90,
+                    "Mükemmel brüt marj (%\(String(format: "%.1f", m)))! Olağanüstü fiyatlama gücü.",
+                    "Yazılım, ilaç ve lüks markalarda bu marjlar görülür. Ürün neredeyse sıfır marjinal maliyetle satılıyor.")
+        }
+    }
+
     // MARK: - Büyüme (CAGR) Açıklamaları
-    
+
     func explainCAGR(value: Double?, type: String) -> (status: AtlasMetricStatus, score: Double, explanation: String, educational: String) {
         guard let cagr = value else {
             return (.noData, 0, "\(type) CAGR verisi yok.",

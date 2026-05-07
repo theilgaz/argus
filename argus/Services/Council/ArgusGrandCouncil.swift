@@ -58,8 +58,8 @@ struct ArgusGrandDecision: Sendable, Equatable, Codable {
     // For Information Quality UI
     let moduleWeights: InformationWeights? = nil
     
-    // For Phoenix
-    let phoenixAdvice: PhoenixAdvice? = nil
+    // For Phoenix (5th Voting Motor — Mean Reversion / Regression Channel)
+    let phoenixAdvice: PhoenixAdvice?
     // let cronosScore: Double? = nil (REMOVED)
     
     // Rich Data for Voice/UI
@@ -71,7 +71,10 @@ struct ArgusGrandDecision: Sendable, Equatable, Codable {
     
     // NEW: Orion V3 Patterns
     let patterns: [OrionChartPattern]?
-    
+
+    // Kelly Criterion pozisyon çarpanı (0.3x – 2.0x)
+    let kellyMultiplier: Double
+
     let timestamp: Date
     
     var shouldTrade: Bool {
@@ -86,15 +89,18 @@ struct ArgusGrandDecision: Sendable, Equatable, Codable {
 
     
 extension ArgusGrandDecision {
-    // Recommended Allocation Multiplier based on Action
     var allocationMultiplier: Double {
         switch action {
-        case .aggressiveBuy: return 1.0  // 100% of max allocation
-        case .accumulate: return 0.3     // 30% start
+        case .aggressiveBuy: return 1.0
+        case .accumulate: return 0.3
         case .neutral: return 0.0
-        case .trim: return 0.5          // Sell 50%
-        case .liquidate: return 1.0     // Sell 100%
+        case .trim: return 0.5
+        case .liquidate: return 1.0
         }
+    }
+
+    var effectiveAllocation: Double {
+        allocationMultiplier * kellyMultiplier
     }
 }
 
@@ -233,9 +239,33 @@ actor ArgusGrandCouncil {
             ArgusLogger.info(.hermes, "V2 → \(v2Result.summary)")
         }
         
-        // 2.5 Get Weights (Non-blocking now)
+        // 2.5 Phoenix (Mean Reversion / Regression Channel) — 5th Voting Motor
+        // PhoenixLogic.analyze() pure + network-free: elimizdeki candle array'inden
+        // regresyon kanalı çıkarır. Candle sayısı < 60 olduğunda `.insufficient()` döner.
+        // Phoenix, trend-following motorlardan bağımsız bir mean-reversion sinyali sağlar.
+        // Ranging (yatay) piyasalarda daha değerli, trending piyasalarda ağırlığı düşük tutulur.
+        var phoenixResult: PhoenixAdvice? = nil
+        if candles.count >= 60 {
+            phoenixResult = PhoenixLogic.analyze(
+                candles: candles,
+                symbol: symbol,
+                timeframe: .d1,
+                config: PhoenixConfig()
+            )
+            if let phx = phoenixResult {
+                let statusTag = phx.status == .active ? "AKTİF" : phx.status.rawValue
+                let r2Text = phx.rSquared.map { String(format: "R²=%.2f", $0) } ?? "R²=?"
+                ArgusLogger.info("Phoenix \(symbol) → \(statusTag) skor=\(Int(phx.confidence)) \(r2Text)", category: "PHOENIX")
+            }
+        }
+
+        // 2.6 Get Weights (Non-blocking now)
         let weights = ChironCouncilLearningService.shared.getCouncilWeights(symbol: symbol, engine: engine)
-        
+
+        // 2.7 Kelly Criterion — Alkindus geçmiş kararlarından pozisyon boyutu çarpanı
+        let kellyProfile = await KellyCache.shared.getSystemProfile()
+        let kellyMult = kellyProfile.positionMultiplier
+
         // --- BIST V2 REFORM ---
         if isBist {
             // 2026-05-05 (Round 7B): AetherCouncil → AetherV2Engine swap.
@@ -277,14 +307,16 @@ actor ArgusGrandCouncil {
                 atlasDecision: atlasDecision,
                 aetherDecision: trueMacroDecision,
                 hermesDecision: hermesDecision,
+                phoenixAdvice: nil, // BIST Phoenix is handled inside BistGrandCouncil separately
                 // Pass rich details
                 orionDetails: OrionAnalysisService.shared.calculateOrionScore(symbol: symbol, candles: candles, spyCandles: nil),
                 financialDetails: snapshot, // Direct Use
-                bistDetails: bistRes, // <--- BIST V2 RESULT
+                bistDetails: bistRes,
                 patterns: detectedPatterns,
+                kellyMultiplier: kellyMult,
                 timestamp: Date()
             )
-            
+
             // ARGUS 3.0: THE HOOK (BIST)
             ArgusLedger.shared.logDecision(
                 decisionId: finalDecision.id,
@@ -370,17 +402,18 @@ actor ArgusGrandCouncil {
             aetherVelocity: aetherVelocity,
             regimeTransition: regimeTransition,
             hermes: hermesDecision,
+            phoenix: phoenixResult,
             patterns: detectedPatterns,
             engine: engine,
             weights: weights,
             // Rich Data context
             orionDetails: OrionAnalysisService.shared.calculateOrionScore(symbol: symbol, candles: candles, spyCandles: nil),
-            financialDetails: snapshot, // Direct Use
+            financialDetails: snapshot,
             // Advisors
             athena: athena,
             demeter: demeter,
-            prometheus: prometheusForecast
-            // chiron: chiron (REMOVED)
+            prometheus: prometheusForecast,
+            kellyMultiplier: kellyMult
         )
         
         // ARGUS 3.0: THE HOOK (GLOBAL)
@@ -394,6 +427,7 @@ actor ArgusGrandCouncil {
                 "Atlas": (atlasDecision?.netSupport ?? 0.0) * 100.0,
                 "Aether": aetherDecision.netSupport * 100.0,
                 "Hermes": (hermesDecision?.netSupport ?? 0.0) * 100.0,
+                "Phoenix": phoenixResult?.confidence ?? 0.0,
                 "Athena": athena?.factorScore ?? 0.0,
                 "Demeter": demeter?.totalScore ?? 0.0
             ],
@@ -401,7 +435,7 @@ actor ArgusGrandCouncil {
             origin: origin,
             currentPrice: candles.last?.close
         )
-        
+
         // 4. Update Cache
         decisionCache[symbol] = (grandDecision, Date())
         
@@ -454,6 +488,7 @@ actor ArgusGrandCouncil {
                         "atlas":  (atlasDecision?.netSupport ?? 0.0) * 100.0,
                         "aether": aetherDecision.netSupport * 100.0,
                         "hermes": (hermesDecision?.netSupport ?? 0.0) * 100.0,
+                        "phoenix": phoenixResult?.confidence ?? 0.0,
                         "athena": athena?.factorScore ?? 0.0,
                         "demeter": demeter?.totalScore ?? 0.0
                     ],
@@ -479,6 +514,7 @@ actor ArgusGrandCouncil {
         aetherVelocity: AetherVelocityEngine.VelocityAnalysis,
         regimeTransition: AetherRegimeTransitionDetector.Transition,
         hermes: HermesDecision?,
+        phoenix: PhoenixAdvice?,
         patterns: [OrionChartPattern],
         engine: AutoPilotEngine,
         weights: CouncilMemberWeights,
@@ -488,8 +524,9 @@ actor ArgusGrandCouncil {
         // Advisors
         athena: AthenaFactorResult?,
         demeter: DemeterScore?,
-        prometheus: PrometheusForecast?
+        prometheus: PrometheusForecast?,
         // chiron: ChronosResult? (REMOVED)
+        kellyMultiplier: Double = 1.0
     ) -> ArgusGrandDecision {
         
         var contributors: [ModuleContribution] = []
@@ -517,21 +554,41 @@ actor ArgusGrandCouncil {
             reasoning: "Teknik: \(orion.action.rawValue)"
         ))
         
-        // --- 1.1 ORION V3 PATTERN VETO ---
-        // Bearish formasyonlar, Alım işlemlerini VETO eder
+        // --- 1.1 ORION V3 PATTERN VETO (Çift Yönlü) ---
         if let bestPattern = patterns.sorted(by: { $0.confidence > $1.confidence }).first, bestPattern.confidence > 60 {
-            if bestPattern.type.isBearish && (orion.action == .buy || orion.action == .hold) {
-                vetoes.append(ModuleVeto(
+            let patternConf = bestPattern.confidence / 100.0
+            let patternName = bestPattern.type.rawValue
+
+            if bestPattern.type.isBearish {
+                // Bearish: SAT oyu + AL vetoes
+                contributors.append(ModuleContribution(
                     module: "Orion Patterns",
-                    reason: "\(bestPattern.type.rawValue) Formasyonu Tespit Edildi (Güven: %\(Int(bestPattern.confidence)))"
+                    action: .sell,
+                    confidence: patternConf,
+                    reasoning: "\(patternName) Formasyonu"
                 ))
+                if bestPattern.confidence >= 80 {
+                    let veto = ModuleVeto(module: "Orion Patterns", reason: "\(patternName) (Güven: %\(Int(bestPattern.confidence)))")
+                    vetoes.append(veto)
+                    hardVetoes.append(veto)
+                } else {
+                    vetoes.append(ModuleVeto(module: "Orion Patterns", reason: "\(patternName) (Güven: %\(Int(bestPattern.confidence)))"))
+                }
             } else if bestPattern.type.isBullish {
+                // Bullish: AL oyu + SAT vetoes
                 contributors.append(ModuleContribution(
                     module: "Orion Patterns",
                     action: .buy,
-                    confidence: bestPattern.confidence / 100.0,
-                    reasoning: "\(bestPattern.type.rawValue) Formasyonu"
+                    confidence: patternConf,
+                    reasoning: "\(patternName) Formasyonu"
                 ))
+                if isOrionSell && bestPattern.confidence >= 80 {
+                    advisorNotes.append(AdvisorNote(
+                        module: "Orion Patterns",
+                        advice: "\(patternName) güçlü alım formasyonu — satış sinyaline rağmen dipten dönüş olası.",
+                        tone: .caution
+                    ))
+                }
             }
         }
         
@@ -712,7 +769,105 @@ actor ArgusGrandCouncil {
                 }
             }
         }
-        
+
+        // --- 5. PHOENIX (Mean Reversion / Regression Channel) ---
+        // Phoenix, fiyatın regresyon kanalı içindeki konumunu analiz eder.
+        // Kanal dibine yakın = alım fırsatı (mean reversion), tepe = aşırı alım.
+        // R-squared (kanal güvenilirliği) confidence olarak kullanılır —
+        // düşük R² = zayıf kanal = düşük oy gücü (weak signal penalty ile).
+        // Phoenix VETO GÜCÜ YOKTUR — tamamlayıcı sinyal, risk kapısı değil.
+        if let phx = phoenix, phx.status == .active, let rSq = phx.rSquared, rSq >= 0.20 {
+            let phoenixAction: ProposedAction
+            if phx.confidence >= 65 {
+                phoenixAction = .buy   // Kanal dibine yakın, mean reversion fırsatı
+            } else if phx.confidence <= 35 {
+                phoenixAction = .sell  // Kanal tepesine yakın, overbought
+            } else {
+                phoenixAction = .hold  // Kanal ortasında, yön belirsiz
+            }
+
+            // R-squared'i confidence olarak kullan (0-1 arası, kanal güvenilirliği).
+            // Phoenix.confidence (0-100) skordur, ancak ağırlıklı oylama sisteminde
+            // diğer modüller netSupport (-1..+1) kullanır. R² aynı aralıkta doğal
+            // çalışır ve zayıf kanallar otomatik olarak cezalanır.
+            let phoenixConfidence = rSq // 0.20 - 1.0 arası (zaten >= 0.20 filtresi var)
+
+            contributors.append(ModuleContribution(
+                module: "Phoenix",
+                action: phoenixAction,
+                confidence: phoenixConfidence,
+                reasoning: "Kanal: \(phoenixAction.rawValue) (skor=\(Int(phx.confidence)), R²=\(String(format: "%.2f", rSq)))"
+            ))
+        }
+
+        // --- 6. ATHENA (Faktör Analizi) ---
+        // Value/Quality/Momentum/Risk faktör skorlarının bileşimi.
+        // VETO GÜCÜ YOK — tamamlayıcı sinyal.
+        if let ath = athena {
+            let athenaAction: ProposedAction
+            if ath.factorScore >= 60 {
+                athenaAction = .buy
+            } else if ath.factorScore <= 40 {
+                athenaAction = .sell
+            } else {
+                athenaAction = .hold
+            }
+            let signalStrength = abs(ath.factorScore - 50) / 50.0
+
+            contributors.append(ModuleContribution(
+                module: "Athena",
+                action: athenaAction,
+                confidence: signalStrength,
+                reasoning: "Faktör: \(athenaAction.rawValue) (skor=\(Int(ath.factorScore)))"
+            ))
+        }
+
+        // --- 7. DEMETER (Sektör Rotasyonu) ---
+        // Sektörün momentum/şok/rejim/genişlik bileşimi.
+        // Veri tazeliği düşükse (confidence < 0.3) oy kullanmaz.
+        // VETO GÜCÜ YOK — tamamlayıcı sinyal.
+        if let dem = demeter, dem.confidence >= 0.3 {
+            let demeterAction: ProposedAction
+            if dem.totalScore >= 60 {
+                demeterAction = .buy
+            } else if dem.totalScore <= 40 {
+                demeterAction = .sell
+            } else {
+                demeterAction = .hold
+            }
+            let signalStrength = abs(dem.totalScore - 50) / 50.0 * dem.confidence
+
+            contributors.append(ModuleContribution(
+                module: "Demeter",
+                action: demeterAction,
+                confidence: signalStrength,
+                reasoning: "Sektör: \(demeterAction.rawValue) (skor=\(Int(dem.totalScore)), güven=\(String(format: "%.0f%%", dem.confidence * 100)))"
+            ))
+        }
+
+        // --- 8. PROMETHEUS (5-Günlük Tahmin) — KOŞULLU OYLAYAN ---
+        // Sadece güven >= 70 iken oy kullanır (düşük güvenli tahminler sadece advisory kalır).
+        // changePercent yön belirler: >2% AL, <-2% SAT, arası TUT.
+        // VETO GÜCÜ YOK — tamamlayıcı kısa vadeli sinyal.
+        if let prom = prometheus, prom.isValid, prom.confidence >= 70 {
+            let prometheusAction: ProposedAction
+            if prom.changePercent > 2.0 {
+                prometheusAction = .buy
+            } else if prom.changePercent < -2.0 {
+                prometheusAction = .sell
+            } else {
+                prometheusAction = .hold
+            }
+            let prometheusConfidence = (prom.confidence - 60.0) / 40.0
+
+            contributors.append(ModuleContribution(
+                module: "Prometheus",
+                action: prometheusAction,
+                confidence: prometheusConfidence,
+                reasoning: "5D Tahmin: \(prom.formattedChange) (\(Int(prom.confidence))% güven, \(prom.trend.rawValue))"
+            ))
+        }
+
         // --- DECISION LOGIC V4: AĞIRLIKLI OYLAMA SİSTEMİ ---
 
         var finalAction: ArgusAction = .neutral
@@ -734,25 +889,49 @@ actor ArgusGrandCouncil {
         } else {
             // No Vetoes - Ağırlıklı Oylama Sistemi
 
-            // Modül ağırlıkları — Aether skoruna göre dinamik
-            // Boğa (≥65): teknik ağırlıklı | Nötr (40-65): makro ağırlığı artar | Ayı (<40): makro hakimiyeti
-            let councilAetherScore = MacroRegimeService.shared.getCachedRating()?.numericScore ?? 50
+            // Modül ağırlıkları — Chiron 5-rejim sistemi
+            let chironRegime = ChironRegimeEngine.shared.globalResult.regime
             let moduleWeights: [String: Double]
-            switch councilAetherScore {
-            case 65...:
+            switch chironRegime {
+            case .trend:
+                // Trend: teknik dominant, mean-reversion ve tahmin güçlü
                 moduleWeights = [
-                    "Orion": 0.35, "Orion Patterns": 0.10,
-                    "Atlas": 0.25, "Aether": 0.20, "Hermes": 0.10
+                    "Orion": 0.28, "Orion Patterns": 0.10,
+                    "Atlas": 0.15, "Aether": 0.12, "Hermes": 0.08,
+                    "Phoenix": 0.12, "Athena": 0.05, "Demeter": 0.07,
+                    "Prometheus": 0.03
                 ]
-            case 40..<65:
+            case .chop:
+                // Yatay: temel analiz + makro ağırlıklı (teknik sinyaller yanıltıcı)
                 moduleWeights = [
-                    "Orion": 0.28, "Orion Patterns": 0.08,
-                    "Atlas": 0.22, "Aether": 0.32, "Hermes": 0.10
+                    "Orion": 0.12, "Orion Patterns": 0.05,
+                    "Atlas": 0.25, "Aether": 0.25, "Hermes": 0.08,
+                    "Phoenix": 0.05, "Athena": 0.08, "Demeter": 0.08,
+                    "Prometheus": 0.04
                 ]
-            default:
+            case .riskOff:
+                // Riskten kaçış: makro dominant, teknik minimal
                 moduleWeights = [
-                    "Orion": 0.18, "Orion Patterns": 0.07,
-                    "Atlas": 0.18, "Aether": 0.47, "Hermes": 0.10
+                    "Orion": 0.08, "Orion Patterns": 0.04,
+                    "Atlas": 0.15, "Aether": 0.45, "Hermes": 0.10,
+                    "Phoenix": 0.03, "Athena": 0.06, "Demeter": 0.06,
+                    "Prometheus": 0.03
+                ]
+            case .newsShock:
+                // Haber şoku: Hermes dominant, tahmin yararlı (kısa vadeli yön)
+                moduleWeights = [
+                    "Orion": 0.10, "Orion Patterns": 0.05,
+                    "Atlas": 0.12, "Aether": 0.15, "Hermes": 0.35,
+                    "Phoenix": 0.03, "Athena": 0.05, "Demeter": 0.05,
+                    "Prometheus": 0.10
+                ]
+            case .neutral:
+                // Dengeli: tüm motorlar dengeli katkı
+                moduleWeights = [
+                    "Orion": 0.20, "Orion Patterns": 0.07,
+                    "Atlas": 0.17, "Aether": 0.22, "Hermes": 0.10,
+                    "Phoenix": 0.07, "Athena": 0.06, "Demeter": 0.06,
+                    "Prometheus": 0.05
                 ]
             }
 
@@ -968,14 +1147,16 @@ actor ArgusGrandCouncil {
             atlasDecision: atlas,
             aetherDecision: aether,
             hermesDecision: hermes,
+            phoenixAdvice: phoenix,
             orionDetails: orionDetails,
             financialDetails: financialDetails,
             bistDetails: nil,
             patterns: patterns,
+            kellyMultiplier: kellyMultiplier,
             timestamp: Date()
         )
     }
-    
+
     // MARK: - Sector-Based News Multiplier
     /// Haberin sektöre göre etkisini ayarlar
     /// Biotech/Healthcare: Haber daha önemli
@@ -1088,8 +1269,6 @@ struct BistDecisionResult: Sendable, Equatable, Codable {
     let grafik: BistModuleResult // Technical (Orion)
     let bilanco: BistModuleResult // Fundamental (Atlas)
     let rejim: BistModuleResult  // Macro (Aether)
-    let sirkulasyon: BistModuleResult // Float/Depth (Yeni)
-    
     let timestamp: Date
     
     var shouldTrade: Bool {
@@ -1155,10 +1334,6 @@ actor BistGrandCouncil {
         
         // --- KULİS (Hermes + Analist) ---
         let kulisRes = analyzeKulis(kulisData, analystConsensus: analystConsensus)
-        
-        // --- SİRKÜLASYON (Placeholder for now) ---
-        let sirkulasyonRes = BistModuleResult(name: "Sirkülasyon", score: 50, action: .hold, commentary: "Takas verisi nötr.", supportLevel: 0)
-        
         
         // 2. Final Verdict Logic (The "Brain")
         
@@ -1226,7 +1401,6 @@ actor BistGrandCouncil {
             grafik: grafikRes,
             bilanco: bilancoRes,
             rejim: rejimRes,
-            sirkulasyon: sirkulasyonRes,
             timestamp: Date()
         )
     }

@@ -118,12 +118,17 @@ final class AnalysisBridge: ObservableObject {
             sirkiyeInput = await buildSirkiyeInput(macro: macro)
         }
 
+        // Hermes news: cache'den al, yoksa nil (graceful degradation)
+        let news: HermesNewsSnapshot? = isBist
+            ? await HermesNewsSnapshot.fromBistCache(symbol: symbol)
+            : HermesNewsSnapshot.fromCache(symbol: symbol)
+
         let decision = await ArgusGrandCouncil.shared.convene(
             symbol: symbol,
             candles: councilCandles,
             snapshot: snapshot,
             macro: macro,
-            news: nil,
+            news: news,
             engine: .pulse,
             sirkiyeInput: sirkiyeInput,
             origin: "SANCTUM_VM"

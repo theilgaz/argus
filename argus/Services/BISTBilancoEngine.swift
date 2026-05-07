@@ -16,6 +16,13 @@ enum BISTBilancoError: LocalizedError {
 
 // MARK: - BIST Bilanço Analiz Motoru
 // Atlas V2 yapısının BIST'e uyarlanmış hali
+//
+// TODO: DUPLICATION — Bu motor ile AtlasBistV2Engine (Services/AtlasBistV2/) arasında
+// işlevsel örtüşme var. BISTBilancoEngine 3 bölüm (değerleme/karlılık/sağlık) ile
+// çalışır ve TradingViewModel+Argus + BISTBilancoDetailView tarafından kullanılır.
+// AtlasBistV2Engine 6 bölümlü modern versiyondur ve ArgusGrandCouncil tarafından
+// kullanılır. İkisi farklı çağıranlardan geldiği için şimdilik korunuyor ancak
+// ileride tek motora (AtlasBistV2Engine) birleştirilmeli.
 
 actor BISTBilancoEngine {
     static let shared = BISTBilancoEngine()

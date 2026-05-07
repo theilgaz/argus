@@ -12,10 +12,11 @@ struct AutoPilotConfig {
     static let maxSymbolExposure: Double = 0.10 // %10
 
     // MARK: - Safety Guards
-    /// Earnings/event guard'ı aktif eder. `true` yapıldığında gerçek bir earnings
-    /// provider bağlanması beklenir. `false` iken `checkSafety` her durumda PASS
-    /// döner (mevcut davranış — provider entegre edilene kadar).
-    static let earningsGuardEnabled: Bool = false
+    /// Earnings/event guard'ı aktif eder. `true` iken ve provider bağlı değilken
+    /// confidence'a %15 soft penalty uygulanır (hard block yok). Provider
+    /// bağlandığında earnings <3 gün kala hard block'a dönüşecek.
+    /// `false` iken `checkSafety` her durumda PASS döner, penalty yok.
+    static let earningsGuardEnabled: Bool = true
 
     /// Chiron shadow mode. `true` iken ChironWeightStore.updateWeights çağrıları
     /// gerçek matrisi değiştirmez, sadece önerilen ile mevcut ağırlığın
@@ -362,7 +363,8 @@ final class ArgusAutoPilotEngine: Sendable {
         // ArgusAutoPilot.attemptEntry zaten bu guard'ı uyguluyor; evaluate path'i
         // AutoPilotService üzerinden gelen ayrı giriş noktası — burada da gate
         // olmazsa earnings guard yalnız bir yolda çalışır.
-        guard await checkSafety(symbol: symbol) else {
+        let safetyResult = await checkSafety(symbol: symbol)
+        guard safetyResult.passed else {
             return (nil, ScoutLog(symbol: symbol, status: "RED", reason: "Earnings Safety Guard reddetti", score: overallScore))
         }
         
@@ -407,8 +409,14 @@ final class ArgusAutoPilotEngine: Sendable {
             let snapshot = try? await FinancialSnapshotService.shared.fetchSnapshot(symbol: symbol)
             
             let macro = await MacroSnapshotService.shared.getSnapshot()
-            let news: HermesNewsSnapshot? = nil // TODO: Get from HermesCache if available
-            
+
+            // Hermes news: cache'den al, yoksa nil (graceful degradation).
+            // BIST sembolleri BISTSentimentEngine cache'ini de dener.
+            let isBistSymbol = SymbolResolver.shared.isBistSymbol(symbol)
+            let news: HermesNewsSnapshot? = isBistSymbol
+                ? await HermesNewsSnapshot.fromBistCache(symbol: symbol)
+                : await MainActor.run { HermesNewsSnapshot.fromCache(symbol: symbol) }
+
             // Use .pulse engine - Async Call
             let decision = await ArgusGrandCouncil.shared.convene(
                 symbol: symbol,
@@ -439,17 +447,28 @@ final class ArgusAutoPilotEngine: Sendable {
                      return (nil, ScoutLog(symbol: symbol, status: "BEKLE", reason: "🏛️ Konsey Kararı: İZLE / NÖTR", score: overallScore))
                     
                 case .aggressiveBuy, .accumulate:
+                    // Earnings guard penalty'sini confidence'a uygula
+                    let adjustedConfidence = gd.confidence * safetyResult.confidenceMultiplier
+
                     // CHURN PREVENTION: Minimum Confidence Filter
-                    if gd.confidence * 100 < AutoPilotConfig.minimumConfidencePercent {
-                        let reason = "⚠️ Düşük Güven Reddi: %\(Int(gd.confidence * 100)) < %\(Int(AutoPilotConfig.minimumConfidencePercent))"
-                        return (nil, ScoutLog(symbol: symbol, status: "RED", reason: reason, score: gd.confidence * 100))
+                    if adjustedConfidence * 100 < AutoPilotConfig.minimumConfidencePercent {
+                        let penaltyTag = safetyResult.confidenceMultiplier < 1.0 ? " [earnings penalty ×\(safetyResult.confidenceMultiplier)]" : ""
+                        let reason = "⚠️ Düşük Güven Reddi: %\(Int(adjustedConfidence * 100)) < %\(Int(AutoPilotConfig.minimumConfidencePercent))\(penaltyTag)"
+                        return (nil, ScoutLog(symbol: symbol, status: "RED", reason: reason, score: adjustedConfidence * 100))
                     }
-                    
+
+                    // Earnings guard advisor note'unu konsey kararına ekle
+                    if let earningsNote = safetyResult.advisorNote {
+                        var mutableGd = gd
+                        mutableGd.advisors.append(earningsNote)
+                        grandDecision = mutableGd
+                    }
+
                     // REFORM: Konsey AL dediyse DOĞRUDAN al! Kendi kriterlerini BYPASS et.
                     let multiplier = gd.allocationMultiplier
                     let isAggressive = gd.action == .aggressiveBuy
                     let engine: AutoPilotEngine = isAggressive ? .corse : .pulse
-                    
+
                     // Pozisyon boyutu hesapla
                     let macroRiskMultiplier: Double
                     switch policy.mode {
@@ -479,7 +498,8 @@ final class ArgusAutoPilotEngine: Sendable {
                     let takeProfit = currentPrice * (1.0 + (stopPercent * 2.5)) // 2.5:1 Risk/Reward
 
                     let clusterNote = sameClusterOpen ? " · Cluster %50" : ""
-                    let reason = "🏛️ KONSEY KARARI: \(gd.action.rawValue) (Güven: %\(Int(gd.confidence * 100)))\(clusterNote)"
+                    let earningsTag = safetyResult.confidenceMultiplier < 1.0 ? " · EarningsGuard" : ""
+                    let reason = "🏛️ KONSEY KARARI: \(gd.action.rawValue) (Güven: %\(Int(adjustedConfidence * 100)))\(clusterNote)\(earningsTag)"
 
                     let signal = AutoPilotSignal(
                         action: .buy,
@@ -490,9 +510,9 @@ final class ArgusAutoPilotEngine: Sendable {
                         strategy: engine,
                         trimPercentage: nil
                     )
-                    
+
                     ArgusLogger.info("KONSEY KARARI doğrudan uygulanıyor: \(gd.action.rawValue) for \(symbol)", category: "AUTOPILOT")
-                    return (signal, ScoutLog(symbol: symbol, status: "ONAYLI", reason: reason, score: gd.confidence * 100))
+                    return (signal, ScoutLog(symbol: symbol, status: "ONAYLI", reason: reason, score: adjustedConfidence * 100))
                 }
             } else {
                 // CRITICAL FIX: No Grand Council = No Entry

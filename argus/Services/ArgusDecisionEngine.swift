@@ -509,24 +509,21 @@ struct ArgusDecisionEngine {
         // --- CHIRON LOGGING (Memory) ---
         Task {
             // Argus Ledger (The Scientific Truth)
-            let refs = ArgusLedger.shared.getSnapshotRefs(symbol: symbol)
-            let hashes = refs.values.map { $0 }
-            
             ArgusLedger.shared.logDecision(
-                decisionId: trace.id.uuidString,
+                decisionId: trace.id,
                 symbol: symbol,
                 action: finalAction.rawValue,
-                currentPrice: marketData?.price ?? 0,
-                moduleScores: [
+                confidence: finalScore / 100.0,
+                scores: [
                     "orion": orion ?? 0,
                     "atlas": atlas ?? 0,
                     "aether": aether ?? 0,
                     "hermes": hermes ?? 0,
                     "phoenix": phoenixOp.score
                 ],
-                inputBlobHashes: hashes,
-                configHash: "default_v1",
-                weightsHash: "chiron_pulse_v1"
+                vetoes: trace.riskEvaluation.isApproved ? [] : [trace.riskEvaluation.reason],
+                origin: "DecisionEngine",
+                currentPrice: marketData?.price ?? 0
             )
             
             // Also Log Module Opinions

@@ -94,44 +94,42 @@ actor ArgusBacktestEngine {
             
             // STRATEGY LOGIC
             switch config.strategy {
-            // ARGUS AI STRATEGIES
+            // ARGUS AI STRATEGIES — Grand Council (Path A)
+            // 2026-05-07: Backtest artık ArgusDecisionEngine.makeDecision() (Path B) yerine
+            // ArgusGrandCouncil.convene() (Path A) kullanıyor. UI'daki karar formülüyle
+            // birebir aynı motorlar, ağırlıklar ve eşikler çalışır — backtest sonuçları
+            // kullanıcının gördüğü kararları yansıtır.
+            //
+            // Sınırlama: Tarihsel makro/haber verisi yok → macro = .empty, news = nil.
+            // Grand Council bu durumda Aether nötr, Hermes sessiz çalışır; Orion + Atlas
+            // ağırlığı artar. Bu "teknik + temel" ağırlıklı backtest doğal davranıştır.
             case .argusStandard, .aggressive, .conservative:
-                // 2026-05-05 (Round 11) V2 SWAP: Eski OrionAnalysisService (V1) yerine
-                // OrionV2Engine kullanılır. forceRefresh: true ile cache bypass — backtest
-                // aynı sembolü 200+ farklı slice ile çağırır, cache symbol-key olduğundan
-                // ilk slice yapışırdı. Production GrandCouncil'dakı V2 davranışıyla uyumlu.
-                let v2Orion = await OrionV2Engine.shared.analyze(symbol: symbol, candles: slice, forceRefresh: true)
-                let orionScore = v2Orion.totalScore
-                // Trend bölüm skoru daily Aether proxy olarak kullanılır (V1 trendPct davranışı)
-                let dailyAether = v2Orion.trendScore ?? 50
-
-                // V1 OrionAnalysisService hâlâ orionDetails için çağrılır (component-level UI verisi).
-                // Future cleanup: makeDecision'ı orionDetails'sız çağıran overload yazılabilir.
-                let orionResult = OrionAnalysisService.shared.calculateOrionScore(symbol: symbol, candles: slice)
-
-                // 2. Decision (V2 skor ile)
-                let decision = ArgusDecisionEngine.shared.makeDecision(
+                let grandDecision = await ArgusGrandCouncil.shared.convene(
                     symbol: symbol,
-                    assetType: .stock,
-                    atlas: nil,
-                    orion: orionScore,           // V2 totalScore
-                    orionDetails: orionResult,
-                    aether: dailyAether,
-                    hermes: nil,
-                    athena: nil,
-                    phoenixAdvice: nil,
-                    demeterScore: nil,
-                    marketData: nil
-                ).1 // Take Decision Result
+                    candles: slice,
+                    snapshot: nil,              // Tarihsel finansal snapshot yok
+                    macro: .empty,              // Tarihsel makro verisi yok
+                    news: nil,                  // Tarihsel haber verisi yok
+                    engine: .corse,             // Mid-term (backtest uyumlu)
+                    forceRefresh: true,         // Her bar için cache bypass
+                    origin: "BACKTEST"
+                )
 
-                usedScore = (config.strategy == .conservative) ? decision.finalScoreCore : decision.finalScorePulse
-                let rawAction = (config.strategy == .conservative) ? decision.finalActionCore : decision.finalActionPulse
+                usedScore = grandDecision.confidence * 100.0 // 0..1 → 0..100
 
-                // Map SignalAction to BacktestAction
-                switch rawAction {
-                case .buy: action = .buy
-                case .sell: action = .sell(1.0)
-                default: action = .hold
+                // Map ArgusAction → BacktestAction
+                switch grandDecision.action {
+                case .aggressiveBuy:
+                    action = .buy
+                case .accumulate:
+                    // Conservative stratejide accumulate = hold (kademeli alım yok)
+                    action = (config.strategy == .conservative) ? .hold : .buy
+                case .trim:
+                    action = .sell(config.strategy == .conservative ? 0.5 : 0.5)
+                case .liquidate:
+                    action = .sell(1.0)
+                case .neutral:
+                    action = .hold
                 }
 
                 // BACKTEST SIMULATION: AUTO-PILOT "MOMENTUM DECAY" Override
@@ -143,10 +141,15 @@ actor ArgusBacktestEngine {
                     }
                 }
 
-                if case .sell = action, reason == "" { reason = "Argus Signal" }
-                else if action == .buy && reason == "" { reason = "Argus Signal" }
+                // Aggressive stratejide aggressiveBuy dışındaki buy'ları hold'a düşürme
+                if config.strategy == .aggressive && action == .buy && grandDecision.action != .aggressiveBuy {
+                    action = .hold
+                }
 
-                logDetails = "OV2:\(String(format:"%.0f", orionScore)) trend:\(String(format:"%.0f", dailyAether))"
+                if case .sell = action, reason == "" { reason = "Council: \(grandDecision.action.rawValue)" }
+                else if action == .buy && reason == "" { reason = "Council: \(grandDecision.action.rawValue)" }
+
+                logDetails = "GC:\(grandDecision.action.rawValue) conf:\(String(format:"%.0f", usedScore)) str:\(grandDecision.strength.rawValue)"
 
             case .orionV2:
                 // ORION V2 PURE TECH STRATEGY (Improved Entry/Exit Logic)

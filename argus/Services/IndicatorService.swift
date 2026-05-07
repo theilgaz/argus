@@ -140,10 +140,9 @@ struct IndicatorService {
     // MARK: - TSI (True Strength Index)
     /// Calculates TSI values for the given close prices
     /// Returns an array of TSI values (-100 to +100 range)
-    static func calculateTSI(values: [Double], longPeriod: Int = 9, shortPeriod: Int = 3) -> [Double?] {
-        // TechnicalAnalysisEngine defaults to 25, 13 but TSI standard is often 25, 13.
-        // The inline code here used parameters 9, 3 but mapped to logic.
-        // Let's pass parameters strictly.
+    /// Standard TSI parameterization: longPeriod=25, shortPeriod=13 (matches TechnicalAnalysisEngine).
+    /// BIST engines (OrionBistV2, TahtaEngine) intentionally override to (9, 3) for higher volatility.
+    static func calculateTSI(values: [Double], longPeriod: Int = 25, shortPeriod: Int = 13) -> [Double?] {
         return TechnicalAnalysisEngine.tsi(values: values, longPeriod: longPeriod, shortPeriod: shortPeriod)
     }
     

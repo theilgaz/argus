@@ -248,12 +248,18 @@ extension AutoPilotStore {
 
                 let snapshot = try? await FinancialSnapshotService.shared.fetchSnapshot(symbol: signal.symbol)
 
+                // Hermes news: cache'den al, yoksa nil (graceful degradation)
+                let isBist = SymbolResolver.shared.isBistSymbol(signal.symbol)
+                let news: HermesNewsSnapshot? = isBist
+                    ? await HermesNewsSnapshot.fromBistCache(symbol: signal.symbol)
+                    : HermesNewsSnapshot.fromCache(symbol: signal.symbol)
+
                 let decision = await ArgusGrandCouncil.shared.convene(
                     symbol: signal.symbol,
                     candles: candles,
                     snapshot: snapshot,
                     macro: macro,
-                    news: nil,
+                    news: news,
                     engine: .pulse,
                     sirkiyeInput: sirkiyeInput,
                     origin: "AUTOPILOT_STORE"

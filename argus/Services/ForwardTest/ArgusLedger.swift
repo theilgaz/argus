@@ -371,7 +371,7 @@ final class ArgusLedger: Sendable {
             // Scientific Meta
             "as_of_utc": now, // For now, decision time is data time (until historical fetch is ready)
             "data_version_hash": dataVersionHash,
-            "engine_config_hash": "ARGUS_V3_DEFAULT", // TODO: Hash config dynamically
+            "engine_config_hash": currentConfigHash(),
             "instrument_type": "STOCK",
             "market_region": symbol.contains(".IS") ? "BIST" : "US"
         ]
@@ -407,6 +407,24 @@ final class ArgusLedger: Sendable {
         }
     }
     
+    // MARK: - Config Hash
+
+    /// Deterministic hash of key Grand Council decision parameters.
+    /// Changes when thresholds or module weights are modified, allowing the
+    /// ledger to distinguish decisions made under different configurations.
+    private func currentConfigHash() -> String {
+        var hasher = Hasher()
+        hasher.combine("GC-v4")
+        // Grand Council decision thresholds
+        hasher.combine(0.45) // aggressiveBuy
+        hasher.combine(0.35) // strongBuy
+        hasher.combine(0.10) // accumulate
+        hasher.combine(0.40) // liquidate
+        // Module weight regime tags (bull/neutral/bear affect weights)
+        hasher.combine("bull-neutral-bear")
+        return "GC4-\(abs(hasher.finalize()) % 100000)"
+    }
+
     // MARK: - Helpers
     private func execute(sql: String) {
         if sqlite3_exec(db, sql, nil, nil, nil) != SQLITE_OK {

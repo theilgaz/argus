@@ -246,11 +246,15 @@ actor OrionBistV2Engine {
         let distFromHigh = (high20 - close) / atr
         let distFromLow  = (close - low20) / atr
 
-        // ATR birimi cinsinden destek mesafesi iyiyse daha güçlü
+        // Simetrik: destek yakını AL sinyali (75), direnç yakını SAT sinyali (25), orta nötr (50)
+        let totalDist = distFromLow + distFromHigh
         let s: Double
-        if distFromLow < 1.0      { s = 75 }  // Desteğe yakın
-        else if distFromHigh < 1.0 { s = 40 } // Dirence yakın
-        else                       { s = 55 } // Ortada
+        if totalDist > 0 {
+            let position = distFromLow / totalDist
+            s = 75.0 - (position * 50.0)
+        } else {
+            s = 50
+        }
 
         let detail = "Dirence mesafe=\(String(format: "%.1f", distFromHigh)) ATR, Desteğe mesafe=\(String(format: "%.1f", distFromLow)) ATR (skor \(Int(s)))"
         return (s, [detail])

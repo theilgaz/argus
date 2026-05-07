@@ -78,6 +78,14 @@ actor BISTSentimentEngine {
         return payload.result
     }
 
+    /// Cache-only erişim: yeni fetch tetiklemez. AutoPilot gibi sıcak yollar için.
+    /// Cache süresi dolmuşsa bile en son veriyi döner (stale > blind).
+    func getCachedPayload(for symbol: String) -> BISTSentimentPayload? {
+        let cleanSymbol = symbol.uppercased().replacingOccurrences(of: ".IS", with: "")
+        guard let cached = cache[cleanSymbol] else { return nil }
+        return BISTSentimentPayload(result: cached.result, articles: cached.articles)
+    }
+
     /// Sembol için sentiment analizi ve kullanilan haberleri birlikte döner
     func analyzeSentimentPayload(for symbol: String) async throws -> BISTSentimentPayload {
         let cleanSymbol = symbol.uppercased().replacingOccurrences(of: ".IS", with: "")

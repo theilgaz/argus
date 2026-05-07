@@ -12,7 +12,20 @@ actor AtlasBistV2Engine {
     private var cache: [String: AtlasV2Result] = [:]
     private let cacheTTL: TimeInterval = 3600  // 1 saat
 
+    private var cachedInflation: Double?
+    private var inflationFetchDate: Date?
+
     private init() {}
+
+    private func refreshInflation() async {
+        if let fetchDate = inflationFetchDate,
+           Date().timeIntervalSince(fetchDate) < 86400 { return }
+        if let data = try? await BorsaPyProvider.shared.getInflationData() {
+            cachedInflation = data.yearlyInflation / 100.0
+            inflationFetchDate = Date()
+            ArgusLogger.info(.atlas, "BistV2 TCMB enflasyon güncellendi: %\(String(format: "%.1f", data.yearlyInflation))")
+        }
+    }
 
     // MARK: - Public API
 
@@ -22,6 +35,8 @@ actor AtlasBistV2Engine {
            Date().timeIntervalSince(cached.timestamp) < cacheTTL {
             return cached
         }
+
+        await refreshInflation()
 
         // BorsaPy'den paralel veri çek
         async let finTask   = try? BorsaPyProvider.shared.getFinancialStatements(symbol: symbol)
@@ -142,14 +157,20 @@ actor AtlasBistV2Engine {
 
     private func scoreGrowth(financials: BistFinancials?) -> Double? {
         guard let f = financials else { return nil }
-        // BIST: ~%50 enflasyon referansı. %80+ nominal → reel büyüme güçlü.
+        let inf = cachedInflation ?? 0.50
         var scores: [Double] = []
 
         if let rg = f.revenueGrowth {
-            scores.append(rg > 0.80 ? 90 : rg > 0.50 ? 70 : rg > 0.30 ? 50 : rg > 0 ? 30 : 10)
+            let strong  = inf + 0.30
+            let neutral = inf
+            let weak    = inf * 0.60
+            scores.append(rg > strong ? 90 : rg > neutral ? 70 : rg > weak ? 50 : rg > 0 ? 30 : 10)
         }
         if let ng = f.netProfitGrowth {
-            scores.append(ng > 1.00 ? 90 : ng > 0.60 ? 70 : ng > 0.30 ? 50 : ng > 0 ? 30 : 10)
+            let strong  = inf + 0.50
+            let neutral = inf + 0.10
+            let weak    = inf * 0.60
+            scores.append(ng > strong ? 90 : ng > neutral ? 70 : ng > weak ? 50 : ng > 0 ? 30 : 10)
         }
         guard !scores.isEmpty else { return nil }
         return scores.reduce(0, +) / Double(scores.count)

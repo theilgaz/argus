@@ -57,7 +57,6 @@ actor HeimdallProbe {
         if case .entitlementDenied = legacyResult {
             print("⚠️ Probe: FMP Intraday (Legacy/1h) Denied. Mode -> DAILY_ONLY")
             // Disable Intraday endpoint specifically
-            // We set a mode tag that FMPProvider can read, or we trust FMPProvider's safe default.
             return .dailyOnly
         }
         

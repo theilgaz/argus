@@ -376,16 +376,28 @@ actor PaperBroker: BrokerProtocol {
         )
     }
     
-    // MARK: - Market Data (Simulated)
-    
+    // MARK: - Market Data (Cached + Fallback)
+
     func getQuote(symbol: String) async throws -> BrokerQuote {
-        // In real implementation, this would fetch from market data provider
-        // For paper trading, we need to integrate with existing data sources
-        
-        // Placeholder - should be replaced with actual data fetch
-        let basePrice = 100.0 // Would come from Yahoo/other provider
-        let spread = basePrice * 0.001 // 0.1% spread
-        
+        // Try cached quote from MarketDataStore first (the real market price)
+        if let cachedQuote = await MainActor.run(body: { MarketDataStore.shared.getQuote(for: symbol) }),
+           cachedQuote.currentPrice > 0 {
+            let price = cachedQuote.currentPrice
+            let spread = price * 0.001 // 0.1% spread
+            return BrokerQuote(
+                symbol: symbol,
+                bid: price - spread / 2,
+                ask: price + spread / 2,
+                last: price,
+                volume: Double(cachedQuote.volume ?? 0),
+                timestamp: cachedQuote.timestamp ?? Date()
+            )
+        }
+
+        // Fallback: hardcoded estimation when no market data is cached
+        let basePrice = 100.0
+        let spread = basePrice * 0.001
+
         return BrokerQuote(
             symbol: symbol,
             bid: basePrice - spread / 2,

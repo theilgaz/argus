@@ -262,14 +262,9 @@ actor OrionV2Engine {
         let range = high50 - low50
         guard range > 0 else { return (nil, ["S/R aralığı sıfır"]) }
 
-        let position = (last.close - low50) / range  // 0 = low, 1 = high
-        // Range içinde alt-orta kısım = alım fırsatı, üst kısım = direnç yakın
-        let s: Double
-        if position < 0.20      { s = 70 }   // Destek yakını — bounce şansı
-        else if position < 0.40 { s = 65 }   // Alt yarı
-        else if position < 0.60 { s = 55 }   // Orta
-        else if position < 0.80 { s = 40 }   // Direnç yakını
-        else                     { s = 25 }   // Tepe — düşüş riski
+        let position = (last.close - low50) / range  // 0 = low (destek), 1 = high (direnç)
+        // Simetrik: destek yakını AL sinyali (75), direnç yakını SAT sinyali (25), orta nötr (50)
+        let s = 75.0 - (position * 50.0)
 
         return (s, [
             "50-günlük aralık: \(String(format: "%.2f", low50)) — \(String(format: "%.2f", high50))",

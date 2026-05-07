@@ -6,7 +6,6 @@ import Foundation
 actor AtlasV2Engine {
     static let shared = AtlasV2Engine()
     
-    private let benchmarks = AtlasSectorBenchmarks.shared
     private let explainer = AtlasExplanationFactory.shared
     
     // Cache
@@ -42,9 +41,10 @@ actor AtlasV2Engine {
         }
         print("✅ AtlasV2: Quote received for \(symbol): \(quote?.c ?? 0)")
         
-        // 3. Sektör benchmark'ını al
+        // 3. Sektör benchmark'ını al (dinamik Yahoo verisi + statik fallback)
         let sector = try? await getSectorFromYahoo(symbol: symbol)
-        let sectorBenchmark = benchmarks.getBenchmark(for: sector)
+        await AtlasSectorBenchmarks.shared.refreshIfNeeded()
+        let sectorBenchmark = await AtlasSectorBenchmarks.shared.getBenchmark(for: sector)
         
         // 4. Her bölümü analiz et ve skorla
         let valuationData = analyzeValuation(financials: financials, quote: quote, benchmark: sectorBenchmark)
@@ -218,26 +218,41 @@ actor AtlasV2Engine {
         )
         
         // EV/EBITDA
-        let evEbitdaMetric = createSimpleMetric(
+        let evEbitdaResult = explainer.explainEVEBITDA(value: financials.evToEbitda)
+        let evEbitdaMetric = AtlasMetric(
             id: "evebitda",
             name: "EV/EBITDA",
             value: financials.evToEbitda,
+            status: evEbitdaResult.status,
+            score: evEbitdaResult.score,
+            explanation: evEbitdaResult.explanation,
+            educationalNote: evEbitdaResult.educational,
             formula: "Kurumsal Değer / FAVÖK"
         )
-        
+
         // PEG
-        let pegMetric = createSimpleMetric(
+        let pegResult = explainer.explainPEG(value: financials.pegRatio)
+        let pegMetric = AtlasMetric(
             id: "peg",
             name: "PEG Oranı",
             value: financials.pegRatio,
+            status: pegResult.status,
+            score: pegResult.score,
+            explanation: pegResult.explanation,
+            educationalNote: pegResult.educational,
             formula: "F/K / Büyüme Oranı"
         )
-        
+
         // Forward P/E
-        let forwardPEMetric = createSimpleMetric(
+        let forwardPEResult = explainer.explainForwardPE(value: financials.forwardPERatio)
+        let forwardPEMetric = AtlasMetric(
             id: "forwardpe",
             name: "İleriye Dönük F/K",
             value: financials.forwardPERatio,
+            status: forwardPEResult.status,
+            score: forwardPEResult.score,
+            explanation: forwardPEResult.explanation,
+            educationalNote: forwardPEResult.educational,
             formula: "Fiyat / Tahmini Gelecek Yıl Karı"
         )
         
@@ -269,26 +284,41 @@ actor AtlasV2Engine {
         )
         
         // ROA
-        let roaMetric = createSimpleMetric(
+        let roaResult = explainer.explainROA(value: financials.returnOnAssets)
+        let roaMetric = AtlasMetric(
             id: "roa",
             name: "ROA (Aktif Karlılığı)",
             value: financials.returnOnAssets,
+            status: roaResult.status,
+            score: roaResult.score,
+            explanation: roaResult.explanation,
+            educationalNote: roaResult.educational,
             formula: "Net Kar / Toplam Aktifler × 100"
         )
-        
+
         // Net Marj
-        let netMarginMetric = createPercentMetric(
+        let netMarginResult = explainer.explainNetMargin(value: financials.profitMargin)
+        let netMarginMetric = AtlasMetric(
             id: "netmargin",
             name: "Net Kar Marjı",
             value: financials.profitMargin,
+            status: netMarginResult.status,
+            score: netMarginResult.score,
+            explanation: netMarginResult.explanation,
+            educationalNote: netMarginResult.educational,
             formula: "Net Kar / Gelir × 100"
         )
-        
+
         // Gross Margin
-        let grossMarginMetric = createPercentMetric(
+        let grossMarginResult = explainer.explainGrossMargin(value: financials.grossMargin)
+        let grossMarginMetric = AtlasMetric(
             id: "grossmargin",
             name: "Brüt Kar Marjı",
             value: financials.grossMargin,
+            status: grossMarginResult.status,
+            score: grossMarginResult.score,
+            explanation: grossMarginResult.explanation,
+            educationalNote: grossMarginResult.educational,
             formula: "Brüt Kar / Gelir × 100"
         )
         
