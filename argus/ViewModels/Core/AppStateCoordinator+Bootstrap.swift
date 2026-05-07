@@ -42,6 +42,15 @@ extension AppStateCoordinator {
                 // Connect Stream for Watchlist
                 ArgusLogger.phase(.veri, "Faz 2: Stream bağlanıyor...")
                 MarketDataProvider.shared.connectStream(symbols: market.watchlist)
+
+                // Initial data load — TVM.loadData()'dan taşındı.
+                // Quotes startWatchlistLoop tarafından zaten immediate çekiliyor;
+                // burada candle/macro/discover/losers paralel başlasın.
+                ArgusLogger.phase(.veri, "Faz 2: Initial data load başlatılıyor...")
+                market.loadMacroEnvironment()
+                market.loadDiscoverData()
+                Task { await market.fetchCandles() }
+                Task { await market.fetchTopLosers() }
             }
         }
 
