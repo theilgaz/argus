@@ -289,12 +289,17 @@ final class MarketViewModel: ObservableObject {
 
     // Watchlist Loop Management
     func startWatchlistLoop() {
-        Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+        // 2026-05-04: Refresh interval 60s → 180s. Quote TTL 180s ile aynı.
+        // 60sn'de 319 sembol × 1.5sn ÷ 4 inflight = 120sn — refresh kendi
+        // süresinden daha sık tetiklenince queue şişiyor, 30sn rate-cap
+        // timeout'larına neden oluyordu. 180sn aralık + eşit TTL → AutoPilot/
+        // Scout/UI cache hit garantili.
+        Timer.scheduledTimer(withTimeInterval: 180, repeats: true) { [weak self] _ in
             Task {
                 await self?.fetchQuotes()
             }
         }
-        // Run once immediately
+        // Run once immediately — fetchCandles Orion için pump primer.
         Task {
             await fetchQuotes()
             await fetchCandles()
