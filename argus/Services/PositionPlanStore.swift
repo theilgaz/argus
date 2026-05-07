@@ -33,6 +33,18 @@ final class PositionPlanStore: ObservableObject {
             .store(in: &cancellables)
     }
 
+    // MARK: - Smart Plan Sheet State
+
+    @Published var generatedSmartPlan: PositionPlan?
+
+    func triggerSmartPlan(for trade: Trade) {
+        Task {
+            guard let decision = SignalStateViewModel.shared.grandDecisions[trade.symbol] else { return }
+            guard let plan = createPlan(for: trade, decision: decision) else { return }
+            await MainActor.run { self.generatedSmartPlan = plan }
+        }
+    }
+
     // MARK: - Forward (Repository)
 
     var plans: [UUID: PositionPlan] { repository.plans }

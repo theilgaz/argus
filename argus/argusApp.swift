@@ -127,7 +127,6 @@ struct argusApp: App {
                         .transition(.opacity)
                     } else if hasAcceptedDisclaimer {
                         ContentView()
-                            .environmentObject(tradingViewModel)
                             .environmentObject(coordinator)
                             .environmentObject(coordinator.watchlist)
                             .environmentObject(coordinator.portfolio)

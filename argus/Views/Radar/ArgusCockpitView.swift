@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - ArgusCockpitView (in-place refactor — ArgusDesignKit v1)
 //
 // Trader Terminal: Global / Sirkiye (BIST) / Fonlar sekmesi + terminal listesi.
-// Veri: viewModel.terminalItems (TerminalItem pre-calculated), ChironDataLakeService (loadLearningEvents).
+// Veri: TerminalViewModel.shared.terminalItems, ChironDataLakeService (loadLearningEvents).
 // Korunur:
 //   • ScoutStoriesBar, ChironCockpitWidget, ChironTerminalFeed, FundListView, ModuleHoloSheet
 //   • TerminalControlBar / TerminalStockRow alt bileşen imzaları
@@ -21,7 +21,7 @@ enum MarketTab: String, CaseIterable {
 }
 
 struct ArgusCockpitView: View {
-    @EnvironmentObject var viewModel: TradingViewModel
+    @ObservedObject private var terminal = TerminalViewModel.shared
     @StateObject private var deepLinkManager = DeepLinkManager.shared
 
     // Terminal State
@@ -48,7 +48,7 @@ struct ArgusCockpitView: View {
 
     // Terminal liste — ViewModel'den
     var terminalData: [TerminalItem] {
-        var items = viewModel.terminalItems
+        var items = terminal.terminalItems
 
         // 1. Market Filter
         switch selectedMarket {
@@ -195,13 +195,13 @@ struct ArgusCockpitView: View {
             }
         }
         .onAppear {
-            viewModel.refreshTerminal()
+            terminal.refreshTerminal()
         }
         .task {
-            await viewModel.bootstrapTerminalData()
+            await terminal.bootstrapTerminalData()
         }
-        .onChange(of: viewModel.watchlist) { _ in
-            viewModel.refreshTerminal()
+        .onChange(of: terminal.watchlist) { _ in
+            terminal.refreshTerminal()
         }
     }
 
@@ -302,7 +302,7 @@ struct ArgusCockpitView: View {
                 case .fonlar:
                     Task { await FundDataManager.shared.refresh() }
                 default:
-                    viewModel.refreshTerminal()
+                    terminal.refreshTerminal()
                 }
             }) {
                 Image(systemName: "arrow.clockwise")
