@@ -16,10 +16,10 @@ import SwiftUI
 ///   • xu100Strip kalktı → MarqueeTicker kayan canlı bant (BIST 100 +
 ///     USD/TRY + EUR/TRY + BIST sektör değişimleri).
 ///
-/// Public API korundu: `init(viewModel: TradingViewModel)`.
+/// Public API: `init()`. Singleton AnalysisViewModel.shared üzerinden okur.
 
 struct SirkiyeDashboardView: View {
-    @ObservedObject var viewModel: TradingViewModel
+    @ObservedObject private var analysisVM = AnalysisViewModel.shared
 
     @State private var showDetails = false
     @State private var xu100Value: Double = 0
@@ -31,14 +31,14 @@ struct SirkiyeDashboardView: View {
     // MARK: - Derived data
 
     private var atmosphereScore: Double {
-        if let decision = viewModel.bistAtmosphere {
+        if let decision = analysisVM.bistAtmosphere {
             return decision.netSupport * 100.0
         }
         return fallbackMacroScore
     }
 
     private var atmosphereMode: MarketMode {
-        viewModel.bistAtmosphere?.marketMode ?? modeFrom(score: fallbackMacroScore)
+        analysisVM.bistAtmosphere?.marketMode ?? modeFrom(score: fallbackMacroScore)
     }
 
     // MARK: - Body
@@ -61,7 +61,7 @@ struct SirkiyeDashboardView: View {
         }
         .sheet(isPresented: $showDetails) {
             NavigationStack {
-                SirkiyeAetherView(linkedDecision: viewModel.bistAtmosphere)
+                SirkiyeAetherView(linkedDecision: analysisVM.bistAtmosphere)
             }
             .preferredColorScheme(.dark)
         }
@@ -80,22 +80,22 @@ struct SirkiyeDashboardView: View {
                     .frame(width: 6, height: 6)
 
                 Text(regimeLabel)
-                    .font(.system(size: 13))
+                    .font(DesignTokens.Fonts.custom(size: 13))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
                 Text("·")
-                    .font(.system(size: 13))
+                    .font(DesignTokens.Fonts.custom(size: 13))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
 
                 Text("\(Int(atmosphereScore))")
-                    .font(.system(size: 13, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 13, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .monospacedDigit()
 
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             .padding(.horizontal, 16)

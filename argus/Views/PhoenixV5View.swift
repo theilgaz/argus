@@ -11,7 +11,7 @@ import SwiftUI
 /// hex gradient daireler. Yeni: "Risk fırsatları" sentence başlık + sade
 /// hairline kartlar + sentence başlıklar + sade text counter.
 struct PhoenixV5View: View {
-    @EnvironmentObject var viewModel: TradingViewModel
+    @ObservedObject private var marketVM = MarketViewModel.shared
     @Environment(\.presentationMode) var presentationMode
 
     /// Ana sembol (mevcut StockDetail'ten gelebilir) veya liste modu (nil).
@@ -54,7 +54,7 @@ struct PhoenixV5View: View {
                 presentationMode.wrappedValue.dismiss()
             } label: {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .frame(width: 36, height: 36)
                     .background(InstitutionalTheme.Colors.surface2)
@@ -63,17 +63,17 @@ struct PhoenixV5View: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Risk fırsatları")
-                    .font(.system(size: 15, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 15, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text("Dip dedektörü, dönüş onayları")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
 
             Spacer()
 
             Text("\(otherSymbols.count + (mainAdvice != nil ? 1 : 0)) aday")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .monospacedDigit()
         }
@@ -98,17 +98,17 @@ struct PhoenixV5View: View {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 8) {
                         Text(advice.symbol)
-                            .font(.system(size: 15, weight: .medium))
+                            .font(DesignTokens.Fonts.custom(size: 15, weight: .medium))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         if let price = currentPrice(for: advice.symbol) {
                             Text(formatPrice(price, symbol: advice.symbol))
-                                .font(.system(size: 14, weight: .medium))
+                                .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                 .monospacedDigit()
                         }
                     }
                     Text(scenarioSummary(advice))
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .lineLimit(1)
                 }
@@ -117,17 +117,17 @@ struct PhoenixV5View: View {
 
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("Güven")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     Text("\(Int(advice.confidence))")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                         .foregroundColor(confidenceColor(advice.confidence))
                         .monospacedDigit()
                 }
             }
 
             // Mini grafik
-            if let candles = viewModel.candles[advice.symbol], candles.count >= 2 {
+            if let candles = marketVM.candles[advice.symbol], candles.count >= 2 {
                 SanctumMiniChart(candles: candles.suffix(60).map { $0 },
                                color: advice.status == .active
                                    ? InstitutionalTheme.Colors.positive
@@ -161,10 +161,10 @@ struct PhoenixV5View: View {
     private func statTile(title: String, value: String, color: Color) -> some View {
         VStack(spacing: 3) {
             Text(title)
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Text(value)
-                .font(.system(size: 13, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                 .foregroundColor(color)
                 .monospacedDigit()
         }
@@ -179,7 +179,7 @@ struct PhoenixV5View: View {
     private func checklistCard(advice: PhoenixAdvice) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Dönüş kontrol listesi")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
             VStack(spacing: 8) {
@@ -209,11 +209,11 @@ struct PhoenixV5View: View {
     private func checklistRow(done: Bool?, text: String) -> some View {
         HStack(spacing: 10) {
             Image(systemName: checklistIcon(done))
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(checklistColor(done))
                 .frame(width: 18)
             Text(text)
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(done == true
                                  ? InstitutionalTheme.Colors.textPrimary
                                  : InstitutionalTheme.Colors.textSecondary)
@@ -239,7 +239,7 @@ struct PhoenixV5View: View {
         VStack(alignment: .leading, spacing: 8) {
             if !otherSymbols.isEmpty {
                 Text("Diğer adaylar")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
                 VStack(spacing: 6) {
@@ -260,10 +260,10 @@ struct PhoenixV5View: View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(sym)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text(advice.reasonShort.isEmpty ? "İzle" : advice.reasonShort)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(
                         advice.status == .active
                             ? InstitutionalTheme.Colors.aurora
@@ -275,7 +275,7 @@ struct PhoenixV5View: View {
             Spacer()
 
             Text("\(Int(advice.confidence))")
-                .font(.system(size: 13, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                 .foregroundColor(confidenceColor(advice.confidence))
                 .monospacedDigit()
         }
@@ -318,7 +318,7 @@ struct PhoenixV5View: View {
 
     private func currentPrice(for symbol: String) -> Double? {
         MarketDataStore.shared.getQuote(for: symbol)?.currentPrice
-            ?? viewModel.quotes[symbol]?.currentPrice
+            ?? marketVM.quotes[symbol]?.currentPrice
     }
 
     private func formatPrice(_ price: Double, symbol: String) -> String {

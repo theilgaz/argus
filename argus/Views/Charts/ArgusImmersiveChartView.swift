@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ArgusImmersiveChartView: View {
     @Environment(\.dismiss) var dismiss
-    @ObservedObject var viewModel: TradingViewModel
+    @ObservedObject private var marketVM = MarketViewModel.shared
     let symbol: String
     
     // UI State
@@ -20,7 +20,7 @@ struct ArgusImmersiveChartView: View {
     private var chartData: ChartData {
         // KEY FIX: Timeframe bazlı anahtar kullan (ör: "AAPL_1G", "AAPL_1S")
         let cacheKey = "\(symbol)_\(selectedTimeframe)"
-        if let candles = viewModel.candles[cacheKey] {
+        if let candles = marketVM.candles[cacheKey] {
             let points = candles.map { $0.toChartPoint() }
             return ChartData(symbol: symbol, points: points, timeframe: selectedTimeframe)
         }
@@ -69,7 +69,7 @@ struct ArgusImmersiveChartView: View {
                                     selectedTimeframe = tf
                                     isLoading = true
                                     Task {
-                                        await viewModel.loadCandles(for: symbol, timeframe: tf)
+                                        await marketVM.loadCandles(for: symbol, timeframe: tf)
                                         await MainActor.run {
                                             isLoading = false
                                         }
@@ -118,7 +118,7 @@ struct ArgusImmersiveChartView: View {
                     } else {
 
                         // NEW: Argus Pro Chart (Canvas Engine)
-                        if let candles = viewModel.candles["\(symbol)_\(selectedTimeframe)"] {
+                        if let candles = marketVM.candles["\(symbol)_\(selectedTimeframe)"] {
                             ArgusProChart(candles: candles)
                                 .overlay(
                                     // Drawing Mode Indicator
@@ -213,7 +213,7 @@ struct ArgusImmersiveChartView: View {
                             Color.black.edgesIgnoringSafeArea(.all)
                             VStack(spacing: 20) {
                                 Image(systemName: "iphone.landscape")
-                                    .font(.system(size: 80))
+                                    .font(DesignTokens.Fonts.custom(size: 80))
                                     .foregroundColor(.white)
                                     .rotationEffect(.degrees(90))
                                     .symbolEffect(.bounce, options: .repeating)
@@ -254,7 +254,7 @@ struct ArgusImmersiveChartView: View {
                 ForEach(Array(stride(from: 0, to: chartData.points.count, by: step)), id: \.self) { index in
                     if index < chartData.points.count {
                         Text(formatDate(chartData.points[index].timestamp))
-                            .font(.system(size: 9, design: .monospaced))
+                            .font(DesignTokens.Fonts.custom(size: 9, design: .monospaced))
                             .foregroundColor(.gray)
                     }
                     if index < chartData.points.count - step { Spacer() }
@@ -287,9 +287,9 @@ struct ToolButton: View {
         Button(action: action) {
             VStack(spacing: 4) {
                 Image(systemName: icon)
-                    .font(.system(size: 18))
+                    .font(DesignTokens.Fonts.custom(size: 18))
                 Text(label)
-                    .font(.system(size: 9))
+                    .font(DesignTokens.Fonts.custom(size: 9))
             }
             .foregroundColor(isSelected ? .blue : color.opacity(0.8))
             .frame(width: 40)
@@ -301,10 +301,7 @@ struct ToolButton: View {
 }
 
 #Preview {
-    ArgusImmersiveChartView(
-        viewModel: TradingViewModel(),
-        symbol: "AAPL"
-    )
+    ArgusImmersiveChartView(symbol: "AAPL")
 }
 
 

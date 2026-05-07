@@ -140,7 +140,7 @@ struct MarketView: View {
         VStack(spacing: 10) {
             HStack(alignment: .center) {
                 Text("Piyasa")
-                    .font(.system(size: 22, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 22, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Spacer()
                 HStack(spacing: 0) {
@@ -161,12 +161,12 @@ struct MarketView: View {
                     .fill(InstitutionalTheme.Colors.aurora)
                     .frame(width: 6, height: 6)
                 Text("Açık")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .padding(.leading, 6)
                     .padding(.trailing, 8)
                 Text(Date().formatted(.dateTime.hour().minute()))
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     .lineLimit(1)
             }
@@ -186,7 +186,7 @@ struct MarketView: View {
     private func headerIconButton(icon: String, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
-                .font(.system(size: 17, weight: .regular))
+                .font(DesignTokens.Fonts.custom(size: 17, weight: .regular))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .frame(width: 36, height: 36)
                 .contentShape(Rectangle())
@@ -206,7 +206,7 @@ struct MarketView: View {
         Button(action: { withAnimation(.easeInOut(duration: 0.18)) { selectedMarket = mode } }) {
             VStack(spacing: 4) {
                 Text(title)
-                    .font(.system(size: 13, weight: isSelected ? .medium : .regular))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: isSelected ? .medium : .regular))
                     .foregroundColor(isSelected
                                      ? InstitutionalTheme.Colors.textPrimary
                                      : InstitutionalTheme.Colors.textSecondary)
@@ -389,7 +389,7 @@ struct BistCockpitView: View {
             // başlık silindi — SirkiyeDashboardView Global'daki AetherDashboardHUD
             // ile aynı dilde kendini "Bugün" başlığıyla zaten ifade ediyor,
             // dış header çift başlık yapıyordu.
-            SirkiyeDashboardView(viewModel: viewModel)
+            SirkiyeDashboardView()
 
             // 2026-05-05 H-65: "BIST takip · Türk lirası" header silindi.
             // Sayfa zaten Sirkiye tab'ında, currency tekrarlamak gereksiz;
@@ -688,11 +688,11 @@ struct BistCrystalRow: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(companyName)
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(DesignTokens.Fonts.custom(size: 14, weight: .semibold))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         .lineLimit(1)
                     Text(cleanSymbol)
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 11, weight: .medium, design: .monospaced))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         .lineLimit(1)
                 }
@@ -704,7 +704,7 @@ struct BistCrystalRow: View {
                 OrionSignalBadge(result: result)
             } else {
                 Text("—")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
 
@@ -712,11 +712,11 @@ struct BistCrystalRow: View {
             if let q = quote {
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(String(format: "₺%.2f", q.currentPrice))
-                        .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 14, weight: .semibold, design: .monospaced))
                         .monospacedDigit()
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     Text(String(format: "%+.2f%%", q.percentChange))
-                        .font(.system(size: 11, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 11, design: .monospaced))
                         .foregroundColor(q.percentChange >= 0
                                          ? InstitutionalTheme.Colors.aurora
                                          : InstitutionalTheme.Colors.crimson)
@@ -777,7 +777,7 @@ struct OrionSignalBadge: View {
     var body: some View {
         let isHold = shortVerdict == "Tut"
         return Text("%\(Int(result.score))")
-            .font(.system(size: 12, design: .monospaced))
+            .font(DesignTokens.Fonts.custom(size: 12, design: .monospaced))
             .foregroundColor(isHold ? InstitutionalTheme.Colors.textTertiary : tint)
             .monospacedDigit()
             .accessibilityLabel(Text("Orion sinyali \(shortVerdict), skor \(Int(result.score))"))

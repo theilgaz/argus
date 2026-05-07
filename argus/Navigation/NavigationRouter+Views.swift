@@ -145,7 +145,7 @@ extension NavigationRouter {
             RoadmapView()
 
         case .immersiveChart(let symbol):
-            ArgusImmersiveChartView(viewModel: viewModel, symbol: symbol)
+            ArgusImmersiveChartView(symbol: symbol)
 
         // MARK: - Components/Detail Sheets
         case .intelligenceCards(let symbol):
@@ -166,7 +166,7 @@ extension NavigationRouter {
 
         // MARK: - Sirkiye Views
         case .sirkiyeDashboard:
-            SirkiyeDashboardView(viewModel: viewModel)
+            SirkiyeDashboardView()
 
         case .sirkiyeAether:
             SirkiyeAetherView()

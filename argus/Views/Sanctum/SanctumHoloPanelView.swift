@@ -29,7 +29,7 @@ struct HoloPanelView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         // Sade alt başlık — modülün ne yaptığını tek cümleyle anlatır.
                         Text(module.description)
-                            .font(.system(size: 13))
+                            .font(DesignTokens.Fonts.custom(size: 13))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
 
@@ -63,10 +63,7 @@ struct HoloPanelView: View {
             }
         }
         .fullScreenCover(isPresented: $showImmersiveChart) {
-            ArgusImmersiveChartView(
-                viewModel: viewModel,
-                symbol: symbol
-            )
+            ArgusImmersiveChartView(symbol: symbol)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(InstitutionalTheme.Colors.background)
@@ -106,7 +103,7 @@ struct HoloPanelView: View {
             navIcon(system: "xmark", action: onClose)
 
             Text(moduleTitle)
-                .font(.system(size: 17, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 17, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
             Spacer()
@@ -130,7 +127,7 @@ struct HoloPanelView: View {
     private func navIcon(system: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: system)
-                .font(.system(size: 15, weight: .regular))
+                .font(DesignTokens.Fonts.custom(size: 15, weight: .regular))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .frame(width: 32, height: 32)
                 .contentShape(Rectangle())
@@ -203,7 +200,7 @@ struct HoloPanelView: View {
                         HStack(spacing: 10) {
                             ProgressView().scaleEffect(0.7)
                             Text("Teknik analiz yükleniyor…")
-                                .font(.system(size: 13))
+                                .font(DesignTokens.Fonts.custom(size: 13))
                                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                             Spacer()
                         }
@@ -225,14 +222,14 @@ struct HoloPanelView: View {
                 Button(action: { showStrategySheet = true }) {
                     HStack(spacing: 10) {
                         Text("Strateji merkezi")
-                            .font(.system(size: 14))
+                            .font(DesignTokens.Fonts.custom(size: 14))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         Spacer()
                         Text("Scalp · Swing · Position")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     }
                     .padding(.horizontal, 14)
@@ -290,24 +287,24 @@ struct HoloPanelView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             sectionTitle("Konsey duruşu")
                             Text("Piyasa duruşu — \(stanceLabel)")
-                                .font(.system(size: 12))
+                                .font(DesignTokens.Fonts.custom(size: 12))
                                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                             HStack(spacing: 16) {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("Piyasa modu")
-                                        .font(.system(size: 11))
+                                        .font(DesignTokens.Fonts.custom(size: 11))
                                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                                     Text(aetherDecision.marketMode.rawValue.capitalized)
-                                        .font(.system(size: 15, weight: .medium))
+                                        .font(DesignTokens.Fonts.custom(size: 15, weight: .medium))
                                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                 }
                                 Spacer()
                                 VStack(alignment: .trailing, spacing: 2) {
                                     Text("Net destek")
-                                        .font(.system(size: 11))
+                                        .font(DesignTokens.Fonts.custom(size: 11))
                                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                                     Text(String(format: "%+.2f", aetherDecision.netSupport))
-                                        .font(.system(size: 15, weight: .medium))
+                                        .font(DesignTokens.Fonts.custom(size: 15, weight: .medium))
                                         .foregroundColor(stanceColor)
                                         .monospacedDigit()
                                 }
@@ -320,7 +317,7 @@ struct HoloPanelView: View {
                         HStack(spacing: 10) {
                             ProgressView().scaleEffect(0.7)
                             Text("Konsey toplanıyor…")
-                                .font(.system(size: 13))
+                                .font(DesignTokens.Fonts.custom(size: 13))
                                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         }
                     }
@@ -336,7 +333,7 @@ struct HoloPanelView: View {
                         HStack(spacing: 10) {
                             ProgressView().scaleEffect(0.7)
                             Text("Makro veriler yükleniyor…")
-                                .font(.system(size: 13))
+                                .font(DesignTokens.Fonts.custom(size: 13))
                                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         }
                     }
@@ -359,11 +356,11 @@ struct HoloPanelView: View {
                     } label: {
                         HStack(spacing: 8) {
                             Text("Makro merkezine git")
-                                .font(.system(size: 14))
+                                .font(DesignTokens.Fonts.custom(size: 14))
                                 .foregroundColor(InstitutionalTheme.Colors.holo)
                             Spacer()
                             Image(systemName: "chevron.right")
-                                .font(.system(size: 12))
+                                .font(DesignTokens.Fonts.custom(size: 12))
                                 .foregroundColor(InstitutionalTheme.Colors.holo.opacity(0.6))
                         }
                         .padding(.vertical, 10)
@@ -396,11 +393,11 @@ struct HoloPanelView: View {
                                 ProgressView().scaleEffect(0.7)
                             } else {
                                 Image(systemName: "arrow.clockwise")
-                                    .font(.system(size: 13, weight: .regular))
+                                    .font(DesignTokens.Fonts.custom(size: 13, weight: .regular))
                                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                             }
                             Text(vm.isLoadingNews ? "Analiz ediliyor…" : "Haberleri tara")
-                                .font(.system(size: 14))
+                                .font(DesignTokens.Fonts.custom(size: 14))
                                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                             Spacer()
                         }
@@ -417,7 +414,7 @@ struct HoloPanelView: View {
                     .disabled(vm.isLoadingNews)
 
                     Text("Eğitim amaçlıdır, yatırım tavsiyesi değildir.")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         .padding(.top, 2)
                 }
@@ -444,24 +441,24 @@ struct HoloPanelView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             sectionTitle("Konsey duruşu")
                             Text("Etki — \(impactLabel)")
-                                .font(.system(size: 12))
+                                .font(DesignTokens.Fonts.custom(size: 12))
                                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                             HStack(spacing: 16) {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("Duygu")
-                                        .font(.system(size: 11))
+                                        .font(DesignTokens.Fonts.custom(size: 11))
                                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                                     Text(hermesDecision.sentiment.displayTitle)
-                                        .font(.system(size: 15, weight: .medium))
+                                        .font(DesignTokens.Fonts.custom(size: 15, weight: .medium))
                                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                 }
                                 Spacer()
                                 VStack(alignment: .trailing, spacing: 2) {
                                     Text("Net destek")
-                                        .font(.system(size: 11))
+                                        .font(DesignTokens.Fonts.custom(size: 11))
                                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                                     Text(String(format: "%+.2f", hermesDecision.netSupport))
-                                        .font(.system(size: 15, weight: .medium))
+                                        .font(DesignTokens.Fonts.custom(size: 15, weight: .medium))
                                         .foregroundColor(toneColor)
                                         .monospacedDigit()
                                 }
@@ -482,11 +479,11 @@ struct HoloPanelView: View {
                                 ProgressView().scaleEffect(0.7)
                             } else {
                                 Image(systemName: "arrow.clockwise")
-                                    .font(.system(size: 13, weight: .regular))
+                                    .font(DesignTokens.Fonts.custom(size: 13, weight: .regular))
                                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                             }
                             Text(vm.isLoadingNews ? "Analiz ediliyor…" : "Haberleri tara")
-                                .font(.system(size: 14))
+                                .font(DesignTokens.Fonts.custom(size: 14))
                                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                             Spacer()
                         }
@@ -505,7 +502,7 @@ struct HoloPanelView: View {
                     // 4) Hata satırı
                     if let error = vm.newsErrorMessage {
                         Text(error)
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.crimson)
                             .lineLimit(3)
                     }
@@ -518,11 +515,11 @@ struct HoloPanelView: View {
                                 ForEach(Array(vm.newsInsights.prefix(5).enumerated()), id: \.offset) { idx, insight in
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text(insight.headline)
-                                            .font(.system(size: 13, weight: .medium))
+                                            .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                             .lineLimit(2)
                                         Text(insight.impactSentenceTR)
-                                            .font(.system(size: 12))
+                                            .font(DesignTokens.Fonts.custom(size: 12))
                                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                                             .lineLimit(3)
                                     }
@@ -548,7 +545,7 @@ struct HoloPanelView: View {
                         }
                     } else {
                         Text("Henüz haber analizi yok.")
-                            .font(.system(size: 13))
+                            .font(DesignTokens.Fonts.custom(size: 13))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                             .padding(.vertical, 8)
                     }
@@ -565,15 +562,15 @@ struct HoloPanelView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Toplam puan — \(Int(athena.factorScore))/100")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         HStack(alignment: .firstTextBaseline) {
                             Text(athena.styleLabel)
-                                .font(.system(size: 18, weight: .medium))
+                                .font(DesignTokens.Fonts.custom(size: 18, weight: .medium))
                                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                             Spacer()
                             Text("\(Int(athena.factorScore))")
-                                .font(.system(size: 24, weight: .medium))
+                                .font(DesignTokens.Fonts.custom(size: 24, weight: .medium))
                                 .foregroundColor(scoreColor)
                                 .monospacedDigit()
                         }
@@ -602,7 +599,7 @@ struct HoloPanelView: View {
                 HStack(spacing: 10) {
                     ProgressView().scaleEffect(0.7)
                     Text("Faktör analizi yükleniyor…")
-                        .font(.system(size: 13))
+                        .font(DesignTokens.Fonts.custom(size: 13))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
             }
@@ -617,15 +614,15 @@ struct HoloPanelView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Toplam puan — \(Int(demeter.totalScore))/100 · \(demeter.grade)")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         HStack(alignment: .firstTextBaseline) {
                             Text(demeter.sector.name)
-                                .font(.system(size: 18, weight: .medium))
+                                .font(DesignTokens.Fonts.custom(size: 18, weight: .medium))
                                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                             Spacer()
                             Text("\(Int(demeter.totalScore))")
-                                .font(.system(size: 24, weight: .medium))
+                                .font(DesignTokens.Fonts.custom(size: 24, weight: .medium))
                                 .foregroundColor(scoreColor)
                                 .monospacedDigit()
                         }
@@ -667,7 +664,7 @@ struct HoloPanelView: View {
                                             .fill(InstitutionalTheme.Colors.crimson)
                                             .frame(width: 5, height: 5)
                                         Text("\(shock.type.displayName) \(shock.direction.symbol)")
-                                            .font(.system(size: 13))
+                                            .font(DesignTokens.Fonts.custom(size: 13))
                                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                     }
                                 }
@@ -679,7 +676,7 @@ struct HoloPanelView: View {
                 HStack(spacing: 10) {
                     ProgressView().scaleEffect(0.7)
                     Text("Sektör analizi yükleniyor…")
-                        .font(.system(size: 13))
+                        .font(DesignTokens.Fonts.custom(size: 13))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
             }
@@ -694,13 +691,13 @@ struct HoloPanelView: View {
                    let chironResult = decision.chironResult {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Şu anki rejim — \(chironResult.regime.descriptor.lowercased())")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         Text(chironResult.explanationTitle)
-                            .font(.system(size: 17, weight: .medium))
+                            .font(DesignTokens.Fonts.custom(size: 17, weight: .medium))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         Text(chironResult.explanationBody)
-                            .font(.system(size: 13))
+                            .font(DesignTokens.Fonts.custom(size: 13))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -716,12 +713,12 @@ struct HoloPanelView: View {
                     if let weights = chironPulseWeights {
                         chironWeightProgressRows(weights: weights)
                         Text(weights.reasoning)
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Fonts.custom(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                             .padding(.top, 4)
                     } else {
                         Text("Varsayılan ağırlıklar kullanılıyor.")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     }
                 }
@@ -736,12 +733,12 @@ struct HoloPanelView: View {
                     if let weights = chironCorseWeights {
                         chironWeightProgressRows(weights: weights)
                         Text(weights.reasoning)
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Fonts.custom(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                             .padding(.top, 4)
                     } else {
                         Text("Varsayılan ağırlıklar kullanılıyor.")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     }
                 }
@@ -753,10 +750,10 @@ struct HoloPanelView: View {
                 // 4) Nasıl öğreniyor
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Nasıl öğreniyor?")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     Text("Geçmiş kararlardan ve fiyat hareketlerinden öğrenerek modül ağırlıklarını dinamik ayarlar. Başarılı modüllerin payı zamanla artar.")
-                        .font(.system(size: 13))
+                        .font(DesignTokens.Fonts.custom(size: 13))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -768,11 +765,11 @@ struct HoloPanelView: View {
                 } label: {
                     HStack(spacing: 8) {
                         Text("Rejim merkezine git")
-                            .font(.system(size: 14))
+                            .font(DesignTokens.Fonts.custom(size: 14))
                             .foregroundColor(InstitutionalTheme.Colors.holo)
                         Spacer()
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.holo.opacity(0.6))
                     }
                     .padding(.vertical, 10)
@@ -827,14 +824,14 @@ struct HoloPanelView: View {
 
         HStack(spacing: 10) {
             Text(label)
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .frame(width: 70, alignment: .leading)
 
             ArgusBar(value: min(1.0, weight), color: barColor, height: 4)
 
             Text("\(Int(weight * 100))%")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .monospacedDigit()
                 .frame(width: 36, alignment: .trailing)
@@ -846,12 +843,12 @@ struct HoloPanelView: View {
     private func v5FactorRow(_ label: String, value: Double, color: Color) -> some View {
         HStack(spacing: 10) {
             Text(label)
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .frame(width: 96, alignment: .leading)
             ArgusBar(value: max(0, min(1, value / 100.0)), color: color, height: 4)
             Text("\(Int(value))")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .monospacedDigit()
                 .frame(width: 32, alignment: .trailing)
@@ -863,12 +860,12 @@ struct HoloPanelView: View {
     private func sectionTitle(_ text: String, trailing: String? = nil) -> some View {
         HStack {
             Text(text)
-                .font(.system(size: 14, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Spacer()
             if let trailing {
                 Text(trailing)
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             }
         }
