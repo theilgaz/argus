@@ -74,6 +74,40 @@ enum DesignTokens {
         static let glassBase          = Color.white.opacity(0.08)
         static let glassBorder        = Color.white.opacity(0.14)
         static let glassHover         = Color.white.opacity(0.12)
+
+        // MARK: Light overlays — beyaz tabanlı şeffaf katmanlar
+        // Elevated yüzeyler, vurgu çizgileri, hover şıltıları için kanonik ölçek.
+        // Inline `Color.white.opacity(0.X)` kullanımı yerine bunlar tercih edilmelidir.
+        enum Overlay {
+            static let l02 = Color.white.opacity(0.02)
+            static let l03 = Color.white.opacity(0.03)  // çok hafif — alt vurgu
+            static let l04 = Color.white.opacity(0.04)
+            static let l05 = Color.white.opacity(0.05)  // hafif yüzey
+            static let l06 = Color.white.opacity(0.06)
+            static let l07 = Color.white.opacity(0.07)
+            static let l08 = Color.white.opacity(0.08)  // = glassBase
+            static let l10 = Color.white.opacity(0.10)  // varsayılan kart vurgusu
+            static let l12 = Color.white.opacity(0.12)  // = glassHover
+            static let l14 = Color.white.opacity(0.14)  // = glassBorder
+            static let l20 = Color.white.opacity(0.20)  // belirgin vurgu
+            static let l40 = Color.white.opacity(0.40)  // güçlü vurgu
+            static let l70 = Color.white.opacity(0.70)  // çok güçlü vurgu
+        }
+
+        // MARK: Dark scrim — siyah tabanlı şeffaf katmanlar
+        // Modal arka plan, vignette, gölge ötesi koyulaştırma.
+        enum Scrim {
+            static let s05 = Color.black.opacity(0.05)
+            static let s10 = Color.black.opacity(0.10)
+            static let s15 = Color.black.opacity(0.15)
+            static let s20 = Color.black.opacity(0.20)
+            static let s30 = Color.black.opacity(0.30)
+            static let s40 = Color.black.opacity(0.40)
+            static let s50 = Color.black.opacity(0.50)
+            static let s60 = Color.black.opacity(0.60)
+            static let s80 = Color.black.opacity(0.80)
+            static let s95 = Color.black.opacity(0.95)  // tam-ekran modal scrim
+        }
     }
 
     // MARK: - Fonts (Dynamic Type destekli)
@@ -93,8 +127,13 @@ enum DesignTokens {
         static let monospace     = Font.system(.footnote, design: .monospaced)
         static let monospaceBold = Font.system(.footnote, design: .monospaced).weight(.semibold)
 
-        static func custom(size: CGFloat, weight: Font.Weight = .regular) -> Font {
-            return Font.system(size: size, weight: weight, design: .default)
+        /// Kanonik kaçış kapısı — token'a tam karşılık gelmeyen size/weight/design üçlüleri.
+        /// Inline `.font(.system(size:weight:design:))` yerine bu kullanılmalıdır; böylece
+        /// font kararları tek bir noktadan revize edilebilir kalır.
+        static func custom(size: CGFloat,
+                           weight: Font.Weight = .regular,
+                           design: Font.Design = .default) -> Font {
+            return Font.system(size: size, weight: weight, design: design)
         }
     }
 

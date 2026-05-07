@@ -34,20 +34,20 @@ struct AssetChipView: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text(symbol)
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .font(DesignTokens.Fonts.custom(size: 16, weight: .bold, design: .rounded))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     
                     // Engine Badge with Info
                     if let engine = engine {
                         HStack(spacing: 4) {
                             Text(engine == .corse ? "CORSE" : (engine == .pulse ? "PULSE" : "MANUEL"))
-                                .font(.system(size: 8, weight: .bold))
+                                .font(DesignTokens.Fonts.custom(size: 8, weight: .bold))
                                 .padding(.horizontal, 4)
                                 .padding(.vertical, 1)
                                 .background(
                                     (engine == .corse ? Color.blue : (engine == .pulse ? Color.purple : Color.gray)).opacity(0.3)
                                 )
-                                .foregroundColor(.white)
+                                .foregroundColor(DesignTokens.Colors.textPrimary)
                                 .cornerRadius(4)
                             
                             // Info Icon logic requires binding, simpler to just use button to show alert/sheet?
@@ -57,7 +57,7 @@ struct AssetChipView: View {
                             // User requested 'i' icon.
                             
                             Image(systemName: "info.circle")
-                                .font(.system(size: 10))
+                                .font(DesignTokens.Fonts.custom(size: 10))
                                 .foregroundColor(.white.opacity(0.5))
                         }
                     }
@@ -65,7 +65,7 @@ struct AssetChipView: View {
                 
                 HStack(spacing: 4) {
                     Text("\(String(format: "%.0f", quantity)) Adet")
-                        .font(.system(size: 11, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 11, design: .monospaced))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     
                     if let price = currentPrice {
@@ -75,7 +75,7 @@ struct AssetChipView: View {
                         
                         let symbolPrefix = symbol.hasSuffix(".IS") ? "₺" : "$"
                         Text("\(symbolPrefix)\(String(format: "%.2f", price))")
-                            .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                            .font(DesignTokens.Fonts.custom(size: 11, weight: .semibold, design: .monospaced))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     }
                 }
@@ -94,13 +94,13 @@ struct AssetChipView: View {
             VStack(alignment: .trailing, spacing: 2) {
                 let currencySymbol = symbol.hasSuffix(".IS") ? "₺" : "$"
                 Text("\(currencySymbol)\(String(format: "%.2f", pnl))")
-                    .font(.system(size: 15, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 15, weight: .bold, design: .monospaced))
                     .foregroundColor(pnlColor)
                     // Glow if profitable
                     .shadow(color: pnl > 0 ? pnlColor.opacity(0.5) : .clear, radius: 4)
                 
                 Text(String(format: "%.1f%%", pnlPercent))
-                    .font(.system(size: 11, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .medium))
                     .foregroundColor(pnlColor.opacity(0.8))
             }
         }

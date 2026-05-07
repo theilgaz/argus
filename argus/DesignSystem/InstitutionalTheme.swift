@@ -213,7 +213,7 @@ struct NanoMetricCard: View {
         HStack(spacing: InstitutionalTheme.Spacing.xs) {
             if let trendUp {
                 Image(systemName: trendUp ? "arrow.up.right" : "arrow.down.right")
-                    .font(.system(size: 9, weight: .bold))
+                    .font(DesignTokens.Fonts.custom(size: 9, weight: .bold))
                     .foregroundColor(trendUp ? InstitutionalTheme.Colors.positive : InstitutionalTheme.Colors.negative)
             }
 

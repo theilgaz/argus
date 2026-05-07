@@ -43,7 +43,7 @@ struct GlassCard<Content: View>: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
         // Optional: Subtle Glow Shadow
-        .shadow(color: Color.black.opacity(0.3), radius: 10, x: 0, y: 5)
+        .shadow(color: DesignTokens.Colors.Scrim.s30, radius: 10, x: 0, y: 5)
     }
 }
 
@@ -62,7 +62,7 @@ extension View {
         VStack {
             Text("Argus Glass System")
                 .font(.title)
-                .foregroundColor(.white)
+                .foregroundColor(DesignTokens.Colors.textPrimary)
                 .padding()
                 .glassCard()
                 .frame(width: 300, height: 100)

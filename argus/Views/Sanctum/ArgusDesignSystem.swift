@@ -48,7 +48,7 @@ struct CinematicHeader: View {
             // Back Button (Cyber)
             Button(action: onDismiss) {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .bold))
                     .foregroundColor(Sanctum2Theme.hologramBlue)
                     .frame(width: 36, height: 36)
                     .background(InstitutionalTheme.Colors.surface2)
@@ -60,7 +60,7 @@ struct CinematicHeader: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(symbol.replacingOccurrences(of: ".IS", with: ""))
-                        .font(.system(size: 20, weight: .heavy, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 20, weight: .heavy, design: .monospaced))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         .shadow(color: Sanctum2Theme.hologramBlue.opacity(0.5), radius: 8, x: 0, y: 0)
                     
@@ -69,7 +69,7 @@ struct CinematicHeader: View {
                         .font(.caption)
                     
                     Text(sector.uppercased())
-                        .font(.system(size: 10, weight: .bold))
+                        .font(DesignTokens.Fonts.custom(size: 10, weight: .bold))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
@@ -89,7 +89,7 @@ struct CinematicHeader: View {
                         .shadow(color: (isMarketOpen ? Sanctum2Theme.neonGreen : Sanctum2Theme.crimsonRed).opacity(0.8), radius: 4)
                     
                     Text(isMarketOpen ? "PİYASA AÇIK" : "PİYASA KAPALI")
-                        .font(.system(size: 9, weight: .bold))
+                        .font(DesignTokens.Fonts.custom(size: 9, weight: .bold))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
             }
@@ -100,14 +100,14 @@ struct CinematicHeader: View {
             if let p = price, let c = change {
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(String(format: "%.2f", p))
-                        .font(.system(size: 22, weight: .bold, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 22, weight: .bold, design: .monospaced))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     
                     HStack(spacing: 4) {
                         Image(systemName: c >= 0 ? "arrow.up.right" : "arrow.down.right")
                         Text(String(format: "%+.2f%%", c))
                     }
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .semibold))
                     .foregroundColor(c >= 0 ? Sanctum2Theme.neonGreen : Sanctum2Theme.crimsonRed)
                 }
             }
@@ -168,12 +168,12 @@ struct BentoCard<Content: View, HeaderAccessory: View>: View {
                             .frame(width: 14, height: 14)
                     } else {
                         Image(systemName: icon)
-                            .font(.system(size: 11, weight: .bold))
+                            .font(DesignTokens.Fonts.custom(size: 11, weight: .bold))
                             .foregroundColor(accentColor)
                     }
 
                     Text(title.uppercased())
-                        .font(.system(size: 10, weight: .heavy))
+                        .font(DesignTokens.Fonts.custom(size: 10, weight: .heavy))
                         .foregroundColor(accentColor.opacity(0.8))
                         .tracking(1) // Letter spacing
                 }

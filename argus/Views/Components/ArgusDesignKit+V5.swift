@@ -232,7 +232,7 @@ struct ArgusIconButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: systemImage)
-                .font(.system(size: 13, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .semibold))
                 .foregroundColor(tone.foreground)
                 .frame(width: 44, height: 44) // WCAG 2.5.8 min target
                 .background(
@@ -329,13 +329,13 @@ struct ArgusInsightRow<Lead: View, Tail: View>: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .lineLimit(1)
 
                 if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .lineLimit(1)
                 }
@@ -347,7 +347,7 @@ struct ArgusInsightRow<Lead: View, Tail: View>: View {
 
             if action != nil {
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
         }

@@ -4,39 +4,38 @@ import CoreMotion
 // A card that reacts to device tilt (Gyroscope) to give a 3D hologram feel.
 // A card that reacts to device tilt (Gyroscope) to give a 3D hologram feel.
 struct HolographicBalanceCard: View {
-    @ObservedObject var viewModel: TradingViewModel
-    var mode: TradeMarket = .global // Default to Global
-    
+    @ObservedObject private var portfolioVM = PortfolioViewModel.shared
+    var mode: TradeMarket = .global
+
     @State private var pitch: Double = 0.0
     @State private var roll: Double = 0.0
     private let motionManager = CMMotionManager()
-    
-    // Dynamic Properties based on Mode
+
     var equity: Double {
         switch mode {
-        case .global: return viewModel.getEquity()
-        case .bist: return calculateBistEquity()
+        case .global: return portfolioVM.getEquity()
+        case .bist: return portfolioVM.getBistEquity()
         }
     }
-    
+
     var balance: Double {
         switch mode {
-        case .global: return viewModel.balance
-        case .bist: return viewModel.bistBalance
+        case .global: return portfolioVM.balance
+        case .bist: return portfolioVM.bistBalance
         }
     }
-    
+
     var realized: Double {
         switch mode {
-        case .global: return viewModel.getRealizedPnL()
-        case .bist: return calculateBistRealized()
+        case .global: return portfolioVM.getRealizedPnL()
+        case .bist: return portfolioVM.getRealizedPnL(market: .bist)
         }
     }
-    
+
     var unrealized: Double {
         switch mode {
-        case .global: return viewModel.getUnrealizedPnL()
-        case .bist: return calculateBistUnrealized()
+        case .global: return portfolioVM.getUnrealizedPnL()
+        case .bist: return portfolioVM.getBistUnrealizedPnL()
         }
     }
     
@@ -56,21 +55,6 @@ struct HolographicBalanceCard: View {
         return mode == .global ? "ARGUS PORTFOLIO" : "BIST PORTFÖY"
     }
     
-    // BIST Helpers - Artık ViewModel fonksiyonlarını kullanıyoruz
-    private func calculateBistEquity() -> Double {
-        return viewModel.getBistEquity()
-    }
-    
-    private func calculateBistRealized() -> Double {
-        // BIST realized calculation (Tüm kapalı BIST işlemlerinden)
-        return viewModel.portfolio
-            .filter { !$0.isOpen && ($0.symbol.hasSuffix(".IS") || SymbolResolver.shared.isBistSymbol($0.symbol)) }
-            .reduce(0.0) { $0 + $1.profit }
-    }
-    
-    private func calculateBistUnrealized() -> Double {
-        return viewModel.getBistUnrealizedPnL()
-    }
     
     var body: some View {
         ZStack {
@@ -133,12 +117,12 @@ struct HolographicBalanceCard: View {
                 // Balance Big
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Toplam varlık")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
                     Text("\(currencySymbol)\(String(format: "%.0f", equity))")
-                        .font(.system(size: 32, weight: .medium))
-                        .foregroundColor(.white)
+                        .font(DesignTokens.Fonts.custom(size: 32, weight: .medium))
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                         .monospacedDigit()
                 }
 
@@ -160,10 +144,10 @@ struct HolographicBalanceCard: View {
     private func statItem(label: String, value: Double, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label)
-                .font(.system(size: 9, weight: .bold))
+                .font(DesignTokens.Fonts.custom(size: 9, weight: .bold))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Text("\(currencySymbol)\(String(format: "%.0f", value))")
-                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .bold, design: .monospaced))
                 .foregroundColor(color)
         }
     }

@@ -11,7 +11,7 @@ import SwiftUI
 ///
 /// Gradient bg: linear #0B1426 → #060C18.
 struct LiquidDashboardHeader: View {
-    @ObservedObject var viewModel: TradingViewModel
+    @ObservedObject private var portfolioVM = PortfolioViewModel.shared
     @Binding var selectedMarket: TradeMarket
 
     var onBrainTap: () -> Void
@@ -22,17 +22,17 @@ struct LiquidDashboardHeader: View {
     private var currencySymbol: String { isBist ? "₺" : "$" }
 
     private var equity: Double {
-        isBist ? viewModel.getBistEquity() : viewModel.getEquity()
+        isBist ? portfolioVM.getBistEquity() : portfolioVM.getEquity()
     }
 
     private var balance: Double {
-        isBist ? viewModel.bistBalance : viewModel.balance
+        isBist ? portfolioVM.bistBalance : portfolioVM.balance
     }
 
-    private var realized: Double { viewModel.getRealizedPnL(market: selectedMarket) }
+    private var realized: Double { portfolioVM.getRealizedPnL(market: selectedMarket) }
 
     private var unrealized: Double {
-        isBist ? viewModel.getBistUnrealizedPnL() : viewModel.getUnrealizedPnL()
+        isBist ? portfolioVM.getBistUnrealizedPnL() : portfolioVM.getUnrealizedPnL()
     }
 
     private var netPnL: Double { realized + unrealized }
@@ -56,11 +56,11 @@ struct LiquidDashboardHeader: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(isBist ? "BIST değeri" : "Toplam varlık")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text("\(currencySymbol)\(formatLarge(equity))")
-                        .font(.system(size: 28, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 28, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
@@ -71,17 +71,17 @@ struct LiquidDashboardHeader: View {
                                              : InstitutionalTheme.Colors.crimson
                         let sign = positive ? "+" : ""
                         Text("\(sign)\(currencySymbol)\(formatLarge(netPnL))")
-                            .font(.system(size: 13, weight: .medium))
+                            .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                             .foregroundColor(color)
                             .monospacedDigit()
                         Text("\(sign)\(String(format: "%.2f", instantPct))%")
-                            .font(.system(size: 13))
+                            .font(DesignTokens.Fonts.custom(size: 13))
                             .foregroundColor(color)
                             .monospacedDigit()
                     }
                 }
                 Text("Bugünkü değişim")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
 
@@ -112,7 +112,7 @@ struct LiquidDashboardHeader: View {
             navIcon(icon: "line.3.horizontal", action: onDrawerTap)
 
             Text("Portföy")
-                .font(.system(size: 17, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 17, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
             Spacer()
@@ -138,7 +138,7 @@ struct LiquidDashboardHeader: View {
     private func navIcon(icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
-                .font(.system(size: 16, weight: .regular))
+                .font(DesignTokens.Fonts.custom(size: 16, weight: .regular))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .frame(width: 32, height: 32)
                 .contentShape(Rectangle())
@@ -164,7 +164,7 @@ struct LiquidDashboardHeader: View {
         Button(action: action) {
             VStack(spacing: 4) {
                 Text(label)
-                    .font(.system(size: 13, weight: selected ? .medium : .regular))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: selected ? .medium : .regular))
                     .foregroundColor(selected
                                      ? InstitutionalTheme.Colors.textPrimary
                                      : InstitutionalTheme.Colors.textSecondary)
@@ -192,10 +192,10 @@ struct LiquidDashboardHeader: View {
             }
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Text(value)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                     .foregroundColor(tone)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)

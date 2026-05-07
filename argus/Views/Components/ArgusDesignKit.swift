@@ -84,8 +84,8 @@ struct ArgusCard<Content: View>: View {
 
     private var shadowColor: Color {
         switch style {
-        case .elevated: return Color.black.opacity(0.28)
-        case .flat:     return Color.black.opacity(0.12)
+        case .elevated: return DesignTokens.Colors.Scrim.s30
+        case .flat:     return DesignTokens.Colors.Scrim.s10
         default:        return .clear
         }
     }
@@ -121,13 +121,13 @@ struct ArgusSectionHeader<Trailing: View>: View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .accessibilityAddTraits(.isHeader)
 
                 if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -231,7 +231,7 @@ struct ArgusDeltaPill: View {
     var body: some View {
         HStack(spacing: 3) {
             Image(systemName: isPositive ? "arrow.up.right" : "arrow.down.right")
-                .font(.system(size: compact ? 8 : 10, weight: .bold))
+                .font(DesignTokens.Fonts.custom(size: compact ? 8 : 10, weight: .bold))
             Text(text)
                 .font(.system(compact ? .caption2 : .caption, design: .monospaced))
                 .fontWeight(.bold)
@@ -308,7 +308,7 @@ struct ArgusSignalBadge: View {
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: signal.icon)
-                .font(.system(size: compact ? 10 : 12, weight: .bold))
+                .font(DesignTokens.Fonts.custom(size: compact ? 10 : 12, weight: .bold))
             Text(signal.label)
                 .font(.system(compact ? .caption2 : .caption, design: .monospaced))
                 .fontWeight(.black)
@@ -360,7 +360,7 @@ struct ArgusEmptyState: View {
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: icon)
-                .font(.system(size: 40, weight: .light))
+                .font(DesignTokens.Fonts.custom(size: 40, weight: .light))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 .padding(.bottom, 4)
 
@@ -486,7 +486,7 @@ struct ArgusErrorState: View {
     var body: some View {
         VStack(spacing: 14) {
             Image(systemName: icon)
-                .font(.system(size: 34, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 34, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.negative)
 
             Text(title)
@@ -505,7 +505,7 @@ struct ArgusErrorState: View {
                 Button(action: onRetry) {
                     HStack(spacing: 6) {
                         Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 12, weight: .bold))
+                            .font(DesignTokens.Fonts.custom(size: 12, weight: .bold))
                         Text(retryTitle)
                             .font(.system(.callout, design: .monospaced))
                             .fontWeight(.semibold)
