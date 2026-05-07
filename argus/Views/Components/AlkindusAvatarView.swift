@@ -108,15 +108,15 @@ struct AlkindusAvatarView_Previews: PreviewProvider {
             Color.black.ignoresSafeArea()
             HStack(spacing: 30) {
                 VStack {
-                    Text("Idle").foregroundColor(.white)
+                    Text("Idle").foregroundColor(DesignTokens.Colors.textPrimary)
                     AlkindusAvatarView(isThinking: false, hasIdea: false)
                 }
                 VStack {
-                    Text("Thinking").foregroundColor(.white)
+                    Text("Thinking").foregroundColor(DesignTokens.Colors.textPrimary)
                     AlkindusAvatarView(isThinking: true, hasIdea: false)
                 }
                 VStack {
-                    Text("Idea!").foregroundColor(.white)
+                    Text("Idea!").foregroundColor(DesignTokens.Colors.textPrimary)
                     AlkindusAvatarView(isThinking: false, hasIdea: true)
                 }
             }

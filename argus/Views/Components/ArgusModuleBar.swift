@@ -71,10 +71,10 @@ struct DisabledModuleCard: View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 1) {
                 Text(ArgusScoreSystem.moduleTitle(module))
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Text(reason)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             Spacer()
@@ -98,11 +98,11 @@ struct ModuleCard: View {
             HStack(spacing: 10) {
                 VStack(alignment: .leading, spacing: 1) {
                     Text(ArgusScoreSystem.moduleTitle(module))
-                        .font(.system(size: 14, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         .lineLimit(1)
                     Text(ArgusScoreSystem.moduleSubtitle(module))
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .lineLimit(1)
                 }
@@ -114,13 +114,13 @@ struct ModuleCard: View {
                 if let s = score {
                     HStack(spacing: 4) {
                         Text("\(Int(s))")
-                            .font(.system(size: 16, weight: .medium, design: .monospaced))
+                            .font(DesignTokens.Fonts.custom(size: 16, weight: .medium, design: .monospaced))
                             .foregroundColor(ArgusScoreSystem.color(for: s))
                             .monospacedDigit()
                     }
                 } else {
                     Text("—")
-                        .font(.system(size: 16, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 16, design: .monospaced))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
             }

@@ -16,12 +16,12 @@ struct ChironEducationCard: View {
                     Text("SİSTEM DURUMU")
                         .font(.headline)
                         .tracking(2)
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                     Spacer()
                     Button(action: { isPresented = false }) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.title2)
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                     }
                 }
                 .padding()
@@ -36,7 +36,7 @@ struct ChironEducationCard: View {
                                 .frame(width: 80, height: 80)
                             
                             Image(systemName: "brain.head.profile")
-                                .font(.system(size: 32))
+                                .font(DesignTokens.Fonts.custom(size: 32))
                                 .foregroundColor(regimeColor)
                             
                             // Orbital Rings
@@ -53,7 +53,7 @@ struct ChironEducationCard: View {
                                 .font(.title2)
                                 .bold()
                                 .multilineTextAlignment(.center)
-                                .foregroundColor(.white)
+                                .foregroundColor(DesignTokens.Colors.textPrimary)
                             
                             Text(result.explanationBody)
                                 .font(.body)
@@ -68,7 +68,7 @@ struct ChironEducationCard: View {
                             Text("NEDEN BU MOD?")
                                 .font(.caption)
                                 .bold()
-                                .foregroundColor(.gray)
+                                .foregroundColor(DesignTokens.Colors.textTertiary)
                                 .tracking(1)
                             
                             if engineType == "CORSE SWING" {
@@ -107,7 +107,7 @@ struct ChironEducationCard: View {
                         .padding(20)
                         .background(Color(hex: "0F172A"))
                         .cornerRadius(16)
-                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.05), lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(DesignTokens.Colors.Overlay.l05, lineWidth: 1))
                         .padding(.horizontal)
                         
                         
@@ -116,7 +116,7 @@ struct ChironEducationCard: View {
                             Text("AĞIRLIK DAĞILIMI (LIVE)")
                                 .font(.caption)
                                 .bold()
-                                .foregroundColor(.gray)
+                                .foregroundColor(DesignTokens.Colors.textTertiary)
                                 .tracking(1)
                                 .padding(.horizontal)
                             
@@ -156,9 +156,9 @@ struct ChironEducationCard: View {
     private func weightRow(label: String, pct: Double, color: Color) -> some View {
         VStack(spacing: 4) {
             HStack {
-                Text(label).font(.caption).foregroundColor(.gray)
+                Text(label).font(.caption).foregroundColor(DesignTokens.Colors.textTertiary)
                 Spacer()
-                Text("\(Int(pct * 100))%").font(.caption).bold().foregroundColor(.white)
+                Text("\(Int(pct * 100))%").font(.caption).bold().foregroundColor(DesignTokens.Colors.textPrimary)
             }
             
             GeometryReader { g in

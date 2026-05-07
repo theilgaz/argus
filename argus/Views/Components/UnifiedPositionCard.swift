@@ -92,19 +92,19 @@ struct UnifiedPositionCard: View {
     private var rowOne: some View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             Text(displaySymbol)
-                .font(.system(size: 14, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Text("\(formatQuantity(trade.quantity)) hisse")
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             if hasCriticalAlert {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 10))
+                    .font(DesignTokens.Fonts.custom(size: 10))
                     .foregroundColor(InstitutionalTheme.Colors.crimson)
             }
             Spacer(minLength: 8)
             Text(formatPrice(currentPrice))
-                .font(.system(size: 13, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .monospacedDigit()
         }
@@ -113,11 +113,11 @@ struct UnifiedPositionCard: View {
     private var rowTwo: some View {
         HStack(alignment: .firstTextBaseline) {
             Text("Giriş \(formatPrice(trade.entryPrice)) · \(holdingDays) gün")
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Spacer(minLength: 6)
             Text("\(pnlValue >= 0 ? "+" : "")\(formatPrice(pnlValue)) · \(pnlPercent >= 0 ? "+" : "")\(String(format: "%.1f", pnlPercent))%")
-                .font(.system(size: 11, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 11, weight: .medium))
                 .foregroundColor(pnlColor)
                 .monospacedDigit()
         }
@@ -172,7 +172,7 @@ struct UnifiedPositionCard: View {
 
     private func badge(text: String, color: Color, filled: Bool) -> some View {
         Text(text)
-            .font(.system(size: 11))
+            .font(DesignTokens.Fonts.custom(size: 11))
             .foregroundColor(color)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
@@ -194,25 +194,25 @@ struct UnifiedPositionCard: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(alertTypeLabel(alert.type))
-                        .font(.system(size: 11, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 11, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     Text(relativeTime(alert.timestamp))
-                        .font(.system(size: 10))
+                        .font(DesignTokens.Fonts.custom(size: 10))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
                 Text(alert.message)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
                 Text(alert.actionDescription)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(dotColor)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 6)
             Button(action: { onAlertDismiss?(alert) }) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 10))
+                    .font(DesignTokens.Fonts.custom(size: 10))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     .frame(width: 22, height: 22)
                     .contentShape(Rectangle())

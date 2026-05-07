@@ -1,19 +1,19 @@
 import SwiftUI
 
 struct TopLosersView: View {
-    @ObservedObject var viewModel: TradingViewModel
-    
+    @ObservedObject private var market = MarketViewModel.shared
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("En Çok Düşenler (Günün Kaybedenleri)")
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundColor(DesignTokens.Colors.textPrimary)
                 .padding(.horizontal)
-            
-            if !viewModel.topLosers.isEmpty {
+
+            if !market.topLosers.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
-                        ForEach(viewModel.topLosers, id: \.symbol) { quote in
+                        ForEach(market.topLosers, id: \.symbol) { quote in
                             LoserCard(symbol: quote.symbol ?? "N/A", quote: quote)
                         }
                     }
@@ -21,19 +21,14 @@ struct TopLosersView: View {
                 }
             } else {
                 HStack {
-                    if viewModel.isLoading {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                    } else {
-                        Text("Veri yok veya yüklenemedi.")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                        Button(action: {
-                            Task { await viewModel.fetchTopLosers() }
-                        }) {
-                            Image(systemName: "arrow.clockwise")
-                                .foregroundColor(InstitutionalTheme.Colors.holo)
-                        }
+                    Text("Veri yok veya yüklenemedi.")
+                        .font(.caption)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
+                    Button(action: {
+                        Task { await market.fetchTopLosers() }
+                    }) {
+                        Image(systemName: "arrow.clockwise")
+                            .foregroundColor(InstitutionalTheme.Colors.holo)
                     }
                 }
                 .padding(.horizontal)
@@ -42,7 +37,6 @@ struct TopLosersView: View {
         }
         .padding(.vertical, 8)
     }
-
 }
 
 struct LoserCard: View {
@@ -55,13 +49,13 @@ struct LoserCard: View {
                 Text(symbol)
                     .font(.subheadline)
                     .bold()
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                 
                 Spacer()
                 
                 Text(String(format: "%.2f", quote.currentPrice))
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
             }
             
             HStack {

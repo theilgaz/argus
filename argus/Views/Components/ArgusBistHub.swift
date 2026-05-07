@@ -2,71 +2,66 @@ import SwiftUI
 
 struct ArgusBistHub: View {
     let symbol: String
-    @ObservedObject var viewModel: TradingViewModel
-    
+    @ObservedObject private var market = MarketViewModel.shared
+    @ObservedObject private var analysis = AnalysisViewModel.shared
+
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                // Header
                 HStack {
                     Text("BIST INTELLIGENCE")
                         .font(.custom("Menlo-Bold", size: 12))
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                     Spacer()
                     Image(systemName: "brain.head.profile")
                         .foregroundColor(.cyan)
                 }
                 .padding(.horizontal)
-                
-                // 1. Sirkiye Makro Kokpit (Enflasyon, Faiz, USD)
-                SirkiyeMacroCockpit(viewModel: viewModel)
-                
-                // 2. Yabancı Takas (Smart Money)
-                if let flow = viewModel.foreignFlowData[symbol] {
+
+                SirkiyeMacroCockpit()
+
+                if let flow = market.foreignFlowData[symbol] {
                     ForeignFlowSentinel(flow: flow)
                 } else {
-                    ForeignFlowSentinel(flow: nil) // Empty State
+                    ForeignFlowSentinel(flow: nil)
                 }
-                
-                // 3. Hibrit Puanlama (Argus Fusion)
-                FusionScoreCard(symbol: symbol, viewModel: viewModel)
-                
-                // 4. KAP Bildirimleri
-                if let kaps = viewModel.kapDisclosures[symbol], !kaps.isEmpty {
+
+                FusionScoreCard(symbol: symbol)
+
+                if let kaps = analysis.kapDisclosures[symbol], !kaps.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("KAP BİLDİRİMLERİ")
                             .font(.custom("Menlo-Bold", size: 12))
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                             .padding(.horizontal)
-                        
-                        ForEach(kaps.prefix(3)) { news in // İlk 3 bildirim
+
+                        ForEach(kaps.prefix(3)) { news in
                             KAPDisclosureRow(news: news)
                         }
                     }
                 }
-                
-                // 5. Argus Akademi (Eğitici Bağlam)
+
                 ArgusAcademyCard()
             }
             .padding(.vertical)
         }
-        .background(Color(UIColor.systemBackground)) // Theme uyumlu
+        .background(Color(UIColor.systemBackground))
     }
 }
 
 // MARK: - 1. Sirkiye Macro Cockpit
 struct SirkiyeMacroCockpit: View {
-    @ObservedObject var viewModel: TradingViewModel
-    
+    @ObservedObject private var analysis = AnalysisViewModel.shared
+    @ObservedObject private var market = MarketViewModel.shared
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("MAKRO RÜZGAR (SIRKIYE)")
                     .font(.custom("Menlo-Bold", size: 12))
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                 Spacer()
-                // Durum Göstergesi
-                if let regime = viewModel.macroRating {
+                if let regime = analysis.macroRating {
                     let color: Color = regime.numericScore > 66 ? .green : (regime.numericScore > 33 ? .yellow : .red)
                     Text("Regime Score: \(Int(regime.numericScore))")
                         .font(.custom("Menlo-Bold", size: 10))
@@ -77,11 +72,10 @@ struct SirkiyeMacroCockpit: View {
                 }
             }
             .padding(.horizontal)
-            
+
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
-                    // Enflasyon Kartı
-                    let inf = viewModel.tcmbData?.inflation ?? 0
+                    let inf = market.tcmbData?.inflation ?? 0
                     RichMacroCard(
                         title: "ENFLASYON",
                         value: String(format: "%%%.1f", inf),
@@ -90,9 +84,8 @@ struct SirkiyeMacroCockpit: View {
                         color: .red,
                         icon: "flame.fill"
                     )
-                    
-                    // Faiz Kartı
-                    let rate = viewModel.tcmbData?.policyRate ?? 0
+
+                    let rate = market.tcmbData?.policyRate ?? 0
                     RichMacroCard(
                         title: "POLİTİKA FAİZİ",
                         value: String(format: "%%%.0f", rate),
@@ -101,15 +94,14 @@ struct SirkiyeMacroCockpit: View {
                         color: .blue,
                         icon: "building.columns.fill"
                     )
-                    
-                    // Reel Getiri
+
                     let real = rate - inf
                     RichMacroCard(
                         title: "REEL FAİZ",
                         value: String(format: "%%%.1f", real),
                         status: real < 0 ? "Negatif" : "Pozitif",
                         comment: real < 0 ? "Yatırımcıyı borsaya zorlar (Pozitif)." : "Borsa için baskı unsuru.",
-                        color: real > 0 ? .orange : .green, // Negatif reel faiz borsa için yeşildir
+                        color: real > 0 ? .orange : .green,
                         icon: "percent"
                     )
                 }
@@ -134,14 +126,14 @@ struct RichMacroCard: View {
                     .foregroundColor(color)
                 Text(title)
                     .font(.custom("Menlo-Bold", size: 10))
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
             }
             
             Text(value)
                 .font(.custom("Menlo-Bold", size: 20))
-                .foregroundColor(.white)
+                .foregroundColor(DesignTokens.Colors.textPrimary)
             
-            Divider().background(Color.white.opacity(0.1))
+            Divider().background(DesignTokens.Colors.Overlay.l10)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(status)
@@ -150,7 +142,7 @@ struct RichMacroCard: View {
                 
                 Text(comment)
                     .font(.custom("Menlo", size: 10))
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -169,22 +161,23 @@ struct RichMacroCard: View {
 // MARK: - 3. Fusion Score Card (Argus Brain)
 struct FusionScoreCard: View {
     let symbol: String
-    @ObservedObject var viewModel: TradingViewModel
-    
-    var orionScore: Double { viewModel.orionScores[symbol]?.score ?? 0 }
-    var atlasScore: Double { viewModel.getFundamentalScore(for: symbol)?.totalScore ?? 0 }
-    var hermesScore: Double { viewModel.newsInsightsBySymbol[symbol]?.first?.impactScore ?? 50 }
-    
-    // EPS ve ROE verilerini al
-    var eps: Double? { viewModel.getFundamentalScore(for: symbol)?.financials?.earningsPerShare }
-    var roe: Double? { viewModel.getFundamentalScore(for: symbol)?.financials?.returnOnEquity }
+    @ObservedObject private var signalState = SignalStateViewModel.shared
+    @ObservedObject private var hermesVM = HermesNewsViewModel.shared
+    @ObservedObject private var market = MarketViewModel.shared
+
+    var orionScore: Double { signalState.orionScores[symbol]?.score ?? 0 }
+    var atlasScore: Double { FundamentalScoreStore.shared.getScore(for: symbol)?.totalScore ?? 0 }
+    var hermesScore: Double { hermesVM.newsInsightsBySymbol[symbol]?.first?.impactScore ?? 50 }
+
+    var eps: Double? { FundamentalScoreStore.shared.getScore(for: symbol)?.financials?.earningsPerShare }
+    var roe: Double? { FundamentalScoreStore.shared.getScore(for: symbol)?.financials?.returnOnEquity }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text("ARGUS ÇEKİRDEK KARARI")
                     .font(.custom("Menlo-Bold", size: 12))
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                 Spacer()
             }
             .padding(.horizontal)
@@ -202,14 +195,14 @@ struct FusionScoreCard: View {
                             detail: "Trend & Momentum",
                             color: .cyan
                         )
-                        Divider().background(Color.white.opacity(0.1))
+                        Divider().background(DesignTokens.Colors.Overlay.l10)
                         ScoreComponent(
                             title: "TEMEL",
                             score: atlasScore,
                             detail: "Bilanço & Değer",
                             color: .purple
                         )
-                        Divider().background(Color.white.opacity(0.1))
+                        Divider().background(DesignTokens.Colors.Overlay.l10)
                         ScoreComponent(
                             title: "HABER",
                             score: hermesScore,
@@ -219,13 +212,13 @@ struct FusionScoreCard: View {
                     }
                     .padding()
                     
-                    Divider().background(Color.white.opacity(0.1))
+                    Divider().background(DesignTokens.Colors.Overlay.l10)
                     
                     // Alt Kısım: Detaylı Açıklama (Context)
                     VStack(alignment: .leading, spacing: 8) {
                         Text("NEDEN BU PUAN?")
                             .font(.custom("Menlo-Bold", size: 10))
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                         
                         // Dinamik Yorum Üretimi
                         let comment = generateComment()
@@ -245,7 +238,7 @@ struct FusionScoreCard: View {
                     }
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.black.opacity(0.2))
+                    .background(DesignTokens.Colors.Scrim.s20)
                 }
             }
             .padding(.horizontal)
@@ -261,7 +254,7 @@ struct FusionScoreCard: View {
         if atlasScore > 70 { parts.append("Şirket temelleri sağlam, hisse iskontolu.") }
         else if atlasScore < 40 { parts.append("Temel veriler zayıf veya hisse pahalı.") }
         
-        if viewModel.tcmbData?.inflation ?? 0 > 40 {
+        if market.tcmbData?.inflation ?? 0 > 40 {
             parts.append("Enflasyonist ortam hisseyi destekliyor.")
         }
         
@@ -283,11 +276,11 @@ struct ScoreComponent: View {
             
             Text(String(format: "%.0f", score))
                 .font(.custom("Menlo-Bold", size: 24))
-                .foregroundColor(.white)
+                .foregroundColor(DesignTokens.Colors.textPrimary)
             
             Text(detail)
                 .font(.custom("Menlo", size: 8))
-                .foregroundColor(.gray)
+                .foregroundColor(DesignTokens.Colors.textTertiary)
         }
         .frame(maxWidth: .infinity)
     }
@@ -317,19 +310,19 @@ struct ForeignFlowSentinel: View {
             HStack {
                 Text("YABANCI TAKAS (SENTINEL)")
                     .font(.custom("Menlo-Bold", size: 12))
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                 Spacer()
                 if let f = flow {
                     Text(f.timestamp.formatted(date: .numeric, time: .omitted))
                         .font(.caption2)
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 }
             }
             .padding(.horizontal)
             
             ZStack {
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.black.opacity(0.4))
+                    .fill(DesignTokens.Colors.Scrim.s40)
                 
                 if let f = flow {
                     HStack {
@@ -340,7 +333,7 @@ struct ForeignFlowSentinel: View {
                             
                             Text("Analiz: \(getComment(for: f.trend))")
                                 .font(.custom("Menlo", size: 10))
-                                .foregroundColor(.gray)
+                                .foregroundColor(DesignTokens.Colors.textTertiary)
                                 .fixedSize(horizontal: false, vertical: true)
                                 .lineLimit(3)
                             
@@ -366,7 +359,7 @@ struct ForeignFlowSentinel: View {
                 } else {
                     Text("Veri bekleniyor...")
                         .font(.custom("Menlo", size: 12))
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                         .padding()
                 }
             }
@@ -423,17 +416,17 @@ struct ArgusAcademyCard: View {
             }
             
             Group {
-                Text("• Enflasyon & Faiz:").bold().foregroundColor(.white) +
+                Text("• Enflasyon & Faiz:").bold().foregroundColor(DesignTokens.Colors.textPrimary) +
                 Text(" Eğer enflasyon faizden yüksekse (Negatif Reel Faiz), paranız erir. Bu durumda borsa, enflasyondan korunma aracı olarak cazip hale gelir.")
                 
-                Text("• Yabancı Takas:").bold().foregroundColor(.white) +
+                Text("• Yabancı Takas:").bold().foregroundColor(DesignTokens.Colors.textPrimary) +
                 Text(" BIST'te trendi genelde yabancılar belirler. Yabancı alıyorsa tahta sahiplidir ve yükseliş kalıcı olabilir. Satıyorsa yükselişler tepki alımıdır.")
                 
-                Text("• Hibrit Skor:").bold().foregroundColor(.white) +
+                Text("• Hibrit Skor:").bold().foregroundColor(DesignTokens.Colors.textPrimary) +
                 Text(" Argus sizin için Teknik (Grafik), Temel (Bilanço) ve Haberleri birleştirir. Tek bir veriye değil, resmin bütününe odaklanır.")
             }
             .font(.custom("Menlo", size: 10))
-            .foregroundColor(.gray)
+            .foregroundColor(DesignTokens.Colors.textTertiary)
             .fixedSize(horizontal: false, vertical: true)
         }
         .padding()

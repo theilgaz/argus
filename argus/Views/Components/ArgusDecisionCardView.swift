@@ -13,7 +13,7 @@ struct ArgusDecisionCardView: View {
             HStack(spacing: 14) {
                 // Büyük aksiyon etiketi
                 Text(actionText)
-                    .font(.system(size: 28, weight: .heavy))
+                    .font(DesignTokens.Fonts.custom(size: 28, weight: .heavy))
                     .foregroundColor(actionColor)
 
                 VStack(alignment: .leading, spacing: 3) {
@@ -22,8 +22,8 @@ struct ArgusDecisionCardView: View {
                         .frame(width: 120, height: 6)
 
                     Text(confidenceLabel)
-                        .font(.system(size: 11))
-                        .foregroundColor(.gray)
+                        .font(DesignTokens.Fonts.custom(size: 11))
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 }
 
                 Spacer()
@@ -31,8 +31,8 @@ struct ArgusDecisionCardView: View {
                 // Saat damgası
                 if !isLoading {
                     Text(decision.generatedAt, style: .time)
-                        .font(.system(size: 11))
-                        .foregroundColor(.gray)
+                        .font(DesignTokens.Fonts.custom(size: 11))
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 } else {
                     ProgressView().scaleEffect(0.75)
                 }
@@ -41,18 +41,18 @@ struct ArgusDecisionCardView: View {
             .padding(.vertical, 14)
             .background(actionColor.opacity(0.08))
 
-            Divider().background(Color.white.opacity(0.06))
+            Divider().background(DesignTokens.Colors.Overlay.l06)
 
             // ── Açıklama ──────────────────────────────────────────────────
             if let exp = explanation {
                 VStack(alignment: .leading, spacing: 12) {
                     // Ana sebep — büyük ve net
                     Text(exp.summary)
-                        .font(.system(size: 14))
+                        .font(DesignTokens.Fonts.custom(size: 14))
                         .foregroundColor(.white.opacity(0.9))
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(12)
-                        .background(Color.white.opacity(0.04))
+                        .background(DesignTokens.Colors.Overlay.l04)
                         .cornerRadius(10)
 
                     // Destekleyici noktalar — sade, bullet ile
@@ -65,7 +65,7 @@ struct ArgusDecisionCardView: View {
                                         .frame(width: 5, height: 5)
                                         .padding(.top, 5)
                                     Text(bullet)
-                                        .font(.system(size: 13))
+                                        .font(DesignTokens.Fonts.custom(size: 13))
                                         .foregroundColor(.white.opacity(0.75))
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
@@ -77,10 +77,10 @@ struct ArgusDecisionCardView: View {
                     if let risk = exp.riskNote, !risk.isEmpty {
                         HStack(spacing: 8) {
                             Image(systemName: "exclamationmark.triangle.fill")
-                                .font(.system(size: 12))
+                                .font(DesignTokens.Fonts.custom(size: 12))
                                 .foregroundColor(.orange)
                             Text(risk)
-                                .font(.system(size: 13))
+                                .font(DesignTokens.Fonts.custom(size: 13))
                                 .foregroundColor(.orange)
                         }
                         .padding(10)
@@ -95,8 +95,8 @@ struct ArgusDecisionCardView: View {
                                 Image(systemName: "arrow.clockwise")
                                 Text("Tekrar dene")
                             }
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(.white)
+                            .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
+                            .foregroundColor(DesignTokens.Colors.textPrimary)
                             .padding(.vertical, 9)
                             .frame(maxWidth: .infinity)
                             .background(Color.blue.opacity(0.75))
@@ -112,8 +112,8 @@ struct ArgusDecisionCardView: View {
                     HStack(spacing: 8) {
                         ProgressView().scaleEffect(0.65)
                         Text("Analiz yorumlanıyor...")
-                            .font(.system(size: 13))
-                            .foregroundColor(.gray)
+                            .font(DesignTokens.Fonts.custom(size: 13))
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                             .italic()
                     }
                     ForEach(0..<3, id: \.self) { i in
@@ -127,8 +127,8 @@ struct ArgusDecisionCardView: View {
 
             } else {
                 Text("Analiz alınamadı.")
-                    .font(.system(size: 13))
-                    .foregroundColor(.gray)
+                    .font(DesignTokens.Fonts.custom(size: 13))
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                     .padding(16)
             }
         }
@@ -183,7 +183,7 @@ private struct DecisionConfidenceBar: View {
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 3).fill(Color.white.opacity(0.1))
+                RoundedRectangle(cornerRadius: 3).fill(DesignTokens.Colors.Overlay.l10)
                 RoundedRectangle(cornerRadius: 3)
                     .fill(color)
                     .frame(width: geo.size.width * CGFloat(min(max(value, 0), 1)))

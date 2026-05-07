@@ -28,17 +28,17 @@ struct DebugTracePanel: View {
                         
                         Text("\(Int(trace.durationMs))ms")
                             .monospacedDigit()
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                         
                         Spacer()
                         
                         Text(trace.provider.rawValue)
                             .bold()
-                            .foregroundColor(.white)
+                            .foregroundColor(DesignTokens.Colors.textPrimary)
                     }
                     .font(.caption)
                     
-                    Divider().background(Color.white.opacity(0.1))
+                    Divider().background(DesignTokens.Colors.Overlay.l10)
                     
                     // row 2: Details
                     Group {
@@ -46,7 +46,7 @@ struct DebugTracePanel: View {
                         Text("Symbol: \(trace.symbol)") // Forensic: Encoded symbol verification
                         // Showing mostly decoded url for readability, or keep raw
                         Text("URL: \(trace.endpoint)")
-                            .font(.system(size: 10, design: .monospaced))
+                            .font(DesignTokens.Fonts.custom(size: 10, design: .monospaced))
                             .lineLimit(1)
                             .truncationMode(.middle)
                         
@@ -70,7 +70,7 @@ struct DebugTracePanel: View {
                         }
                     }
                     .font(.caption2)
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                     
                     // row 3: Retry/Fallback
                     if trace.retryCount > 0 {
@@ -82,11 +82,11 @@ struct DebugTracePanel: View {
             } else {
                 Text("Bu motor için kayıt bulunamadı.")
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
             }
         }
         .padding()
-        .background(Color.black.opacity(0.4))
+        .background(DesignTokens.Colors.Scrim.s40)
         .cornerRadius(8)
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.orange.opacity(0.3), lineWidth: 1))
         .onAppear {

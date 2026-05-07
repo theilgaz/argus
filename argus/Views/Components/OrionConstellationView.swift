@@ -45,7 +45,7 @@ struct OrionConstellationView: View {
                     .fill(Color(red: 0.05, green: 0.05, blue: 0.1))
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                            .stroke(DesignTokens.Colors.Overlay.l10, lineWidth: 1)
                     )
                 
                 Canvas { context, size in
@@ -102,9 +102,9 @@ struct OrionConstellationView: View {
             } else {
                 Text("Detay görmek için devre bileşenlerine dokunun.")
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                     .padding(8)
-                    .background(Color.white.opacity(0.05))
+                    .background(DesignTokens.Colors.Overlay.l05)
                     .cornerRadius(8)
             }
         }
@@ -169,17 +169,17 @@ struct OrionConstellationView: View {
         context.stroke(Path(roundedRect: rect, cornerRadius: 8), with: .color(color), lineWidth: 2)
         
         // Label inside
-        var text = Text(node.type.rawValue.prefix(1)).font(.system(size: 14, weight: .bold)).foregroundColor(color)
+        var text = Text(node.type.rawValue.prefix(1)).font(DesignTokens.Fonts.custom(size: 14, weight: .bold)).foregroundColor(color)
         if node.type == .consensus {
-            text = Text(node.value).font(.system(size: 12, weight: .black)).foregroundColor(.white)
+            text = Text(node.value).font(DesignTokens.Fonts.custom(size: 12, weight: .black)).foregroundColor(DesignTokens.Colors.textPrimary)
         }
         
         context.draw(text, at: node.position, anchor: .center)
         
         // Label below
         let label = Text(node.type.rawValue)
-            .font(.system(size: 8, weight: .bold))
-            .foregroundColor(.gray)
+            .font(DesignTokens.Fonts.custom(size: 8, weight: .bold))
+            .foregroundColor(DesignTokens.Colors.textTertiary)
         context.draw(label, at: CGPoint(x: node.position.x, y: node.position.y + size/2 + 8), anchor: .center)
     }
     
@@ -267,16 +267,16 @@ struct ProcessorInfoPanel: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(node.type.rawValue)
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                 Text(node.details)
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
         }
         .padding()
-        .background(Color.black.opacity(0.4))
+        .background(DesignTokens.Colors.Scrim.s40)
         .cornerRadius(12)
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(color.opacity(0.3), lineWidth: 1))
         .padding(.horizontal)

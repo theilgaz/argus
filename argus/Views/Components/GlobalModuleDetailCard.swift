@@ -25,10 +25,10 @@ struct GlobalModuleDetailCard: View {
 
                     VStack(spacing: 0) {
                         Text("\(Int(decision.netSupport * 100))")
-                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .font(DesignTokens.Fonts.custom(size: 18, weight: .bold, design: .rounded))
                             .foregroundColor(supportColor)
                         Text("%")
-                            .font(.system(size: 9))
+                            .font(DesignTokens.Fonts.custom(size: 9))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     }
                 }

@@ -100,7 +100,7 @@ struct OrionPatternGraphView: View {
                         .stroke(Color.blue.opacity(0.8), style: StrokeStyle(lineWidth: 1, dash: [4, 2]))
                         
                         Text("HEDEF")
-                            .font(.system(size: 8, weight: .bold))
+                            .font(DesignTokens.Fonts.custom(size: 8, weight: .bold))
                             .foregroundColor(.blue)
                             .position(x: 20, y: yTarget - 6)
                     }

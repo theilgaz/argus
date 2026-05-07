@@ -152,19 +152,19 @@ struct ScoutStoryDetailView: View {
             Circle()
                 .fill(currentStory.signalColor.opacity(0.2))
                 .frame(width: 44, height: 44)
-                .overlay(Text(currentStory.symbol.prefix(4)).font(.system(size: 14, weight: .bold)))
+                .overlay(Text(currentStory.symbol.prefix(4)).font(DesignTokens.Fonts.custom(size: 14, weight: .bold)))
             
             VStack(alignment: .leading, spacing: 2) {
-                Text(currentStory.symbol).font(.headline).foregroundColor(.white)
+                Text(currentStory.symbol).font(.headline).foregroundColor(DesignTokens.Colors.textPrimary)
                 Text(currentStory.timeAgo).font(.caption).foregroundColor(.white.opacity(0.7))
             }
             Spacer()
             Button(action: onDismiss) {
                 Image(systemName: "xmark")
                     .font(.title3)
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                     .padding(8)
-                    .background(Circle().fill(Color.black.opacity(0.3)))
+                    .background(Circle().fill(DesignTokens.Colors.Scrim.s30))
             }
         }
     }
@@ -174,8 +174,8 @@ struct ScoutStoryDetailView: View {
             // Price
             VStack(spacing: 4) {
                 Text(String(format: "$%.2f", currentStory.price))
-                    .font(.system(size: 48, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
+                    .font(DesignTokens.Fonts.custom(size: 48, weight: .bold, design: .rounded))
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                 HStack(spacing: 4) {
                     Image(systemName: currentStory.changePercent >= 0 ? "arrow.up.right" : "arrow.down.right")
                     Text(String(format: "%+.2f%%", currentStory.changePercent))
@@ -189,18 +189,18 @@ struct ScoutStoryDetailView: View {
                 HStack {
                     Image(systemName: "brain.head.profile")
                         .foregroundStyle(LinearGradient(colors: [.purple, .pink], startPoint: .leading, endPoint: .trailing))
-                    Text("Orion Skoru").font(.subheadline).foregroundColor(.secondary)
+                    Text("Orion Skoru").font(.subheadline).foregroundColor(DesignTokens.Colors.textSecondary)
                     Spacer()
                 }
                 HStack(alignment: .bottom, spacing: 8) {
                     Text(String(format: "%.0f", currentStory.orionScore))
-                        .font(.system(size: 64, weight: .bold, design: .rounded))
+                        .font(DesignTokens.Fonts.custom(size: 64, weight: .bold, design: .rounded))
                         .foregroundColor(currentStory.signalColor)
-                    Text("/100").font(.title2).foregroundColor(.secondary).padding(.bottom, 12)
+                    Text("/100").font(.title2).foregroundColor(DesignTokens.Colors.textSecondary).padding(.bottom, 12)
                     Spacer()
                     Text(currentStory.signal.rawValue)
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
                         .background(Capsule().fill(currentStory.signalColor))
@@ -222,9 +222,9 @@ struct ScoutStoryDetailView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: highlight.type.icon).foregroundColor(highlight.type.color)
-                Text(highlight.type.rawValue).font(.caption).foregroundColor(.secondary)
+                Text(highlight.type.rawValue).font(.caption).foregroundColor(DesignTokens.Colors.textSecondary)
             }
-            Text(highlight.value).font(.caption2).foregroundColor(.primary).lineLimit(2)
+            Text(highlight.value).font(.caption2).foregroundColor(DesignTokens.Colors.textPrimary).lineLimit(2)
             
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
@@ -244,14 +244,14 @@ struct ScoutStoryDetailView: View {
                     Image(systemName: "plus.circle.fill")
                     Text("Watchlist'e Ekle")
                 }
-                .font(.headline).foregroundColor(.white).frame(maxWidth: .infinity).padding().background(RoundedRectangle(cornerRadius: 14).fill(Color.blue))
+                .font(.headline).foregroundColor(DesignTokens.Colors.textPrimary).frame(maxWidth: .infinity).padding().background(RoundedRectangle(cornerRadius: 14).fill(Color.blue))
             }
             Button(action: { onGoToDetail?(currentStory.symbol) }) {
                 HStack {
                     Image(systemName: "chart.line.uptrend.xyaxis")
                     Text("Detay")
                 }
-                .font(.headline).foregroundColor(.primary).frame(maxWidth: .infinity).padding().background(RoundedRectangle(cornerRadius: 14).fill(InstitutionalTheme.Colors.surface1))
+                .font(.headline).foregroundColor(DesignTokens.Colors.textPrimary).frame(maxWidth: .infinity).padding().background(RoundedRectangle(cornerRadius: 14).fill(InstitutionalTheme.Colors.surface1))
             }
         }
     }

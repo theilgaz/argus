@@ -85,8 +85,8 @@ struct RadarLabels: View {
                 let y = center.y + sin(angle) * labelRadius
                 
                 Text(labels[i])
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
-                    .foregroundColor(.gray)
+                    .font(DesignTokens.Fonts.custom(size: 10, weight: .bold, design: .monospaced))
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                     .position(x: x, y: y)
             }
         }

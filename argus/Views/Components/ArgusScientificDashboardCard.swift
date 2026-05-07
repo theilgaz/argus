@@ -18,7 +18,7 @@ struct ArgusScientificDashboardCard: View {
                     .foregroundColor(.cyan)
                 Text("BİLİMSEL DOĞRULAMA")
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                 
                 Spacer()
                 
@@ -57,7 +57,7 @@ struct ArgusScientificDashboardCard: View {
                     Divider().background(Color.gray.opacity(0.3))
                     Text("Doğrulama Günlüğü")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                     
                     ForEach(recentResults.prefix(3)) { result in
                         ValidationResultRow(result: result)
@@ -70,7 +70,7 @@ struct ArgusScientificDashboardCard: View {
                     HStack {
                         Text("Bekleyen Hipotezler")
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                         Spacer()
                         Text("\(pendingHypotheses.filter { $0.isMature }.count) Adet İncelenebilir")
                             .font(.caption2)
@@ -136,11 +136,11 @@ struct ScientificMetricBox: View {
                 .foregroundColor(color)
             Text(title)
                 .font(.caption2)
-                .foregroundColor(.gray)
+                .foregroundColor(DesignTokens.Colors.textTertiary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
-        .background(Color.white.opacity(0.05))
+        .background(DesignTokens.Colors.Overlay.l05)
         .cornerRadius(8)
     }
 }
@@ -158,7 +158,7 @@ struct ValidationResultRow: View {
                 Text(result.symbol)
                     .font(.caption)
                     .bold()
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                 Text("Gerçekleşen: \(String(format: "%+.2f%%", result.actualChange))")
                     .font(.caption2)
                     .foregroundColor(result.actualChange >= 0 ? .green : .red)
@@ -168,7 +168,7 @@ struct ValidationResultRow: View {
             
             Text(result.notes ?? "")
                 .font(.caption2)
-                .foregroundColor(.gray)
+                .foregroundColor(DesignTokens.Colors.textTertiary)
                 .lineLimit(1)
                 .truncationMode(.tail)
         }

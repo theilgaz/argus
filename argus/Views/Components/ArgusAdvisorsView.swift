@@ -7,7 +7,7 @@ struct ArgusAdvisorsView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Konsey Danışmanları")
                 .font(.headline)
-                .foregroundColor(.gray)
+                .foregroundColor(DesignTokens.Colors.textTertiary)
                 .padding(.bottom, 4)
             
             if advisors.isEmpty {
@@ -25,7 +25,7 @@ struct ArgusAdvisorsView: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                .stroke(DesignTokens.Colors.Overlay.l10, lineWidth: 1)
         )
     }
 }

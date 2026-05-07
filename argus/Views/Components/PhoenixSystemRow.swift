@@ -17,7 +17,7 @@ struct PhoenixSystemRow: View {
                 }
                 
                 Image(systemName: "flame.fill")
-                    .font(.system(size: 18))
+                    .font(DesignTokens.Fonts.custom(size: 18))
                     .foregroundColor(statusColor)
             }
             .frame(width: 40, height: 40)
@@ -39,7 +39,7 @@ struct PhoenixSystemRow: View {
             // Score / Confidence
             HStack(spacing: 4) {
                 Text("\(Int(advice.confidence))%")
-                    .font(.system(size: 16, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 16, weight: .bold, design: .monospaced))
                     .foregroundColor(statusColor)
                 
                 Image(systemName: "chevron.right")

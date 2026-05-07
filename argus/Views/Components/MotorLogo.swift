@@ -39,7 +39,7 @@ struct MotorLogo: View {
                     .scaledToFit()
             } else {
                 Image(systemName: "sparkles")
-                    .font(.system(size: size * 0.6, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: size * 0.6, weight: .semibold))
                     .foregroundStyle(InstitutionalTheme.Colors.Motors.color(for: engine))
             }
         }
@@ -57,7 +57,7 @@ struct MotorLogo: View {
                     .foregroundStyle(color)
             } else {
                 Image(systemName: "sparkles")
-                    .font(.system(size: size * 0.6, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: size * 0.6, weight: .semibold))
                     .foregroundStyle(color)
             }
         }
@@ -95,7 +95,7 @@ struct MotorLogo: View {
                 ForEach([MotorEngine.orion, .atlas, .aether, .hermes], id: \.self) { motor in
                     VStack {
                         MotorLogo(motor, size: 40)
-                        Text("\(motor.rawValue)").font(.caption).foregroundColor(.gray)
+                        Text("\(motor.rawValue)").font(.caption).foregroundColor(DesignTokens.Colors.textTertiary)
                     }
                 }
             }
@@ -103,7 +103,7 @@ struct MotorLogo: View {
                 ForEach([MotorEngine.athena, .demeter, .chiron, .prometheus], id: \.self) { motor in
                     VStack {
                         MotorLogo(motor, size: 40)
-                        Text("\(motor.rawValue)").font(.caption).foregroundColor(.gray)
+                        Text("\(motor.rawValue)").font(.caption).foregroundColor(DesignTokens.Colors.textTertiary)
                     }
                 }
             }
@@ -111,7 +111,7 @@ struct MotorLogo: View {
                 ForEach([MotorEngine.alkindus, .council, .argus], id: \.self) { motor in
                     VStack {
                         MotorLogo(motor, size: 40)
-                        Text("\(motor.rawValue)").font(.caption).foregroundColor(.gray)
+                        Text("\(motor.rawValue)").font(.caption).foregroundColor(DesignTokens.Colors.textTertiary)
                     }
                 }
             }

@@ -24,7 +24,7 @@ struct AtlasBistScoreCard: View {
                         .foregroundColor(.yellow)
                     Text("BIST Temel Analiz")
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                     
                     Spacer()
                     
@@ -34,10 +34,10 @@ struct AtlasBistScoreCard: View {
                         // Toplam Puan Badge
                         HStack(spacing: 4) {
                             Text("\(Int(result.totalScore))")
-                                .font(.system(size: 20, weight: .black, design: .rounded))
+                                .font(DesignTokens.Fonts.custom(size: 20, weight: .black, design: .rounded))
                             Text("/100")
                                 .font(.caption)
-                                .foregroundColor(.gray)
+                                .foregroundColor(DesignTokens.Colors.textTertiary)
                         }
                         .foregroundColor(scoreColor(result.totalScore))
                     }
@@ -48,7 +48,7 @@ struct AtlasBistScoreCard: View {
                     HStack {
                         Text("Kalite:")
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                         Text(result.qualityBand)
                             .font(.caption)
                             .bold()
@@ -70,7 +70,7 @@ struct AtlasBistScoreCard: View {
                             .cornerRadius(8)
                     }
                     
-                    Divider().background(Color.white.opacity(0.2))
+                    Divider().background(DesignTokens.Colors.Overlay.l20)
                     
                     // Bileşen Skorları
                     ForEach(result.components.all) { component in
@@ -95,7 +95,7 @@ struct AtlasBistScoreCard: View {
                         Text("Son güncelleme: Şimdi")
                             .font(.caption2)
                     }
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                     .padding(.top, 8)
                     
                 } else if !isLoading {
@@ -107,7 +107,7 @@ struct AtlasBistScoreCard: View {
                                 .foregroundColor(.red)
                             Text(error)
                                 .font(.caption2)
-                                .foregroundColor(.gray)
+                                .foregroundColor(DesignTokens.Colors.textTertiary)
                         }
                     } else {
                         Text("Mali veri bulunamadı")
@@ -177,12 +177,12 @@ struct ComponentRow: View {
                     // İsim
                     Text(component.name)
                         .font(.subheadline)
-                        .foregroundColor(.white)
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                     
                     // Ağırlık
                     Text("(\(Int(component.weight * 100))%)")
                         .font(.caption2)
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                     
                     Spacer()
                     
@@ -207,7 +207,7 @@ struct ComponentRow: View {
                     // Genişlet İkonu
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                         .font(.caption2)
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 }
             }
             .buttonStyle(PlainButtonStyle())
@@ -218,7 +218,7 @@ struct ComponentRow: View {
                     // Açıklama
                     Text(component.summary)
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                         .padding(.leading, 24)
                     
                     // Metrikler Çizelgesi
@@ -275,7 +275,7 @@ struct MetricDetailRow: View {
                 // Metrik Adı
                 Text(metric.name)
                     .font(.caption)
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                 
                 Spacer()
                 
@@ -283,7 +283,7 @@ struct MetricDetailRow: View {
                 Text(formatValue(metric.value, for: metric.name))
                     .font(.caption)
                     .bold()
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                 
                 // Puan / Max
                 Text("\(Int(metric.score))/\(Int(metric.maxScore))")
@@ -298,20 +298,20 @@ struct MetricDetailRow: View {
             // Açıklama
             Text(metric.explanation)
                 .font(.caption2)
-                .foregroundColor(.gray)
+                .foregroundColor(DesignTokens.Colors.textTertiary)
             
             // Formül (Öğretici)
             HStack(spacing: 4) {
                 Image(systemName: "function")
-                    .font(.system(size: 8))
+                    .font(DesignTokens.Fonts.custom(size: 8))
                 Text(metric.formula)
-                    .font(.system(size: 10, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 10, design: .monospaced))
             }
             .foregroundColor(.cyan.opacity(0.7))
             .padding(.top, 2)
         }
         .padding(10)
-        .background(Color.white.opacity(0.05))
+        .background(DesignTokens.Colors.Overlay.l05)
         .cornerRadius(8)
         .padding(.leading, 24)
     }

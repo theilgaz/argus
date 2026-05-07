@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ModuleSummaryCard: View {
     let symbol: String
-    @ObservedObject var viewModel: TradingViewModel
+    @ObservedObject private var signalState = SignalStateViewModel.shared
     
     // Callbacks for Sheet Navigation
     var onAtlasTap: (() -> Void)?
@@ -29,7 +29,7 @@ struct ModuleSummaryCard: View {
             }
             
             VStack(spacing: 0) {
-                if let decision = viewModel.argusDecisions[symbol] {
+                if let decision = signalState.argusDecisions[symbol] {
                     // Atlas (Fundamental)
                     CompactModuleRow(
                         name: "Atlas",
@@ -119,17 +119,17 @@ struct ModuleSummaryCard: View {
                 } else {
                     Text("Sistem analizi bekleniyor...")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                         .padding()
                 }
                 
                 // Demeter (Sector) separator if needed
-                if viewModel.argusDecisions[symbol] != nil && viewModel.getDemeterScore(for: symbol) != nil {
+                if signalState.argusDecisions[symbol] != nil && !signalState.demeterScores.isEmpty {
                      Divider().padding(.leading, 56)
                 }
                 
                 // Demeter (Sector)
-                if let demeter = viewModel.getDemeterScore(for: symbol) {
+                if let demeter = signalState.demeterScores.first {
                     CompactModuleRow(
                         name: "Demeter",
                         score: demeter.totalScore,
@@ -206,12 +206,12 @@ struct CompactModuleRow: View {
                     
                     Text("•")
                         .font(.caption2)
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 }
                 
                 Text(tag)
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
             }
             
             Spacer()

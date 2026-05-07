@@ -45,7 +45,7 @@ struct AgoraDebateSheet: View {
                             Text("Danışman Görüşleri")
                                 .font(.title2)
                                 .bold()
-                                .foregroundColor(.white)
+                                .foregroundColor(DesignTokens.Colors.textPrimary)
                             
                             ArgusAdvisorsView(advisors: decision.advisors)
                         }
@@ -104,7 +104,7 @@ struct AgoraDebateSheet: View {
                 Text(decision.symbol)
                     .font(.title)
                     .bold()
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                 
                 Text(decision.action.rawValue)
                     .font(.headline)
@@ -128,7 +128,7 @@ struct AgoraDebateSheet: View {
                 Text("\(Int(decision.confidence * 100))%")
                     .font(.caption)
                     .bold()
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
             }
         }
         .padding()
@@ -144,7 +144,7 @@ struct AgoraDebateSheet: View {
                     .foregroundColor(.cyan)
                 Text("Canlı Tartışma")
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                 
                 Spacer()
                 
@@ -153,7 +153,7 @@ struct AgoraDebateSheet: View {
                     startAnimation()
                 }) {
                     Image(systemName: "arrow.clockwise")
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 }
             }
             
@@ -210,7 +210,7 @@ struct AgoraDebateSheet: View {
             }
         }
         .padding()
-        .background(Color.white.opacity(0.05))
+        .background(DesignTokens.Colors.Overlay.l05)
         .cornerRadius(12)
     }
     
@@ -229,7 +229,7 @@ struct AgoraDebateSheet: View {
                 
                 Text(speaker)
                     .font(.caption2)
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
             }
             
             // Speech bubble
@@ -264,12 +264,12 @@ struct AgoraDebateSheet: View {
                     .foregroundColor(.cyan)
                 Text("Modül Detayları")
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
             }
             
             Text("Her modülün neden böyle düşündüğünü öğrenmek için 'Neden?' butonuna tıklayın")
                 .font(.caption2)
-                .foregroundColor(.gray)
+                .foregroundColor(DesignTokens.Colors.textTertiary)
             
             // ORION
             moduleCardWithWhy(
@@ -328,7 +328,7 @@ struct AgoraDebateSheet: View {
             }
         }
         .padding()
-        .background(Color.white.opacity(0.05))
+        .background(DesignTokens.Colors.Overlay.l05)
         .cornerRadius(12)
     }
     
@@ -341,7 +341,7 @@ struct AgoraDebateSheet: View {
                 Text(name)
                     .font(.caption)
                     .bold()
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                 
                 Spacer()
                 
@@ -362,7 +362,7 @@ struct AgoraDebateSheet: View {
                     .padding(.vertical, 2)
                     .background(color.opacity(0.3))
                     .cornerRadius(4)
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                 
                 // Why button
                 Button(action: {
@@ -375,9 +375,9 @@ struct AgoraDebateSheet: View {
                         .bold()
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Color.white.opacity(0.2))
+                        .background(DesignTokens.Colors.Overlay.l20)
                         .cornerRadius(8)
-                        .foregroundColor(.white)
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                 }
             }
             
@@ -385,7 +385,7 @@ struct AgoraDebateSheet: View {
             HStack {
                 Text("Güven:")
                     .font(.caption2)
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                 
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
@@ -402,7 +402,7 @@ struct AgoraDebateSheet: View {
                 
                 Text("\(Int(confidence * 100))%")
                     .font(.caption2)
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                     .frame(width: 35, alignment: .trailing)
             }
             
@@ -443,12 +443,12 @@ struct AgoraDebateSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: icon)
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                 
                 Text(name)
                     .font(.caption)
                     .bold()
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                 
                 Spacer()
                 
@@ -459,7 +459,7 @@ struct AgoraDebateSheet: View {
                     .padding(.vertical, 2)
                     .background(Color.gray.opacity(0.3))
                     .cornerRadius(4)
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
             }
             
             HStack(alignment: .top, spacing: 8) {
@@ -489,7 +489,7 @@ struct AgoraDebateSheet: View {
                     .foregroundColor(.cyan)
                 Text("Oylama Özeti")
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
             }
             
             HStack(spacing: 12) {
@@ -499,7 +499,7 @@ struct AgoraDebateSheet: View {
             }
         }
         .padding()
-        .background(Color.white.opacity(0.05))
+        .background(DesignTokens.Colors.Overlay.l05)
         .cornerRadius(12)
     }
     
@@ -511,7 +511,7 @@ struct AgoraDebateSheet: View {
                 .foregroundColor(color)
             Text(label)
                 .font(.caption2)
-                .foregroundColor(.gray)
+                .foregroundColor(DesignTokens.Colors.textTertiary)
         }
         .frame(maxWidth: .infinity)
         .padding()
@@ -537,7 +537,7 @@ struct AgoraDebateSheet: View {
             
             Text("Bu modüller karara VETO koydu - işlem engellendi:")
                 .font(.caption2)
-                .foregroundColor(.gray)
+                .foregroundColor(DesignTokens.Colors.textTertiary)
             
             ForEach(decision.vetoes, id: \.module) { veto in
                 HStack {
@@ -550,7 +550,7 @@ struct AgoraDebateSheet: View {
                     
                     Text(veto.reason)
                         .font(.caption2)
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 }
                 .padding()
                 .background(Color.red.opacity(0.1))
@@ -570,12 +570,12 @@ struct AgoraDebateSheet: View {
                     .foregroundColor(.blue)
                 Text("Terim Sözlüğü")
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
             }
             
             Text("Anlamını öğrenmek için bir terime tıklayın")
                 .font(.caption2)
-                .foregroundColor(.gray)
+                .foregroundColor(DesignTokens.Colors.textTertiary)
             
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
                 ForEach(glossaryTerms) { term in
@@ -585,7 +585,7 @@ struct AgoraDebateSheet: View {
                         HStack {
                             Text(term.term)
                                 .font(.caption)
-                                .foregroundColor(.white)
+                                .foregroundColor(DesignTokens.Colors.textPrimary)
                             
                             Spacer()
                             
@@ -601,7 +601,7 @@ struct AgoraDebateSheet: View {
             }
         }
         .padding()
-        .background(Color.white.opacity(0.05))
+        .background(DesignTokens.Colors.Overlay.l05)
         .cornerRadius(12)
     }
     
@@ -613,7 +613,7 @@ struct AgoraDebateSheet: View {
                     .foregroundColor(.yellow)
                 Text("Ne Öğrendik?")
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
             }
             
             VStack(alignment: .leading, spacing: 6) {
@@ -939,7 +939,7 @@ struct AgoraTermDetailSheet: View {
                 Text(term.term)
                     .font(.title)
                     .bold()
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                 
                 Text(term.definition)
                     .font(.body)

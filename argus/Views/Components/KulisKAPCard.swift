@@ -21,10 +21,10 @@ struct KulisKAPCard: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("KULİS")
-                        .font(.system(size: 10, weight: .bold))
+                        .font(DesignTokens.Fonts.custom(size: 10, weight: .bold))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     Text("KAP Bildirimleri")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
                 Spacer()
@@ -99,9 +99,9 @@ struct KulisKAPCard: View {
                 }) {
                     HStack {
                         Text(showAll ? "Kapat" : "\(news.count - 3) haber daha")
-                            .font(.system(size: 11, weight: .medium))
+                            .font(DesignTokens.Fonts.custom(size: 11, weight: .medium))
                         Image(systemName: showAll ? "chevron.up" : "chevron.down")
-                            .font(.system(size: 9))
+                            .font(DesignTokens.Fonts.custom(size: 9))
                     }
                     .foregroundColor(SanctumTheme.hermesColor)
                     .padding(.vertical, 10)
@@ -119,13 +119,13 @@ struct KulisKAPCard: View {
             // Tarih + Kaynak
             HStack {
                 Text(item.date)
-                    .font(.system(size: 9, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 9, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 
                 Spacer()
                 
                 Text(item.source)
-                    .font(.system(size: 8, weight: .bold))
+                    .font(DesignTokens.Fonts.custom(size: 8, weight: .bold))
                     .foregroundColor(SanctumTheme.hermesColor)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
@@ -135,14 +135,14 @@ struct KulisKAPCard: View {
             
             // Başlık
             Text(item.title)
-                .font(.system(size: 12, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .lineLimit(2)
             
             // Özet (varsa)
             if !item.summary.isEmpty {
                 Text(item.summary)
-                    .font(.system(size: 10))
+                    .font(DesignTokens.Fonts.custom(size: 10))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .lineLimit(2)
             }
@@ -175,7 +175,7 @@ struct KulisKAPCard: View {
                     .font(.caption)
                     .foregroundColor(SanctumTheme.hermesColor)
                 Text("KAP Bildirimleri Neden Önemli?")
-                    .font(.system(size: 11, weight: .bold))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .bold))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             }
             
@@ -186,7 +186,7 @@ struct KulisKAPCard: View {
             }
             
             Text("⚠️ KAP haberleri bilgilendirme amaçlıdır, yatırım tavsiyesi değildir.")
-                .font(.system(size: 9))
+                .font(DesignTokens.Fonts.custom(size: 9))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
         .padding(12)
@@ -198,7 +198,7 @@ struct KulisKAPCard: View {
         HStack(alignment: .top, spacing: 6) {
             Text("•").font(.caption).foregroundColor(SanctumTheme.hermesColor)
             Text(text)
-                .font(.system(size: 10))
+                .font(DesignTokens.Fonts.custom(size: 10))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
     }

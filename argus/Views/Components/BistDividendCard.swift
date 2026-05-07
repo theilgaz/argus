@@ -63,14 +63,14 @@ struct BistDividendCard: View {
     private var header: some View {
         HStack {
             Text("Temettü geçmişi")
-                .font(.system(size: 14, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Spacer()
             if isLoading {
                 ProgressView().scaleEffect(0.6)
             } else {
                 Text("\(dividends.count) kayıt")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
         }
@@ -93,11 +93,11 @@ struct BistDividendCard: View {
     private func footerRow(last: BistDividend) -> some View {
         HStack {
             Text("Son temettü")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Spacer()
             Text(String(format: "Brüt %%%.1f", last.grossRate))
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.aurora)
         }
         .padding(.top, 2)
@@ -105,13 +105,13 @@ struct BistDividendCard: View {
 
     private var emptyBlock: some View {
         Text("Bu hisse için temettü kaydı yok.")
-            .font(.system(size: 13))
+            .font(DesignTokens.Fonts.custom(size: 13))
             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
     }
 
     private func errorBlock(_ error: String) -> some View {
         Text(error)
-            .font(.system(size: 12))
+            .font(DesignTokens.Fonts.custom(size: 12))
             .foregroundColor(InstitutionalTheme.Colors.crimson)
     }
 
@@ -140,15 +140,15 @@ struct DividendRow: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(formatDate(dividend.date))
-                    .font(.system(size: 13))
+                    .font(DesignTokens.Fonts.custom(size: 13))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text(String(format: "Hisse başı ₺%.2f", dividend.perShare))
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             Spacer()
             Text(String(format: "%%%.1f", dividend.grossRate))
-                .font(.system(size: 14, weight: .medium, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .medium, design: .monospaced))
                 .foregroundColor(InstitutionalTheme.Colors.aurora)
                 .monospacedDigit()
         }
@@ -205,14 +205,14 @@ struct BistCapitalIncreaseCard: View {
     private var header: some View {
         HStack {
             Text("Sermaye artırımları")
-                .font(.system(size: 14, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Spacer()
             if isLoading {
                 ProgressView().scaleEffect(0.6)
             } else {
                 Text("\(capitalIncreases.count) kayıt")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
         }
@@ -242,12 +242,12 @@ struct CapitalIncreaseRow: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(formatDate(increase.date))
-                    .font(.system(size: 13))
+                    .font(DesignTokens.Fonts.custom(size: 13))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
                 if increase.rightsIssueRate > 0 {
                     Text(String(format: "Bedelli %%%.0f", increase.rightsIssueRate))
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.holo)
                 }
             }
@@ -257,11 +257,11 @@ struct CapitalIncreaseRow: View {
             if increase.totalBonusRate > 0 {
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(String(format: "%%%.0f", increase.totalBonusRate))
-                        .font(.system(size: 14, weight: .medium, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 14, weight: .medium, design: .monospaced))
                         .foregroundColor(InstitutionalTheme.Colors.aurora)
                         .monospacedDigit()
                     Text("Bedelsiz")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
             }

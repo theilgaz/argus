@@ -17,10 +17,10 @@ struct BistAnalystCard: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Analist konsensüsü")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     Text("Hedef fiyat ve tavsiyeler")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
                 Spacer()
@@ -92,10 +92,10 @@ struct BistAnalystCard: View {
                     // Düşük hedef
                     VStack(spacing: 2) {
                         Text("Düşük")
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Fonts.custom(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         Text(formatPrice(c.lowTargetPrice))
-                            .font(.system(size: 13, weight: .medium))
+                            .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                             .foregroundColor(InstitutionalTheme.Colors.negative)
                             .monospacedDigit()
                     }
@@ -105,10 +105,10 @@ struct BistAnalystCard: View {
                     // Ortalama hedef (büyük)
                     VStack(spacing: 2) {
                         Text("Ortalama hedef")
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Fonts.custom(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         Text(formatPrice(avg))
-                            .font(.system(size: 20, weight: .medium))
+                            .font(DesignTokens.Fonts.custom(size: 20, weight: .medium))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                             .monospacedDigit()
                     }
@@ -118,10 +118,10 @@ struct BistAnalystCard: View {
                     // Yüksek hedef
                     VStack(spacing: 2) {
                         Text("Yüksek")
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Fonts.custom(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         Text(formatPrice(c.highTargetPrice))
-                            .font(.system(size: 13, weight: .medium))
+                            .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                             .foregroundColor(InstitutionalTheme.Colors.positive)
                             .monospacedDigit()
                     }
@@ -142,11 +142,11 @@ struct BistAnalystCard: View {
         VStack(spacing: 10) {
             HStack {
                 Text("Tavsiye dağılımı")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Spacer()
                 Text("\(c.totalAnalysts) analist")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             }
             
@@ -181,25 +181,25 @@ struct BistAnalystCard: View {
                 // Labels
                 HStack {
                     Label("\(c.buyCount) AL", systemImage: "arrow.up.circle.fill")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(DesignTokens.Fonts.custom(size: 10, weight: .semibold))
                         .foregroundColor(InstitutionalTheme.Colors.positive)
                     Spacer()
                     Label("\(c.holdCount) TUT", systemImage: "equal.circle.fill")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(DesignTokens.Fonts.custom(size: 10, weight: .semibold))
                         .foregroundColor(InstitutionalTheme.Colors.warning)
                     Spacer()
                     Label("\(c.sellCount) SAT", systemImage: "arrow.down.circle.fill")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(DesignTokens.Fonts.custom(size: 10, weight: .semibold))
                         .foregroundColor(InstitutionalTheme.Colors.negative)
                 }
                 
                 // Konsensüs badge
                 HStack {
                     Text("Konsensüs:")
-                        .font(.system(size: 10))
+                        .font(DesignTokens.Fonts.custom(size: 10))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     Text(c.recommendation.uppercased())
-                        .font(.system(size: 10, weight: .bold))
+                        .font(DesignTokens.Fonts.custom(size: 10, weight: .bold))
                         .foregroundColor(consensusColor(c.recommendation))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
@@ -222,17 +222,17 @@ struct BistAnalystCard: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Potansiyel getiri")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Text("Mevcut fiyat: \(formatPrice(current))")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             }
             Spacer()
             HStack(spacing: 4) {
                 Image(systemName: isPositive ? "arrow.up.right" : "arrow.down.right")
                 Text(String(format: "%+.1f%%", returnPct))
-                    .font(.system(size: 16, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 16, weight: .bold, design: .monospaced))
             }
             .foregroundColor(isPositive ? InstitutionalTheme.Colors.positive : InstitutionalTheme.Colors.negative)
         }
@@ -295,7 +295,7 @@ struct BistAnalystCard: View {
                     .font(.caption)
                     .foregroundColor(.cyan)
                 Text("Analist Konsensüsü Nasıl Okunur?")
-                    .font(.system(size: 11, weight: .bold))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .bold))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             }
             
@@ -306,7 +306,7 @@ struct BistAnalystCard: View {
             }
             
             Text("⚠️ Analist tahminleri geçmiş performansı garanti etmez. Eğitim amaçlıdır.")
-                .font(.system(size: 9))
+                .font(DesignTokens.Fonts.custom(size: 9))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
         .padding(12)
@@ -320,7 +320,7 @@ struct BistAnalystCard: View {
                 .font(.caption)
                 .foregroundColor(.cyan)
             Text(text)
-                .font(.system(size: 10))
+                .font(DesignTokens.Fonts.custom(size: 10))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
     }

@@ -94,7 +94,7 @@ struct TradeBrainAlertListView: View {
                 if coordinator.planAlerts.isEmpty {
                     VStack(spacing: 16) {
                         Image(systemName: "bell.slash")
-                            .font(.system(size: 60))
+                            .font(DesignTokens.Fonts.custom(size: 60))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary.opacity(0.3))
                         
                         Text("Bildirim Yok")

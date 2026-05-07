@@ -8,12 +8,12 @@ struct PhoenixLevelCard: View {
             // Header
             HStack {
                 Text("Risk seviyeleri")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Spacer()
 
                 Text(advice.timeframe.localizedName)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             
@@ -132,7 +132,7 @@ struct PhoenixLevelCard: View {
     private func vDataBlock(title: String, value: String, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(title)
-                .font(.system(size: 9, weight: .bold))
+                .font(DesignTokens.Fonts.custom(size: 9, weight: .bold))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .textCase(.uppercase)
             Text(value)

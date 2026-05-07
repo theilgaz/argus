@@ -39,7 +39,7 @@ struct CustomTabBar: View {
             .background(
                 TabShape()
                     .fill(InstitutionalTheme.Colors.surface1)
-                    .shadow(color: Color.black.opacity(0.4), radius: 10, x: 0, y: -5)
+                    .shadow(color: DesignTokens.Colors.Scrim.s40, radius: 10, x: 0, y: -5)
             )
             
             // Floating Button (Chiron / Voice)
@@ -52,8 +52,8 @@ struct CustomTabBar: View {
                         .shadow(color: InstitutionalTheme.Colors.holo.opacity(0.5), radius: 10, x: 0, y: 5)
                     
                     Image(systemName: "mic.fill")
-                        .font(.system(size: 26, weight: .bold))
-                        .foregroundColor(.white)
+                        .font(DesignTokens.Fonts.custom(size: 26, weight: .bold))
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                 }
             }
             .offset(y: -50) // Lifted up to float
@@ -71,7 +71,7 @@ struct TabBarButton: View {
         Button(action: action) {
             VStack(spacing: 4) {
                 Image(systemName: icon)
-                    .font(.system(size: 22))
+                    .font(DesignTokens.Fonts.custom(size: 22))
                     .foregroundColor(isSelected ? InstitutionalTheme.Colors.holo : .gray)
                 
                 Text(text)

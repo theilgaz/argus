@@ -43,11 +43,11 @@ struct AetherDashboardCard: View {
     private var header: some View {
         HStack {
             Text("Makro")
-                .font(.system(size: 14, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Spacer()
             Text(regimeLabel)
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(regimeColor)
         }
     }
@@ -58,15 +58,15 @@ struct AetherDashboardCard: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text("\(Int(rating.numericScore))")
-                    .font(.system(size: 32, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 32, weight: .medium))
                     .foregroundColor(scoreColor(rating.numericScore))
                     .monospacedDigit()
                 Text("/ 100")
-                    .font(.system(size: 13))
+                    .font(DesignTokens.Fonts.custom(size: 13))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Spacer()
                 Text(rating.letterGrade.uppercased())
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                     .foregroundColor(scoreColor(rating.numericScore))
             }
 
@@ -87,7 +87,7 @@ struct AetherDashboardCard: View {
     private func categoryRow(label: String, score: Double, weight: String) -> some View {
         HStack(spacing: 10) {
             Text(label)
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .frame(width: 76, alignment: .leading)
 
@@ -96,13 +96,13 @@ struct AetherDashboardCard: View {
                      height: 4)
 
             Text("\(Int(score))")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .monospacedDigit()
                 .frame(width: 26, alignment: .trailing)
 
             Text(weight)
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 .frame(width: 30, alignment: .trailing)
         }
@@ -114,11 +114,11 @@ struct AetherDashboardCard: View {
         HStack(spacing: 12) {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text("\(Int(rating.numericScore))")
-                    .font(.system(size: 22, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 22, weight: .medium))
                     .foregroundColor(scoreColor(rating.numericScore))
                     .monospacedDigit()
                 Text("/100")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             }
             Spacer(minLength: 8)
@@ -128,7 +128,7 @@ struct AetherDashboardCard: View {
                 miniScore(label: "G", score: rating.laggingScore ?? 50)
             }
             Image(systemName: "chevron.right")
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
     }
@@ -136,10 +136,10 @@ struct AetherDashboardCard: View {
     private func miniScore(label: String, score: Double) -> some View {
         HStack(spacing: 3) {
             Text(label)
-                .font(.system(size: 11, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 11, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Text("\(Int(score))")
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(scoreColor(score))
                 .monospacedDigit()
         }

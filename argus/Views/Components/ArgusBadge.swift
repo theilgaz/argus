@@ -14,15 +14,15 @@ struct ArgusBadge: View {
             // 2. Text (Horizontal)
             if showLabel {
                 Text("ARGUS")
-                    .font(.system(size: size * 0.5, weight: .bold))
+                    .font(DesignTokens.Fonts.custom(size: size * 0.5, weight: .bold))
                     .tracking(1) // Slight spacing for premium feel
                     .foregroundColor(InstitutionalTheme.Colors.holo)
             }
             
             // 3. Score
             Text("\(Int(score))")
-                .font(.system(size: size * 0.6, weight: .bold))
-                .foregroundColor(.white)
+                .font(DesignTokens.Fonts.custom(size: size * 0.6, weight: .bold))
+                .foregroundColor(DesignTokens.Colors.textPrimary)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
                 .background(scoreColor(score))
@@ -94,7 +94,7 @@ struct StaleDataBadge: View {
     var body: some View {
         HStack(spacing: DesignTokens.Spacing.xs) {
             Image(systemName: state.symbol)
-                .font(.system(size: 10, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 10, weight: .semibold))
                 .foregroundStyle(state.color)
 
             VStack(alignment: .leading, spacing: 0) {

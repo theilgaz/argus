@@ -19,7 +19,7 @@ struct PrometheusBadge: View {
     var body: some View {
         if let f = forecast, f.isValid {
             Text("\(arrow(f.changePercent)) \(formatPercent(f.changePercent)) tahmin")
-                .font(.system(size: 10, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 10, design: .monospaced))
                 .foregroundColor(color(f.changePercent))
                 .lineLimit(1)
         } else {

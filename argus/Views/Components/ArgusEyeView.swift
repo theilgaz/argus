@@ -150,7 +150,7 @@ struct ArgusEyeView: View {
                         .fill(Color.black)
                         .frame(width: size * 0.25 * pupilDilation, height: size * 0.25 * pupilDilation)
                         .overlay(
-                            Circle().stroke(Color.white.opacity(0.2), lineWidth: 1)
+                            Circle().stroke(DesignTokens.Colors.Overlay.l20, lineWidth: 1)
                         )
                 }
                 .offset(lookOffset) // Eye Movement
@@ -159,7 +159,7 @@ struct ArgusEyeView: View {
                 // 4. Glare / Reflection (Glass effect)
                 Circle()
                     .trim(from: 0.1, to: 0.25)
-                    .stroke(Color.white.opacity(0.7), style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                    .stroke(DesignTokens.Colors.Overlay.l70, style: StrokeStyle(lineWidth: 3, lineCap: .round))
                     .frame(width: size * 0.8, height: size * 0.8)
                     .rotationEffect(.degrees(-45))
                 

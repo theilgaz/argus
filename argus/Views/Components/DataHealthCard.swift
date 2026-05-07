@@ -14,7 +14,7 @@ struct DataHealthCard: View {
                     .foregroundColor(InstitutionalTheme.Colors.holo)
                 Text("Veri Güven Skoru")
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                 Spacer()
                 
                 Text("\(Int(confidence))%")
@@ -35,7 +35,7 @@ struct DataHealthCard: View {
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     Text(provider)
                         .font(.subheadline)
-                        .foregroundColor(.white)
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                 }
                 
                 // Status
@@ -50,7 +50,7 @@ struct DataHealthCard: View {
                             .frame(width: 6, height: 6)
                         Text(isLive ? "Canlı Akış" : "Gecikmeli")
                             .font(.subheadline)
-                            .foregroundColor(.white)
+                            .foregroundColor(DesignTokens.Colors.textPrimary)
                     }
                 }
                 

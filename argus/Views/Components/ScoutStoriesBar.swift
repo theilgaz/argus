@@ -4,7 +4,7 @@ import SwiftUI
 /// Instagram-style horizontal scrollable stories bar
 struct ScoutStoriesBar: View {
     @ObservedObject var store = ScoutStoryStore.shared
-    @EnvironmentObject var viewModel: TradingViewModel
+    @ObservedObject private var market = MarketViewModel.shared
     @State private var showingStoryDetail = false
     @State private var frozenStories: [ScoutStory] = [] // Snapshot for detail view
     @State private var frozenIndex: Int = 0
@@ -24,7 +24,7 @@ struct ScoutStoriesBar: View {
                 if store.unviewedCount > 0 {
                     Text("\(store.unviewedCount) yeni")
                         .font(.caption2)
-                        .foregroundColor(.white)
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
                         .background(
@@ -51,15 +51,10 @@ struct ScoutStoriesBar: View {
                     startIndex: frozenIndex,
                     onDismiss: { showingStoryDetail = false },
                     onAddToWatchlist: { symbol in
-                        viewModel.addToWatchlist(symbol: symbol)
+                        market.addToWatchlist(symbol: symbol)
                     },
                     onGoToDetail: { symbol in
                         showingStoryDetail = false
-                        // Trigger Navigation in MarketView via ViewModel
-                        // Delay slightly to allow fullScreenCover to dismiss
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            viewModel.selectedSymbolForDetail = symbol
-                        }
                     }
                 )
             }
@@ -102,10 +97,10 @@ struct ScoutStoriesBar: View {
             VStack(spacing: 4) {
                 Image(systemName: "sparkles")
                     .font(.title3)
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                 Text("Henüz keşif yok")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(DesignTokens.Colors.textSecondary)
             }
             .padding(.vertical, 20)
             Spacer()
@@ -144,8 +139,8 @@ struct StoryRingButton: View {
                     
                     // Symbol text
                     Text(story.symbol.prefix(4))
-                        .font(.system(size: 14, weight: .bold, design: .rounded))
-                        .foregroundColor(.primary)
+                        .font(DesignTokens.Fonts.custom(size: 14, weight: .bold, design: .rounded))
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                     
                     // Score badge
                     ZStack {
@@ -154,15 +149,15 @@ struct StoryRingButton: View {
                             .frame(width: 22, height: 22)
                         
                         Text(String(format: "%.0f", story.orionScore))
-                            .font(.system(size: 9, weight: .bold))
-                            .foregroundColor(.white)
+                            .font(DesignTokens.Fonts.custom(size: 9, weight: .bold))
+                            .foregroundColor(DesignTokens.Colors.textPrimary)
                     }
                     .offset(x: 22, y: 22)
                 }
                 
                 // Price change
                 Text(String(format: "%+.1f%%", story.changePercent))
-                    .font(.system(size: 10, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 10, weight: .medium))
                     .foregroundColor(story.changePercent >= 0 ? .green : .red)
             }
         }

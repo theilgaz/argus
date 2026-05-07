@@ -58,7 +58,7 @@ struct OrionModuleDetailView: View {
         HStack {
             Button(action: onClose) {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 16, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .frame(width: 36, height: 36)
                     .contentShape(Rectangle())
@@ -69,10 +69,10 @@ struct OrionModuleDetailView: View {
 
             VStack(spacing: 1) {
                 Text(nodeTitle)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text("Teknik · \(symbol.uppercased())")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
 
@@ -80,7 +80,7 @@ struct OrionModuleDetailView: View {
 
             Button(action: onClose) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 14))
+                    .font(DesignTokens.Fonts.custom(size: 14))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .frame(width: 36, height: 36)
                     .contentShape(Rectangle())
@@ -113,11 +113,11 @@ struct OrionModuleDetailView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text("Canlı analiz")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Spacer()
                 Text("son \(min(50, candles.count)) mum")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
 
@@ -131,7 +131,7 @@ struct OrionModuleDetailView: View {
                         .foregroundColor(segment.color)
                         .fontWeight(segment.isBold ? .medium : .regular)
                 }
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -218,21 +218,21 @@ struct OrionModuleDetailView: View {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     Text(subtitle)
-                        .font(.system(size: 14, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(value)
-                        .font(.system(size: 22, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 22, weight: .medium))
                         .foregroundColor(valueColor)
                         .monospacedDigit()
                     if let meta = meta {
                         Text(meta)
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Fonts.custom(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     }
                 }
@@ -257,12 +257,12 @@ struct OrionModuleDetailView: View {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Formasyon")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     Text(analysis.components.patternDesc.isEmpty || analysis.components.patternDesc == "Yok"
                          ? "Tespit yok"
                          : analysis.components.patternDesc)
-                        .font(.system(size: 15, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 15, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 }
                 Spacer()
@@ -412,7 +412,7 @@ struct OrionModuleDetailView: View {
 
     private func emptyChartLabel(_ text: String) -> some View {
         Text(text)
-            .font(.system(size: 12))
+            .font(DesignTokens.Fonts.custom(size: 12))
             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -422,10 +422,10 @@ struct OrionModuleDetailView: View {
     private var learningCard: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Bu nedir?")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Text(type.educationalContent(for: analysis))
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
                 .lineSpacing(2)
@@ -450,9 +450,9 @@ struct OrionModuleDetailView: View {
             Button(action: {}) {
                 HStack(spacing: 6) {
                     Image(systemName: "bell")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                     Text("Alarm")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                 }
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .frame(maxWidth: .infinity)
@@ -469,9 +469,9 @@ struct OrionModuleDetailView: View {
             Button(action: {}) {
                 HStack(spacing: 6) {
                     Image(systemName: "square.and.arrow.up")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                     Text("Paylaş")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                 }
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .frame(maxWidth: .infinity)

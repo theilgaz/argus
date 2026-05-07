@@ -8,8 +8,8 @@ struct LoadingQuoteView: View {
         VStack(spacing: 8) {
             if let quote = quote {
                 Text(quote.quote)
-                    .font(.system(size: 13, weight: .medium, design: .serif))
-                    .foregroundColor(.gray)
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .medium, design: .serif))
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                     .italic()
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
@@ -34,8 +34,8 @@ struct EmptyPortfolioQuote: View {
         VStack(spacing: 8) {
             if let quote = quote {
                 Text(quote.quote)
-                    .font(.system(size: 14, weight: .medium, design: .serif))
-                    .foregroundColor(.gray)
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium, design: .serif))
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                     .italic()
                     .multilineTextAlignment(.center)
                 
@@ -58,23 +58,23 @@ struct DailyQuoteCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Günün sözü")
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             
             if let quote = quote {
                 Text(quote.quote)
-                    .font(.system(size: 14, weight: .medium, design: .serif))
-                    .foregroundColor(.white)
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium, design: .serif))
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                     .italic()
                 
                 Text("- \(quote.author)")
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
             }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white.opacity(0.05))
+        .background(DesignTokens.Colors.Overlay.l05)
         .cornerRadius(12)
         .onAppear {
             quote = WisdomService.shared.getDailyQuote()
@@ -91,19 +91,19 @@ struct WisdomQuoteStrip: View {
         VStack(alignment: .leading, spacing: 4) {
             if let quote = quote {
                 Text(quote.quote)
-                    .font(.system(size: 12, weight: .medium, design: .serif))
-                    .foregroundColor(.white)
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .medium, design: .serif))
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                     .italic()
                     .lineLimit(2)
                 
                 Text("- \(quote.author)")
-                    .font(.system(size: 10))
-                    .foregroundColor(.gray)
+                    .font(DesignTokens.Fonts.custom(size: 10))
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
             }
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white.opacity(0.05))
+        .background(DesignTokens.Colors.Overlay.l05)
         .cornerRadius(10)
         .onAppear {
             quote = WisdomService.shared.getQuote(for: action)

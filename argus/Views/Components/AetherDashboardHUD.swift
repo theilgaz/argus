@@ -29,17 +29,17 @@ struct AetherDashboardHUD: View {
                     .frame(width: 6, height: 6)
 
                 Text(regimeLabel)
-                    .font(.system(size: 13))
+                    .font(DesignTokens.Fonts.custom(size: 13))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .lineLimit(1)
 
                 if let r = rating {
                     Text("·")
-                        .font(.system(size: 13))
+                        .font(DesignTokens.Fonts.custom(size: 13))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
 
                     Text("\(Int(r.numericScore))")
-                        .font(.system(size: 13, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 13, design: .monospaced))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .monospacedDigit()
                 }
@@ -47,7 +47,7 @@ struct AetherDashboardHUD: View {
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             .padding(.horizontal, 16)

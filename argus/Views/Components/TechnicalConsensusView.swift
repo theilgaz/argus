@@ -34,11 +34,11 @@ struct TechnicalConsensusView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("Teknik konsensüs")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Spacer()
                 Text("\(breakdown.summary.total) sinyal")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
 
@@ -49,10 +49,10 @@ struct TechnicalConsensusView: View {
                 VStack(spacing: 3) {
                     Spacer()
                     Text(dominantLabel)
-                        .font(.system(size: 20, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 20, weight: .medium))
                         .foregroundColor(dominantColor)
                     Text("\(breakdown.summary.buy) al · \(breakdown.summary.sell) sat")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
                 .offset(y: 16)
@@ -152,7 +152,7 @@ struct SignalColumn: View {
     private var columnHeader: some View {
         HStack {
             Text(title)
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Spacer()
             HStack(spacing: 6) {
@@ -178,7 +178,7 @@ struct SignalColumn: View {
                 .fill(color)
                 .frame(width: 5, height: 5)
             Text("\(count)")
-                .font(.system(size: 11, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 11, design: .monospaced))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .monospacedDigit()
         }
@@ -188,15 +188,15 @@ struct SignalColumn: View {
         HStack(spacing: 8) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(signal.name)
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text(signal.value)
-                    .font(.system(size: 10, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 10, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             Spacer(minLength: 4)
             Text(actionLabel(signal.action))
-                .font(.system(size: 11, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 11, weight: .medium))
                 .foregroundColor(actionColor(signal.action))
         }
         .padding(.horizontal, 10)

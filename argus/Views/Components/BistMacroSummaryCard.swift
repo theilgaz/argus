@@ -15,10 +15,10 @@ struct BistMacroSummaryCard: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("MAKRO PANO")
-                        .font(.system(size: 10, weight: .bold))
+                        .font(DesignTokens.Fonts.custom(size: 10, weight: .bold))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     Text("Piyasa Nabzı")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
                 Spacer()
@@ -134,17 +134,17 @@ struct BistMacroSummaryCard: View {
     private func macroCell(title: String, value: String, icon: String, color: Color) -> some View {
         VStack(spacing: 6) {
             Image(systemName: icon)
-                .font(.system(size: 14))
+                .font(DesignTokens.Fonts.custom(size: 14))
                 .foregroundColor(color)
             
             Text(value)
-                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .bold, design: .monospaced))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .minimumScaleFactor(0.7)
                 .lineLimit(1)
             
             Text(title)
-                .font(.system(size: 7, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 7, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 .lineLimit(1)
         }
@@ -158,10 +158,10 @@ struct BistMacroSummaryCard: View {
     private func miniStat(title: String, value: String) -> some View {
         VStack(spacing: 2) {
             Text(value)
-                .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 11, weight: .semibold, design: .monospaced))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Text(title)
-                .font(.system(size: 8))
+                .font(DesignTokens.Fonts.custom(size: 8))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
     }
@@ -226,7 +226,7 @@ struct BistMacroSummaryCard: View {
                     .font(.caption)
                     .foregroundColor(.orange)
                 Text("Makro Veriler Piyasayı Nasıl Etkiler?")
-                    .font(.system(size: 11, weight: .bold))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .bold))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             }
             
@@ -238,7 +238,7 @@ struct BistMacroSummaryCard: View {
             }
             
             Text("⚠️ Bu veriler bilgilendirme amaçlıdır, yatırım tavsiyesi değildir.")
-                .font(.system(size: 9))
+                .font(DesignTokens.Fonts.custom(size: 9))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
         .padding(12)
@@ -250,7 +250,7 @@ struct BistMacroSummaryCard: View {
         HStack(alignment: .top, spacing: 6) {
             Text("•").font(.caption).foregroundColor(.orange)
             Text(text)
-                .font(.system(size: 10))
+                .font(DesignTokens.Fonts.custom(size: 10))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
     }

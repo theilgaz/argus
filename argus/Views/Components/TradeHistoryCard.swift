@@ -16,23 +16,23 @@ struct TradeHistoryCard: View {
             // HEADER
             headerSection
             
-            Divider().background(Color.white.opacity(0.1))
+            Divider().background(DesignTokens.Colors.Overlay.l10)
             
             // DETAYLAR
             detailsSection
             
-            Divider().background(Color.white.opacity(0.1))
+            Divider().background(DesignTokens.Colors.Overlay.l10)
             
             // GİRİŞ SEBEBİ
             entryReasonSection
             
-            Divider().background(Color.white.opacity(0.1))
+            Divider().background(DesignTokens.Colors.Overlay.l10)
             
             // NE ÖĞRENDİK
             if let lesson = lesson {
                 lessonSection(lesson: lesson)
                 
-                Divider().background(Color.white.opacity(0.1))
+                Divider().background(DesignTokens.Colors.Overlay.l10)
                 
                 // SİSTEM AYARI
                 if let changes = lesson.weightChanges, !changes.isEmpty {
@@ -63,7 +63,7 @@ struct TradeHistoryCard: View {
             Text(isProfit ? "KARLI" : "ZARARLI")
                 .font(.caption)
                 .bold()
-                .foregroundColor(.white)
+                .foregroundColor(DesignTokens.Colors.textPrimary)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
                 .background(isProfit ? Color.green : Color.red)
@@ -124,7 +124,7 @@ struct TradeHistoryCard: View {
                 Text("")
                 Text("Giriş Sebebi:")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(DesignTokens.Colors.textSecondary)
             }
             
             Text(trade.entryReason ?? "Bilgi yok")
@@ -134,12 +134,12 @@ struct TradeHistoryCard: View {
                 HStack {
                     Text("Baskın Sinyal:")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(DesignTokens.Colors.textSecondary)
                     
                     Text(dominant)
                         .font(.caption)
                         .bold()
-                        .foregroundColor(.white)
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
                         .background(Color.purple)
@@ -164,14 +164,14 @@ struct TradeHistoryCard: View {
             
             Text(lesson.lessonText)
                 .font(.subheadline)
-                .foregroundColor(.primary)
+                .foregroundColor(DesignTokens.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
             
             if let deviation = lesson.deviationPercent {
                 HStack {
                     Text("⚠️ Sapma:")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(DesignTokens.Colors.textSecondary)
                     Text("\(String(format: "%.2f", deviation))%")
                         .font(.caption)
                         .foregroundColor(.yellow)
@@ -187,7 +187,7 @@ struct TradeHistoryCard: View {
     private func weightAdjustmentSection(changes: [String: Double]) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Sistem ayarı")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             
             ForEach(Array(changes.keys.sorted()), id: \.self) { key in
@@ -220,12 +220,12 @@ struct TradeHistoryCard: View {
                 Text("NE ÖĞRENDİK?")
                     .font(.caption)
                     .bold()
-                    .foregroundColor(.secondary)
+                    .foregroundColor(DesignTokens.Colors.textSecondary)
             }
             
             Text("Henüz analiz yapılmadı.")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(DesignTokens.Colors.textSecondary)
         }
         .padding()
     }

@@ -26,7 +26,7 @@ struct BrandStoryView: View {
                         
                         HStack {
                             Text("ARGUS")
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
+                                .font(DesignTokens.Fonts.custom(size: 32, weight: .bold, design: .rounded))
                                 .foregroundColor(ArgusMode.argus.color)
                                 .tracking(4)
                             
@@ -58,7 +58,7 @@ struct BrandStoryView: View {
                         
                         HStack {
                             Text("AETHER")
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
+                                .font(DesignTokens.Fonts.custom(size: 32, weight: .bold, design: .rounded))
                                 .foregroundColor(ArgusMode.aether.color)
                                 .tracking(4)
                             
@@ -109,7 +109,7 @@ struct BrandStoryView: View {
                         
                         HStack {
                             Text("ORION")
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
+                                .font(DesignTokens.Fonts.custom(size: 32, weight: .bold, design: .rounded))
                                 .foregroundColor(ArgusMode.orion.color)
                                 .tracking(4)
                             
@@ -140,7 +140,7 @@ struct BrandStoryView: View {
                         
                         HStack {
                             Text("DEMETER")
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
+                                .font(DesignTokens.Fonts.custom(size: 32, weight: .bold, design: .rounded))
                                 .foregroundColor(ArgusMode.demeter.color) // Mode enum updated
                                 .tracking(4)
                             
@@ -171,7 +171,7 @@ struct BrandStoryView: View {
                         ArgusEyeView(mode: .atlas, size: 80)
                         HStack {
                             Text("ATLAS")
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
+                                .font(DesignTokens.Fonts.custom(size: 32, weight: .bold, design: .rounded))
                                 .foregroundColor(ArgusMode.atlas.color)
                                 .tracking(4)
                             Button(action: { showInfo(.atlas) }) {
@@ -198,7 +198,7 @@ struct BrandStoryView: View {
                         ArgusEyeView(mode: .hermes, size: 80)
                         HStack {
                             Text("HERMES")
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
+                                .font(DesignTokens.Fonts.custom(size: 32, weight: .bold, design: .rounded))
                                 .foregroundColor(ArgusMode.hermes.color)
                                 .tracking(4)
                             Button(action: { showInfo(.hermes) }) {
@@ -225,7 +225,7 @@ struct BrandStoryView: View {
                         ArgusEyeView(mode: .council, size: 80)
                         HStack {
                             Text("KONSEY")
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
+                                .font(DesignTokens.Fonts.custom(size: 32, weight: .bold, design: .rounded))
                                 .foregroundColor(ArgusMode.council.color)
                                 .tracking(4)
                             Button(action: { showInfo(.council) }) {

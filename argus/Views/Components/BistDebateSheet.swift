@@ -89,21 +89,21 @@ struct BistDebateSheet: View {
                 // Header
                 HStack {
                     Image(systemName: "gavel.fill")
-                        .foregroundColor(.white)
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                     Text("Konsey Tartışması")
                         .font(.headline)
                         .bold()
-                        .foregroundColor(.white)
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                     
                     Spacer()
                     
                     Button("Kapat") {
                         isPresented = false
                     }
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(Color.white.opacity(0.1))
+                    .background(DesignTokens.Colors.Overlay.l10)
                     .cornerRadius(20)
                 }
                 .padding()
@@ -215,12 +215,12 @@ struct DebateCard: View {
                     }()
                     
                     Text(num)
-                        .font(.system(size: 12, weight: .bold))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .bold))
                         .foregroundColor(color)
                 }
                 
                 Text(title)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                     .foregroundColor(color)
 
                 Spacer()
@@ -229,12 +229,12 @@ struct DebateCard: View {
                 if !showDetails {
                     Text(modules.map { $0.name }.joined(separator: ", "))
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 } else {
                     Text(modules.first?.name ?? "")
                         .font(.caption)
                         .bold()
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 }
             }
             
@@ -247,7 +247,7 @@ struct DebateCard: View {
                     
                     Text(module.commentary)
                         .font(.custom("Avenir-MediumItalic", size: 14)) // Elegant font
-                        .foregroundColor(.white)
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(.leading, 4)
@@ -304,25 +304,25 @@ struct EmptyStateCard: View {
                     .frame(width: 24, height: 24)
                 
                 Text(type == .support ? "2" : "3")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.gray)
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .bold))
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
             }
             
             Text(type == .support ? "Destek" : "İtiraz")
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             
             Spacer()
             
             Text("Yok")
                 .font(.caption)
-                .foregroundColor(.gray)
+                .foregroundColor(DesignTokens.Colors.textTertiary)
         }
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .strokeBorder(Color.gray.opacity(0.2), lineWidth: 1)
-                .background(Color.white.opacity(0.02))
+                .background(DesignTokens.Colors.Overlay.l02)
         )
     }
 }
@@ -335,22 +335,22 @@ struct BistVerdictCard: View {
             HStack {
                 ZStack {
                     RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.white.opacity(0.2))
+                        .fill(DesignTokens.Colors.Overlay.l20)
                         .frame(width: 24, height: 24)
                     
                     Text("4")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.white)
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .bold))
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                 }
                 
                 Text("Nihai karar")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
                 Spacer()
 
                 Text("Konsey")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             
@@ -362,18 +362,18 @@ struct BistVerdictCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(decision.reasoning)
                          .font(.custom("Avenir-Medium", size: 14))
-                         .foregroundColor(.white)
+                         .foregroundColor(DesignTokens.Colors.textPrimary)
                          .fixedSize(horizontal: false, vertical: true)
                     
                     HStack {
                          Text("Karar:")
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                         Text(getActionLabel(decision.action))
                             .bold()
-                            .foregroundColor(.white)
+                            .foregroundColor(DesignTokens.Colors.textPrimary)
                             .padding(.horizontal, 4)
                             .padding(.vertical, 2)
-                            .background(Color.white.opacity(0.1))
+                            .background(DesignTokens.Colors.Overlay.l10)
                             .cornerRadius(4)
                     }
                     .font(.caption)
@@ -411,6 +411,6 @@ struct FooterTerm: View {
             Text(term)
         }
         .font(.caption2)
-        .foregroundColor(.gray)
+        .foregroundColor(DesignTokens.Colors.textTertiary)
     }
 }

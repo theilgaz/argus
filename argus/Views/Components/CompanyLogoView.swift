@@ -189,8 +189,8 @@ struct CompanyLogoView: View {
                            startPoint: .topLeading,
                            endPoint: .bottomTrailing)
             Text(cleanSymbol.prefix(2).uppercased())
-                .font(.system(size: size * 0.38, weight: .black, design: .monospaced))
-                .foregroundColor(.white)
+                .font(DesignTokens.Fonts.custom(size: size * 0.38, weight: .black, design: .monospaced))
+                .foregroundColor(DesignTokens.Colors.textPrimary)
                 .shadow(color: .black.opacity(0.18), radius: 1, x: 0, y: 1)
         }
         .frame(width: size, height: size)

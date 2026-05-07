@@ -55,10 +55,10 @@ struct DuyguBarometresiCard: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Duygu barometresi")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Text("Haber, algı analizi")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             Spacer()
@@ -70,10 +70,10 @@ struct DuyguBarometresiCard: View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 3) {
                 Text("Duygu")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Text(sentimentLabel)
-                    .font(.system(size: 17, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 17, weight: .medium))
                     .foregroundColor(tone.foreground)
             }
 
@@ -81,12 +81,12 @@ struct DuyguBarometresiCard: View {
 
             VStack(alignment: .trailing, spacing: 3) {
                 Text("Skor")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Text(sentimentScore >= 0
                      ? "+\(Int(sentimentScore))"
                      : "\(Int(sentimentScore))")
-                    .font(.system(size: 24, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 24, weight: .medium))
                     .foregroundColor(tone.foreground)
                     .monospacedDigit()
             }
@@ -100,15 +100,15 @@ struct DuyguBarometresiCard: View {
         VStack(spacing: 6) {
             HStack {
                 Text("Korku")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.crimson)
                 Spacer()
                 Text("Nötr")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Spacer()
                 Text("Açgözlülük")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.aurora)
             }
 
@@ -148,7 +148,7 @@ struct DuyguBarometresiCard: View {
         HStack(spacing: 10) {
             ProgressView().scaleEffect(0.7)
             Text("Yükleniyor")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
         .frame(maxWidth: .infinity, minHeight: 60)
@@ -268,10 +268,10 @@ private struct EducationToggle: View {
         } label: {
             HStack(spacing: 5) {
                 Image(systemName: isOn ? "info.circle.fill" : "info.circle")
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 10, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.titan)
                 Text("NE DEMEK?")
-                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 9, weight: .bold, design: .monospaced))
                     .tracking(0.7)
                     .foregroundColor(InstitutionalTheme.Colors.titan)
             }
@@ -298,7 +298,7 @@ private struct EducationRow: View {
             ArgusDot(color: InstitutionalTheme.Colors.titan)
                 .padding(.top, 5)
             Text(text)
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }

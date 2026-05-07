@@ -23,7 +23,7 @@ struct AlkindusSymbolCard: View {
             // Header
             HStack {
                 Text("Modül öğrenmeleri")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Spacer()
             }
@@ -34,7 +34,7 @@ struct AlkindusSymbolCard: View {
                         .scaleEffect(0.8)
                     Text("Yükleniyor...")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 }
                 .padding(.vertical, 8)
             } else if let insight = insight {
@@ -47,11 +47,11 @@ struct AlkindusSymbolCard: View {
                             .frame(width: 8, height: 8)
                         Text("En Güvenilir:")
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                         Text(insight.bestModule.capitalized)
                             .font(.caption)
                             .fontWeight(.semibold)
-                            .foregroundColor(.white)
+                            .foregroundColor(DesignTokens.Colors.textPrimary)
                         Spacer()
                         Text("\(Int(insight.bestHitRate * 100))%")
                             .font(.caption)
@@ -67,11 +67,11 @@ struct AlkindusSymbolCard: View {
                                 .frame(width: 8, height: 8)
                             Text("Dikkatli Ol:")
                                 .font(.caption)
-                                .foregroundColor(.gray)
+                                .foregroundColor(DesignTokens.Colors.textTertiary)
                             Text(insight.worstModule.capitalized)
                                 .font(.caption)
                                 .fontWeight(.semibold)
-                                .foregroundColor(.white)
+                                .foregroundColor(DesignTokens.Colors.textPrimary)
                             Spacer()
                             Text("\(Int(insight.worstHitRate * 100))%")
                                 .font(.caption)
@@ -82,16 +82,16 @@ struct AlkindusSymbolCard: View {
                     // Sample size
                     Text("\(insight.totalDecisions) karar üzerinden")
                         .font(.caption2)
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 }
             } else {
                 // No data
                 HStack {
                     Image(systemName: "questionmark.circle")
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                     Text("Henüz \(symbol) için yeterli veri yok")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 }
                 .padding(.vertical, 8)
             }
@@ -126,18 +126,18 @@ struct AlkindusTimeCard: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text("Zaman bazlı içgörüler")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             }
             
             if let advice = timeAdvice {
                 Text(advice)
                     .font(.caption)
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
             } else {
                 Text("Henüz zaman bazlı pattern yok")
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
             }
             
             if !anomalies.isEmpty {

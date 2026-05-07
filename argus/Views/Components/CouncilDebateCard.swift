@@ -21,14 +21,14 @@ struct CouncilDebateCard: View {
                 Image(systemName: icon)
                     .foregroundColor(accentColor)
                 Text(title)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 
                 Spacer()
                 
                 // Net support badge
                 Text("\(netSupport > 0 ? "+" : "")\(Int(netSupport * 100))%")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .bold, design: .monospaced))
                     .foregroundColor(netSupport > 0 ? .green : (netSupport < 0 ? .red : .yellow))
                 
                 Button(action: { withAnimation { isExpanded.toggle() } }) {
@@ -42,11 +42,11 @@ struct CouncilDebateCard: View {
             if let proposal = winningProposal {
                 HStack(spacing: 8) {
                 Image(systemName: "megaphone.fill")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(accentColor)
                     
                     Text(proposal.name)
-                        .font(.system(size: 11, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 11, weight: .medium))
                         .foregroundColor(accentColor)
                     
                     Text("→")
@@ -54,12 +54,12 @@ struct CouncilDebateCard: View {
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     
                     Text(proposal.action)
-                        .font(.system(size: 11, weight: .bold))
+                        .font(DesignTokens.Fonts.custom(size: 11, weight: .bold))
                         .foregroundColor(actionColor(for: proposal.action))
                 }
                 
                 Text(proposal.reasoning)
-                    .font(.system(size: 10))
+                    .font(DesignTokens.Fonts.custom(size: 10))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .italic()
                     .lineLimit(2)
@@ -74,7 +74,7 @@ struct CouncilDebateCard: View {
                 // 2026-05-05 H-67: caps "OYLAR" tracking 1 → sentence "Oylar".
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Oylar")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     
                     ForEach(Array(votes.enumerated()), id: \.offset) { _, vote in
@@ -97,13 +97,13 @@ struct CouncilDebateCard: View {
                     let vetoCount = votes.filter { $0.decision == .veto }.count
 
                     Text("\(approveCount) onay, \(vetoCount) veto")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
                     Spacer()
 
                     Text("→ \(finalDecision)")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                         .foregroundColor(actionColor(for: finalDecision))
                 }
             }
@@ -137,27 +137,27 @@ struct DebateVoteRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
             Text(decision.emoji)
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
             
             VStack(alignment: .leading, spacing: 2) {
                 HStack {
                     Text(name)
-                        .font(.system(size: 11, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 11, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     
                     Text(decision.rawValue)
-                        .font(.system(size: 10, weight: .bold))
+                        .font(DesignTokens.Fonts.custom(size: 10, weight: .bold))
                         .foregroundColor(decisionColor)
                     
                     if weight > 0.8 {
                         Text("⚡")
-                            .font(.system(size: 8))
+                            .font(DesignTokens.Fonts.custom(size: 8))
                     }
                 }
                 
                 if let reason = reasoning, !reason.isEmpty {
                     Text(reason)
-                        .font(.system(size: 9))
+                        .font(DesignTokens.Fonts.custom(size: 9))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .lineLimit(1)
                 }
@@ -245,11 +245,11 @@ struct GrandCouncilDebateCard: View {
             // sentence "Karar patikası". Holo motor logo kalktı.
             HStack {
                 Text("Karar patikası")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Spacer()
                 Text(decision.action.rawValue)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                     .foregroundColor(actionColor(decision.action))
                 Button(action: { withAnimation { isExpanded.toggle() } }) {
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
@@ -260,7 +260,7 @@ struct GrandCouncilDebateCard: View {
 
             // Reasoning özet (sayım + ağırlık + eşik dahil)
             Text(decision.reasoning)
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -273,7 +273,7 @@ struct GrandCouncilDebateCard: View {
                 // Oy verenler
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Oylar · \(decision.contributors.count) / \(totalExpectedVoters) modül")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     ForEach(Array(decision.contributors.enumerated()), id: \.offset) { _, contrib in
                         contributorRow(contrib)
@@ -284,7 +284,7 @@ struct GrandCouncilDebateCard: View {
                 if !pendingMembers.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Bekleyen · \(pendingMembers.count) modül")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.titan)
                         ForEach(Array(pendingMembers.enumerated()), id: \.offset) { _, p in
                             pendingRow(name: p.name, reason: p.reason)
@@ -299,19 +299,19 @@ struct GrandCouncilDebateCard: View {
                         .frame(height: 0.5)
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Veto · \(decision.vetoes.count)")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.crimson)
                         ForEach(Array(decision.vetoes.enumerated()), id: \.offset) { _, veto in
                             HStack(spacing: 6) {
                                 Image(systemName: "hand.raised.fill")
-                                    .font(.system(size: 9))
+                                    .font(DesignTokens.Fonts.custom(size: 9))
                                     .foregroundColor(InstitutionalTheme.Colors.crimson)
                                 Text(veto.module)
-                                    .font(.system(size: 11, weight: .semibold))
+                                    .font(DesignTokens.Fonts.custom(size: 11, weight: .semibold))
                                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                 Text("·").foregroundColor(InstitutionalTheme.Colors.textTertiary)
                                 Text(veto.reason)
-                                    .font(.system(size: 10))
+                                    .font(DesignTokens.Fonts.custom(size: 10))
                                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                                     .lineLimit(2)
                             }
@@ -326,19 +326,19 @@ struct GrandCouncilDebateCard: View {
                         .frame(height: 0.5)
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Danışman notları · \(decision.advisors.count)")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         ForEach(Array(decision.advisors.enumerated()), id: \.offset) { _, note in
                             HStack(alignment: .top, spacing: 6) {
                                 Image(systemName: noteIcon(for: note.tone))
-                                    .font(.system(size: 9))
+                                    .font(DesignTokens.Fonts.custom(size: 9))
                                     .foregroundColor(noteColor(for: note.tone))
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(note.module)
-                                        .font(.system(size: 10, weight: .bold))
+                                        .font(DesignTokens.Fonts.custom(size: 10, weight: .bold))
                                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                     Text(note.advice)
-                                        .font(.system(size: 10))
+                                        .font(DesignTokens.Fonts.custom(size: 10))
                                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
@@ -364,25 +364,25 @@ struct GrandCouncilDebateCard: View {
     private func contributorRow(_ contrib: ModuleContribution) -> some View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: voteIcon(for: contrib.action))
-                .font(.system(size: 11, weight: .bold))
+                .font(DesignTokens.Fonts.custom(size: 11, weight: .bold))
                 .foregroundColor(voteColor(for: contrib.action))
                 .frame(width: 14)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text(contrib.module)
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(DesignTokens.Fonts.custom(size: 11, weight: .semibold))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     Text(voteLabel(for: contrib.action))
-                        .font(.system(size: 11, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 11, weight: .medium))
                         .foregroundColor(voteColor(for: contrib.action))
                     Spacer()
                     Text("%\(Int(abs(contrib.confidence) * 100))")
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 10, weight: .bold, design: .monospaced))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
                 if !contrib.reasoning.isEmpty {
                     Text(contrib.reasoning)
-                        .font(.system(size: 10))
+                        .font(DesignTokens.Fonts.custom(size: 10))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .lineLimit(1)
                 }
@@ -395,21 +395,21 @@ struct GrandCouncilDebateCard: View {
     private func pendingRow(name: String, reason: String) -> some View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: "clock")
-                .font(.system(size: 10))
+                .font(DesignTokens.Fonts.custom(size: 10))
                 .foregroundColor(InstitutionalTheme.Colors.titan)
                 .frame(width: 14)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text(name)
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(DesignTokens.Fonts.custom(size: 11, weight: .semibold))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     Text("Bekleniyor")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 11, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.titan)
                     Spacer()
                 }
                 Text(reason)
-                    .font(.system(size: 10))
+                    .font(DesignTokens.Fonts.custom(size: 10))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .lineLimit(1)
             }

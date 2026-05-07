@@ -162,9 +162,9 @@ struct ArgusNavHeader: View {
                 Button { onSelect(idx) } label: {
                     VStack(spacing: 8) {
                         Text(label)
-                            .font(.system(size: 13,
-                                          weight: idx == selected ? .black : .bold,
-                                          design: .monospaced))
+                            .font(DesignTokens.Fonts.custom(size: 13,
+                                                            weight: idx == selected ? .black : .bold,
+                                                            design: .monospaced))
                             .tracking(1.2)
                             .foregroundColor(idx == selected
                                              ? InstitutionalTheme.Colors.holo
@@ -195,7 +195,7 @@ struct ArgusNavHeader: View {
             VStack(alignment: .leading, spacing: 1) {
                 HStack(spacing: 8) {
                     Text(title)
-                        .font(.system(size: 22, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 22, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
                     if let pill = titlePill {
@@ -205,7 +205,7 @@ struct ArgusNavHeader: View {
 
                 if let subtitle {
                     Text(subtitle)
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
             }
@@ -233,7 +233,7 @@ struct ArgusNavHeader: View {
         case .back(let onTap):
             Button(action: onTap) {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 17, weight: .regular))
+                    .font(DesignTokens.Fonts.custom(size: 17, weight: .regular))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .frame(width: 32, height: 32)
                     .contentShape(Rectangle())
@@ -247,7 +247,7 @@ struct ArgusNavHeader: View {
     private func actionButton(_ action: Action) -> some View {
         Button(action: action.action) {
             Image(systemName: action.sfSymbol)
-                .font(.system(size: 16, weight: .regular))
+                .font(DesignTokens.Fonts.custom(size: 16, weight: .regular))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .frame(width: 32, height: 32)
                 .contentShape(Rectangle())
@@ -283,13 +283,13 @@ struct ArgusNavHeader: View {
                 .fill(dotColor)
                 .frame(width: 6, height: 6)
             Text(label)
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(primary
                                  ? InstitutionalTheme.Colors.textPrimary
                                  : InstitutionalTheme.Colors.textSecondary)
             Spacer(minLength: 8)
             Text(trailing)
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
     }

@@ -70,7 +70,7 @@ struct CollapsibleCardView<Content: View>: View {
                         if let sub = subtitle, !isExpanded {
                             Text(sub)
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(DesignTokens.Colors.textSecondary)
                                 .lineLimit(1)
                         }
                     }
@@ -79,7 +79,7 @@ struct CollapsibleCardView<Content: View>: View {
                     
                     Image(systemName: "chevron.right")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(DesignTokens.Colors.textSecondary)
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
                 }
                 .padding()
@@ -101,6 +101,6 @@ struct CollapsibleCardView<Content: View>: View {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(Color.gray.opacity(0.1), lineWidth: 1)
         )
-        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+        .shadow(color: DesignTokens.Colors.Scrim.s05, radius: 2, x: 0, y: 1)
     }
 }

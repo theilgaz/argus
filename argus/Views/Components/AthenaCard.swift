@@ -20,11 +20,11 @@ struct AthenaCard: View {
                 // Header
                 HStack {
                     Text("Sinyal analizi")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     Spacer()
                     Text("\(signals.count) sinyal")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         .monospacedDigit()
                 }
@@ -81,11 +81,11 @@ struct AthenaSignalRow: View {
                     // Signal Info — sentence
                     VStack(alignment: .leading, spacing: 2) {
                         Text(signal.type.turkishName)
-                            .font(.system(size: 13, weight: .medium))
+                            .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
                         Text(signal.title)
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Fonts.custom(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                             .lineLimit(1)
                     }
@@ -93,7 +93,7 @@ struct AthenaSignalRow: View {
                     Spacer()
 
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
                 .padding(.vertical, 8)
@@ -106,10 +106,10 @@ struct AthenaSignalRow: View {
                 VStack(alignment: .leading, spacing: 10) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Açıklama")
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Fonts.custom(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         Text(signal.type.turkishDescription)
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                             .fixedSize(horizontal: false, vertical: true)
                             .lineSpacing(2)
@@ -117,10 +117,10 @@ struct AthenaSignalRow: View {
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Öneri")
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Fonts.custom(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         Text(signal.type.turkishAdvice)
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                             .fixedSize(horizontal: false, vertical: true)
                             .lineSpacing(2)

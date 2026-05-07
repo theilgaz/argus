@@ -38,11 +38,11 @@ struct HeimdallPulseView: View {
                     .shadow(color: color.opacity(0.5), radius: 10, x: 0, y: 0)
                 
                 Image(systemName: "shield.fill")
-                    .font(.system(size: 40))
+                    .font(DesignTokens.Fonts.custom(size: 40))
                     .foregroundColor(color)
                 
                 Image(systemName: "eye.fill")
-                    .font(.system(size: 16))
+                    .font(DesignTokens.Fonts.custom(size: 16))
                     .foregroundColor(InstitutionalTheme.Colors.background)
                     .offset(y: -4)
             }

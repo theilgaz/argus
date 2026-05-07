@@ -60,11 +60,11 @@ struct AlkindusVerdictCard: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Sonuç analizi")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                         .foregroundColor(accentColor)
 
                     Text("T+\(verdict.horizon) · \(verdict.evaluationDate.formatted(date: .abbreviated, time: .omitted))")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
                 .padding(.horizontal, 10)
@@ -74,7 +74,7 @@ struct AlkindusVerdictCard: View {
 
                 // Verdict badge
                 Text(verdict.wasCorrect ? "TEZ TUTTU" : "TEZ TURMADI")
-                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 9, weight: .bold, design: .monospaced))
                     .tracking(1)
                     .foregroundColor(.black)
                     .padding(.horizontal, 8)
@@ -97,13 +97,13 @@ struct AlkindusVerdictCard: View {
                 VStack(alignment: .leading, spacing: 8) {
                     // Speech bubble
                     Text(speechText)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white)
+                        .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(12)
                         .background(
                             RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.white.opacity(0.06))
+                                .fill(DesignTokens.Colors.Overlay.l06)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
                                         .stroke(accentColor.opacity(0.25), lineWidth: 1)
@@ -113,15 +113,15 @@ struct AlkindusVerdictCard: View {
                     // Price change + regime
                     HStack(spacing: 8) {
                         Text(String(format: "%+.1f%%", verdict.priceChange))
-                            .font(.system(size: 13, weight: .bold, design: .monospaced))
+                            .font(DesignTokens.Fonts.custom(size: 13, weight: .bold, design: .monospaced))
                             .foregroundColor(verdict.priceChange >= 0 ? ideaGreen : errorRed)
 
                         Text(regimeBadgeText)
-                            .font(.system(size: 11, design: .monospaced))
-                            .foregroundColor(.gray)
+                            .font(DesignTokens.Fonts.custom(size: 11, design: .monospaced))
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Color.white.opacity(0.05))
+                            .background(DesignTokens.Colors.Overlay.l05)
                             .cornerRadius(4)
                     }
                 }
@@ -131,7 +131,7 @@ struct AlkindusVerdictCard: View {
 
             // MARK: Module Verdicts
             if !verdict.moduleVerdicts.isEmpty {
-                Divider().background(Color.white.opacity(0.07))
+                Divider().background(DesignTokens.Colors.Overlay.l07)
 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 6) {
@@ -146,16 +146,16 @@ struct AlkindusVerdictCard: View {
 
             // MARK: Original Reasoning (collapsible)
             if !verdict.originalReasoning.isEmpty && verdict.originalReasoning != "Gerekçe kaydedilmemiş" {
-                Divider().background(Color.white.opacity(0.07))
+                Divider().background(DesignTokens.Colors.Overlay.l07)
 
                 Button(action: { withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() } }) {
                     HStack(spacing: 6) {
                         Image(systemName: expanded ? "chevron.up" : "chevron.down")
-                            .font(.system(size: 10))
-                            .foregroundColor(.gray)
+                            .font(DesignTokens.Fonts.custom(size: 10))
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                         Text("Karar Anındaki Gerekçe")
-                            .font(.system(size: 11, design: .monospaced))
-                            .foregroundColor(.gray)
+                            .font(DesignTokens.Fonts.custom(size: 11, design: .monospaced))
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                         Spacer()
                     }
                     .padding(.horizontal, 14)
@@ -165,8 +165,8 @@ struct AlkindusVerdictCard: View {
 
                 if expanded {
                     Text(verdict.originalReasoning)
-                        .font(.system(size: 11))
-                        .foregroundColor(.gray)
+                        .font(DesignTokens.Fonts.custom(size: 11))
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                         .padding(.horizontal, 14)
                         .padding(.bottom, 12)
                         .fixedSize(horizontal: false, vertical: true)
@@ -196,22 +196,22 @@ private struct ModuleVerdictChip: View {
     var body: some View {
         HStack(spacing: 4) {
             Text(mv.module.uppercased())
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 10, weight: .bold, design: .monospaced))
                 .foregroundColor(.white.opacity(0.85))
 
             Text("\(Int(mv.score))")
-                .font(.system(size: 10, design: .monospaced))
-                .foregroundColor(.gray)
+                .font(DesignTokens.Fonts.custom(size: 10, design: .monospaced))
+                .foregroundColor(DesignTokens.Colors.textTertiary)
 
             Image(systemName: mv.wasCorrect ? "checkmark" : "xmark")
-                .font(.system(size: 9, weight: .bold))
+                .font(DesignTokens.Fonts.custom(size: 9, weight: .bold))
                 .foregroundColor(mv.wasCorrect ? ideaGreen : errorRed)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
         .background(
             RoundedRectangle(cornerRadius: 6)
-                .fill(Color.white.opacity(0.07))
+                .fill(DesignTokens.Colors.Overlay.l07)
                 .overlay(
                     RoundedRectangle(cornerRadius: 6)
                         .stroke((mv.wasCorrect ? ideaGreen : errorRed).opacity(0.3), lineWidth: 1)
@@ -233,8 +233,8 @@ struct AlkindusVerdictSection: View {
             if loaded && !verdicts.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Alkindus Dedi Ki...")
-                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                        .foregroundColor(.gray)
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .semibold, design: .monospaced))
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                         .padding(.horizontal, 16)
 
                     ForEach(verdicts.prefix(3)) { verdict in

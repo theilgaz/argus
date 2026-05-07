@@ -94,7 +94,7 @@ struct ArgusSolarCardView: View {
             infoView
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.black.opacity(0.2))
+                .background(DesignTokens.Colors.Scrim.s20)
         }
         .background(Color(hex: "#1C1C1E"))
         .cornerRadius(16)
@@ -115,7 +115,7 @@ struct ArgusSolarCardView: View {
                 Text("ARGUS KARARI")
                     .font(.headline)
                     .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
             }
             
             Spacer()
@@ -139,18 +139,18 @@ struct ArgusSolarCardView: View {
                     }
                 }
             }
-            .background(Color.white.opacity(0.05))
+            .background(DesignTokens.Colors.Overlay.l05)
             .cornerRadius(8)
         }
         .padding()
-        .background(Color.black.opacity(0.3))
+        .background(DesignTokens.Colors.Scrim.s30)
     }
     
     private var solarSystemView: some View {
         ZStack {
             // Orbit Path
             Circle()
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                .stroke(DesignTokens.Colors.Overlay.l10, lineWidth: 1)
                 .frame(width: 200, height: 200)
             
             // Center (Argus - The Brain)
@@ -166,7 +166,7 @@ struct ArgusSolarCardView: View {
                         Text("\(Int(currentScore))")
                             .font(.caption2)
                             .fontWeight(.bold)
-                            .foregroundColor(.white)
+                            .foregroundColor(DesignTokens.Colors.textPrimary)
                             .shadow(color: .black, radius: 2)
                             .offset(y: 45) // Push below eye
                     }
@@ -217,11 +217,11 @@ struct ArgusSolarCardView: View {
                         .foregroundColor(module.color)
                     Text(module.rawValue)
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                     Spacer()
                     Text("\(Int(getScore(for: module)))/100")
                         .font(.subheadline)
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 }
                 
                 Text(getModuleDescription(module))
@@ -254,18 +254,18 @@ struct ArgusSolarCardView: View {
                     Text(exp.title)
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundColor(.white)
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                     
                     Text(exp.summary)
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                         .lineLimit(3)
                 } else if isLoading {
                     HStack {
                         ProgressView().scaleEffect(0.5)
                         Text("Yapay zeka analiz ediyor...")
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                     }
                 }
             }
@@ -332,10 +332,10 @@ struct PlanetView: View {
             // Score Badge (only if selected)
             if isSelected {
                 Text("\(Int(score))")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.white)
+                    .font(DesignTokens.Fonts.custom(size: 10, weight: .bold))
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                     .padding(4)
-                    .background(Color.black.opacity(0.6))
+                    .background(DesignTokens.Colors.Scrim.s60)
                     .clipShape(Circle())
                     .offset(y: 30)
             }

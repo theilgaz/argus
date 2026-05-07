@@ -32,14 +32,14 @@ struct PiyasaRejimiCard: View {
                         .font(InstitutionalTheme.Typography.micro)
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     Text("Genel Trend Yönü")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
                 Spacer()
                 Button(action: { withAnimation(.snappy) { showEducation.toggle() } }) {
                     Image(systemName: showEducation ? "lightbulb.fill" : "lightbulb")
                         .foregroundColor(.orange)
-                        .font(.system(size: 14))
+                        .font(DesignTokens.Fonts.custom(size: 14))
                 }
             }
             .padding(16)
@@ -60,7 +60,7 @@ struct PiyasaRejimiCard: View {
                     HStack {
                         Image(systemName: rejimIcon)
                             .foregroundColor(rejimColor)
-                            .font(.system(size: 16))
+                            .font(DesignTokens.Fonts.custom(size: 16))
                         Text("Rejim Skoru: \(Int(rejimScore))/100")
                             .font(InstitutionalTheme.Typography.data)
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
@@ -96,13 +96,13 @@ struct PiyasaRejimiCard: View {
                     Divider().background(InstitutionalTheme.Colors.borderSubtle)
                     HStack(alignment: .top, spacing: 8) {
                         Text("💡")
-                            .font(.system(size: 14))
+                            .font(DesignTokens.Fonts.custom(size: 14))
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Ne Demek?")
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(DesignTokens.Fonts.custom(size: 12, weight: .semibold))
                                 .foregroundColor(.orange)
                             Text("Piyasa rejimi, genel trendin yönünü gösterir. 60 üzeri skorlar boğa piyasasına işaret eder ve alım fırsatları daha güçlüdür. 40 altı skorlar ayı piyasasını, aradaki değerler ise belirsizliği yansıtır.")
-                                .font(.system(size: 11))
+                                .font(DesignTokens.Fonts.custom(size: 11))
                                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -124,7 +124,7 @@ struct PiyasaRejimiCard: View {
     @ViewBuilder
     private func rejimBadge(_ label: String, isActive: Bool, color: Color) -> some View {
         Text(label)
-            .font(.system(size: 13, weight: .bold))
+            .font(DesignTokens.Fonts.custom(size: 13, weight: .bold))
             .foregroundColor(isActive ? .white : InstitutionalTheme.Colors.textTertiary)
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
@@ -162,14 +162,14 @@ struct MakroGostergelerCard: View {
                         .font(InstitutionalTheme.Typography.micro)
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     Text("Türkiye Ekonomi Verileri")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
                 Spacer()
                 Button(action: { withAnimation(.snappy) { showEducation.toggle() } }) {
                     Image(systemName: showEducation ? "lightbulb.fill" : "lightbulb")
                         .foregroundColor(.orange)
-                        .font(.system(size: 14))
+                        .font(DesignTokens.Fonts.custom(size: 14))
                 }
             }
             .padding(16)
@@ -264,13 +264,13 @@ struct MakroGostergelerCard: View {
                     Divider().background(InstitutionalTheme.Colors.borderSubtle)
                     HStack(alignment: .top, spacing: 8) {
                         Text("💡")
-                            .font(.system(size: 14))
+                            .font(DesignTokens.Fonts.custom(size: 14))
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Ne Demek?")
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(DesignTokens.Fonts.custom(size: 12, weight: .semibold))
                                 .foregroundColor(.orange)
                             Text("Reel faiz pozitif olduğunda TL varlıklar cazip hale gelir. Enflasyonun düşüş trendi borsa için olumludur. BIST 100 endeksi Türk borsasının genel barometresidir.")
-                                .font(.system(size: 11))
+                                .font(DesignTokens.Fonts.custom(size: 11))
                                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -294,7 +294,7 @@ struct MakroGostergelerCard: View {
     private func makroRow(icon: String, label: String, value: String, trend: Bool?, color: Color, detail: String? = nil) -> some View {
         HStack(spacing: 10) {
             Image(systemName: icon)
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(color.opacity(0.8))
                 .frame(width: 20)
 
@@ -316,7 +316,7 @@ struct MakroGostergelerCard: View {
 
             if let trend = trend {
                 Image(systemName: trend ? "arrow.up.right" : "arrow.down.right")
-                    .font(.system(size: 10, weight: .bold))
+                    .font(DesignTokens.Fonts.custom(size: 10, weight: .bold))
                     .foregroundColor(trend ? InstitutionalTheme.Colors.positive : InstitutionalTheme.Colors.negative)
             }
         }
@@ -406,14 +406,14 @@ struct TeknikKonsensusCard: View {
                         .font(InstitutionalTheme.Typography.micro)
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     Text("28 Gösterge Sinyali")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
                 Spacer()
                 Button(action: { withAnimation(.snappy) { showEducation.toggle() } }) {
                     Image(systemName: showEducation ? "lightbulb.fill" : "lightbulb")
                         .foregroundColor(.orange)
-                        .font(.system(size: 14))
+                        .font(DesignTokens.Fonts.custom(size: 14))
                 }
             }
             .padding(16)
@@ -454,7 +454,7 @@ struct TeknikKonsensusCard: View {
                     if !s.oscillators.values.isEmpty {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Öne Çıkan Göstergeler:")
-                                .font(.system(size: 11, weight: .semibold))
+                                .font(DesignTokens.Fonts.custom(size: 11, weight: .semibold))
                                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
                             if let rsi = s.oscillators.values["RSI"], let rsiVal = rsi.value {
@@ -483,13 +483,13 @@ struct TeknikKonsensusCard: View {
                     Divider().background(InstitutionalTheme.Colors.borderSubtle)
                     HStack(alignment: .top, spacing: 8) {
                         Text("💡")
-                            .font(.system(size: 14))
+                            .font(DesignTokens.Fonts.custom(size: 14))
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Ne Demek?")
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(DesignTokens.Fonts.custom(size: 12, weight: .semibold))
                                 .foregroundColor(.orange)
                             Text("28 teknik gösterge (RSI, MACD, hareketli ortalamalar vb.) analiz edilir. Çoğunluk AL diyorsa teknik görünüm olumludur. RSI 70 üzeri aşırı alım, 30 altı aşırı satım bölgesini gösterir. Tek başına yeterli olmaz, diğer modüllerle birlikte değerlendirilmelidir.")
-                                .font(.system(size: 11))
+                                .font(DesignTokens.Fonts.custom(size: 11))
                                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -514,8 +514,8 @@ struct TeknikKonsensusCard: View {
     @ViewBuilder
     private func signalBadge(_ text: String, color: Color) -> some View {
         Text(text)
-            .font(.system(size: 14, weight: .bold))
-            .foregroundColor(.white)
+            .font(DesignTokens.Fonts.custom(size: 14, weight: .bold))
+            .foregroundColor(DesignTokens.Colors.textPrimary)
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
             .background(
@@ -547,10 +547,10 @@ struct TeknikKonsensusCard: View {
     private func groupIndicator(label: String, value: String, recommendation: String) -> some View {
         VStack(spacing: 4) {
             Text(label)
-                .font(.system(size: 10))
+                .font(DesignTokens.Fonts.custom(size: 10))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Text(value)
-                .font(.system(size: 12, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .semibold))
                 .foregroundColor(sinyalColor(recommendation))
         }
         .frame(maxWidth: .infinity)
@@ -567,12 +567,12 @@ struct TeknikKonsensusCard: View {
                 .font(InstitutionalTheme.Typography.dataSmall)
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Text("(\(signal))")
-                .font(.system(size: 10))
+                .font(DesignTokens.Fonts.custom(size: 10))
                 .foregroundColor(signal == "Al" ? InstitutionalTheme.Colors.positive : (signal == "Sat" ? InstitutionalTheme.Colors.negative : InstitutionalTheme.Colors.textTertiary))
             Spacer()
             if let w = warning {
                 Text(w)
-                    .font(.system(size: 9, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 9, weight: .semibold))
                     .foregroundColor(.orange)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)

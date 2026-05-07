@@ -25,7 +25,7 @@ struct MetricInsightRow: View {
                     // Label & Context
                     VStack(alignment: .leading, spacing: 2) {
                         Text(metric.label)
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(DesignTokens.Fonts.custom(size: 11, weight: .semibold))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         Text(metric.context)
                             .font(.caption2)
@@ -36,7 +36,7 @@ struct MetricInsightRow: View {
                     
                     // Value
                     Text(metric.value)
-                        .font(.system(size: 13, weight: .bold, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 13, weight: .bold, design: .monospaced))
                         .foregroundColor(metric.scoreImpact > 0 ? InstitutionalTheme.Colors.positive : (metric.scoreImpact < 0 ? InstitutionalTheme.Colors.negative : InstitutionalTheme.Colors.textPrimary))
                     
                     // Expand Icon
@@ -58,7 +58,7 @@ struct MetricInsightRow: View {
                         .offset(y: 2)
                     
                     Text(metric.education)
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .lineLimit(nil)
                         .fixedSize(horizontal: false, vertical: true)
@@ -98,10 +98,10 @@ struct BistFaktorCard: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Temel analiz")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     Text(symbol)
-                        .font(.system(size: 17, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 17, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 }
 
@@ -110,18 +110,18 @@ struct BistFaktorCard: View {
                 if let r = result {
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
                         Text("\(Int(r.totalScore))")
-                            .font(.system(size: 24, weight: .medium))
+                            .font(DesignTokens.Fonts.custom(size: 24, weight: .medium))
                             .foregroundColor(scoreColor(r.totalScore))
                             .monospacedDigit()
                         Text("/ 100")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     }
                 } else if isLoading {
                     ProgressView()
                 } else {
                     Text("Veri yok")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.titan)
                 }
             }
@@ -141,7 +141,7 @@ struct BistFaktorCard: View {
                 // Detailed Metrics List
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Detaylı analiz")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .padding(.top, 8)
 
@@ -149,7 +149,7 @@ struct BistFaktorCard: View {
                         if !factor.metrics.isEmpty {
                             VStack(alignment: .leading, spacing: 0) {
                                 Text(factor.name)
-                                    .font(.system(size: 12, weight: .medium))
+                                    .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                                     .foregroundColor(factorColor(factor.color))
                                     .padding(.bottom, 4)
                                 
@@ -241,16 +241,16 @@ struct FactorSummaryCell: View {
     var body: some View {
         VStack(spacing: 4) {
             Image(systemName: factor.icon)
-                .font(.system(size: 14))
+                .font(DesignTokens.Fonts.custom(size: 14))
                 .foregroundColor(factorColor(factor.color))
 
             Text(factor.name.components(separatedBy: " ").first ?? "")
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .lineLimit(1)
 
             Text("\(Int(factor.score))")
-                .font(.system(size: 14, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .monospacedDigit()
         }
@@ -289,15 +289,15 @@ struct BistSektorCard: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Sektör rotasyonu")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     if let r = result {
                         Text(r.rotation.rawValue)
-                            .font(.system(size: 17, weight: .medium))
+                            .font(DesignTokens.Fonts.custom(size: 17, weight: .medium))
                             .foregroundColor(rotationColor(r.rotation))
                     } else {
                         Text("Yükleniyor")
-                            .font(.system(size: 14))
+                            .font(DesignTokens.Fonts.custom(size: 14))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     }
                 }
@@ -317,16 +317,16 @@ struct BistSektorCard: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 HStack(spacing: 5) {
                                     Image(systemName: sector.icon)
-                                        .font(.system(size: 11))
+                                        .font(DesignTokens.Fonts.custom(size: 11))
                                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                                     Text(sector.name)
-                                        .font(.system(size: 12, weight: .medium))
+                                        .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                         .lineLimit(1)
                                 }
 
                                 Text("\(sector.dailyChange >= 0 ? "+" : "")\(String(format: "%.1f", sector.dailyChange))%")
-                                    .font(.system(size: 13, weight: .medium))
+                                    .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                                     .foregroundColor(sector.dailyChange >= 0
                                                      ? InstitutionalTheme.Colors.aurora
                                                      : InstitutionalTheme.Colors.crimson)
@@ -348,7 +348,7 @@ struct BistSektorCard: View {
                 // Educational Insights
                 VStack(alignment: .leading, spacing: 0) {
                     Text("Neden bu hareket")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .padding(.vertical, 8)
 
@@ -402,15 +402,15 @@ struct BistMoneyFlowCard: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Para akışı")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     if let r = result {
                         Text(r.flowStatus.rawValue)
-                            .font(.system(size: 17, weight: .medium))
+                            .font(DesignTokens.Fonts.custom(size: 17, weight: .medium))
                             .foregroundColor(flowColor(r.flowStatus))
                     } else {
                         Text("Analiz ediliyor")
-                            .font(.system(size: 14))
+                            .font(DesignTokens.Fonts.custom(size: 14))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     }
                 }
@@ -445,7 +445,7 @@ struct BistMoneyFlowCard: View {
                 // Deep Dive Metrics
                 VStack(alignment: .leading, spacing: 0) {
                     Text("Akıllı para")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .padding(.vertical, 8)
 

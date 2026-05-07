@@ -26,7 +26,7 @@ struct ArgusRadarChart: View {
                     .font(.caption2)
                     .foregroundColor(.orange)
                 Text("ARGUS RADAR")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .medium))
                     .tracking(1)
                     .foregroundColor(.orange)
             }
@@ -68,7 +68,7 @@ struct ArgusRadarChart: View {
                 // Center: Average Score
                 VStack(spacing: 0) {
                     Text("\(Int(averageScore))")
-                        .font(.system(size: 26, weight: .bold, design: .rounded))
+                        .font(DesignTokens.Fonts.custom(size: 26, weight: .bold, design: .rounded))
                         .foregroundColor(scoreColor(averageScore))
                 }
                 
@@ -132,11 +132,11 @@ private struct ModuleLabelSimple: View {
                     .foregroundColor(module.color)
                 
                 Text(module.shortName)
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(.secondary)
+                    .font(DesignTokens.Fonts.custom(size: 10, weight: .semibold))
+                    .foregroundColor(DesignTokens.Colors.textSecondary)
                 
                 Text("\(Int(score))")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(DesignTokens.Fonts.custom(size: 16, weight: .bold))
                     .foregroundColor(scoreColor)
             }
         }
@@ -297,7 +297,7 @@ enum RadarModule: String, CaseIterable {
                 .frame(width: size, height: size)
         } else {
             Image(systemName: icon)
-                .font(.system(size: size * 0.85))
+                .font(DesignTokens.Fonts.custom(size: size * 0.85))
         }
     }
     

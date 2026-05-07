@@ -80,10 +80,10 @@ struct OrionMotherboardView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text("Teknik analiz")
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Text(symbol.uppercased())
-                .font(.system(size: 22, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 22, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .tracking(-0.2)
         }
@@ -112,7 +112,7 @@ struct OrionMotherboardView: View {
             Task { await viewModel.changeTimeframe(to: mode) }
         } label: {
             Text(timeframeLabel(mode))
-                .font(.system(size: 13, weight: isSelected ? .medium : .regular))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: isSelected ? .medium : .regular))
                 .foregroundColor(isSelected
                                  ? InstitutionalTheme.Colors.textPrimary
                                  : InstitutionalTheme.Colors.textSecondary)
@@ -149,24 +149,24 @@ struct OrionMotherboardView: View {
             HStack(alignment: .firstTextBaseline) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text("\(Int(currentOrion.score))")
-                        .font(.system(size: 32, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 32, weight: .medium))
                         .foregroundColor(scoreColor(currentOrion.score))
                         .monospacedDigit()
                     Text("/ 100")
-                        .font(.system(size: 13))
+                        .font(DesignTokens.Fonts.custom(size: 13))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(verdictText)
-                        .font(.system(size: 14, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                         .foregroundColor(scoreColor(currentOrion.score))
                     Text(confidenceText)
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     .padding(.leading, 2)
             }
@@ -201,10 +201,10 @@ struct OrionMotherboardView: View {
             let source = analysis.sourceFor(timeframe: selectedTimeframe)
             HStack(spacing: 6) {
                 Image(systemName: "info.circle")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Text("\(timeframeLabel(selectedTimeframe).lowercased()) skoru \(source.displayLabel) verisinden türetildi.")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Spacer()
             }
@@ -236,10 +236,10 @@ struct OrionMotherboardView: View {
             } else {
                 VStack(spacing: 8) {
                     Image(systemName: "chart.line.uptrend.xyaxis")
-                        .font(.system(size: 22))
+                        .font(DesignTokens.Fonts.custom(size: 22))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     Text("Grafik verisi yükleniyor")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
                 .frame(height: 280)
@@ -249,7 +249,7 @@ struct OrionMotherboardView: View {
                 VStack(spacing: 8) {
                     ProgressView()
                     Text("\(timeframeLabel(selectedTimeframe).lowercased()) yükleniyor")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
                 .padding(14)
@@ -386,7 +386,7 @@ struct OrionMotherboardView: View {
         } label: {
             HStack(spacing: 10) {
                 Text(label)
-                    .font(.system(size: 13))
+                    .font(DesignTokens.Fonts.custom(size: 13))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .frame(width: 84, alignment: .leading)
 
@@ -394,14 +394,14 @@ struct OrionMotherboardView: View {
 
                 if !valueText.isEmpty {
                     Text(valueText)
-                        .font(.system(size: 12, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         .monospacedDigit()
                         .frame(width: 28, alignment: .trailing)
                 }
 
                 Text(statusText)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(color)
                     .lineLimit(1)
                     .truncationMode(.tail)
@@ -420,10 +420,10 @@ struct OrionMotherboardView: View {
     private var adviceCard: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Yorum")
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Text(analysis.strategicAdvice)
-                .font(.system(size: 14))
+                .font(DesignTokens.Fonts.custom(size: 14))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
                 .lineSpacing(2)

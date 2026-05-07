@@ -216,7 +216,7 @@ struct StrategyResultRow: View {
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
                 .background(color(for: result.currentAction))
-                .foregroundColor(.white)
+                .foregroundColor(DesignTokens.Colors.textPrimary)
                 .cornerRadius(6)
         }
         .padding()
