@@ -1,18 +1,70 @@
 {
-  "version": "Athena-V1-Expert-2026-04",
-  "description": "Factor ağırlıkları. Kalibrasyon notları: momentum ve kalite ağırlıkları Jegadeesh–Titman (1993) ve Fama–French QMJ literatürüne dayanır. Ağırlıklar 1.0 toplamaz çünkü bias + ölçekleme ile birleşir — AthenaInferenceEngine.predict içinde clamp([0,100]) uygulanır. Geri-test doğrulama: Alkindus verdict'lerinden türetilen live win-rate ile revize edilmeli (F1-8).",
+  "version": "Athena-V2-Polynomial-2026-05",
+  "description": "Non-linear polynomial model with regime conditioning. Linear weights operate on normalized [0,1] inputs, sigmoid output. Interaction terms capture value+quality synergy and momentum+risk penalty. Regime modifiers shift factor importance per Chiron regime.",
   "bias": 0.0,
-  "valueWeight": 0.20,
-  "qualityWeight": 0.25,
-  "momentumWeight": 0.25,
-  "sizeWeight": 0.15,
-  "riskWeight": 0.15,
-  "lastUpdated": "2026-04-21",
+  "valueWeight": 1.8,
+  "qualityWeight": 2.0,
+  "momentumWeight": 2.0,
+  "sizeWeight": 1.2,
+  "riskWeight": 1.5,
+  "interactionWeights": {
+    "valueQuality": 1.2,
+    "valueMomentum": 0.6,
+    "qualityMomentum": 0.8,
+    "momentumRisk": -0.9,
+    "valueRisk": 0.4,
+    "valueSq": -0.5,
+    "qualitySq": -0.4,
+    "momentumSq": -0.3,
+    "riskSq": -0.6
+  },
+  "regimeModifiers": {
+    "Neutral": {
+      "valueMult": 1.0,
+      "qualityMult": 1.0,
+      "momentumMult": 1.0,
+      "sizeMult": 1.0,
+      "riskMult": 1.0
+    },
+    "Trend": {
+      "valueMult": 0.8,
+      "qualityMult": 0.9,
+      "momentumMult": 1.4,
+      "sizeMult": 1.0,
+      "riskMult": 0.7
+    },
+    "Chop": {
+      "valueMult": 1.2,
+      "qualityMult": 1.3,
+      "momentumMult": 0.5,
+      "sizeMult": 0.9,
+      "riskMult": 1.3
+    },
+    "Risk-Off": {
+      "valueMult": 0.7,
+      "qualityMult": 1.4,
+      "momentumMult": 0.6,
+      "sizeMult": 0.8,
+      "riskMult": 1.6
+    },
+    "News Shock": {
+      "valueMult": 0.6,
+      "qualityMult": 1.1,
+      "momentumMult": 0.4,
+      "sizeMult": 0.7,
+      "riskMult": 1.5
+    }
+  },
+  "lastUpdated": "2026-05-07",
   "notes": {
-    "value": "P/E + P/B + FCF yield ağırlıklı ortalaması. Zarar eden şirketlerde floor 20.",
-    "quality": "ROE + Operating Margin + Debt/Equity. Yüksek leverage cezalandırılır.",
-    "momentum": "Jegadeesh-Titman 12m-1m return + Orion teknik skoru.",
-    "size": "Log-market-cap z-score; küçük ölçekli büyüme şirketleri için küçük premium.",
-    "risk": "Fiyat volatilitesi + likidite; yüksek risk cezalandırılır."
+    "architecture": "Polynomial regression with pairwise interactions + quadratic terms + sigmoid activation. Regime conditioning via multiplicative modifiers on linear weights.",
+    "value": "P/E + P/B + FCF yield. In Trend regime dampened (momentum dominates), in Chop regime amplified (mean-reversion).",
+    "quality": "ROE + Operating Margin + Debt/Equity. Amplified in Risk-Off and Chop (quality premium).",
+    "momentum": "Jegadeesh-Titman 12m-1m + Orion score. Heavily amplified in Trend, near-zero in News Shock.",
+    "size": "Log-market-cap SMB. Dampened in Risk-Off (flight to large-cap safety).",
+    "risk": "Volatility + liquidity. Amplified in Risk-Off and News Shock (risk aversion dominates).",
+    "interaction_valueQuality": "Cheap + quality synergy (Buffett premium). Positive weight rewards both being high.",
+    "interaction_momentumRisk": "High momentum + high risk = dangerous. Negative weight penalizes this combination.",
+    "quadratic_terms": "Negative weights create diminishing returns — prevents extreme factor scores from dominating linearly."
   }
 }

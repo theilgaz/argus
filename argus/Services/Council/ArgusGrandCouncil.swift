@@ -266,6 +266,18 @@ actor ArgusGrandCouncil {
         let kellyProfile = await KellyCache.shared.getSystemProfile()
         let kellyMult = kellyProfile.positionMultiplier
 
+        // 2.8 Poseidon — Hacim bazlı akıllı para analizi (mevcut candle'lardan)
+        let whaleScore = await PoseidonService.shared.analyzeSmartMoney(symbol: symbol, candles: candles)
+
+        // 2.9 Multi-timeframe alignment — günlük + haftalık trend uyumu
+        let dailyMF = await MainActor.run {
+            OrionMultiFrameEngine.shared.analyzeTimeframe(symbol: symbol, candles: candles, timeframe: .d1)
+        }
+        let weeklyCandles = Self.aggregateToWeekly(candles)
+        let weeklyMF = await MainActor.run {
+            OrionMultiFrameEngine.shared.analyzeTimeframe(symbol: symbol, candles: weeklyCandles, timeframe: .w1)
+        }
+
         // --- BIST V2 REFORM ---
         if isBist {
             // 2026-05-05 (Round 7B): AetherCouncil → AetherV2Engine swap.
@@ -293,16 +305,45 @@ actor ArgusGrandCouncil {
                 analystConsensus: analystConsensus
             )
             
+            // Poseidon advisory (BIST)
+            var bistAdvisors: [AdvisorNote] = []
+            let bistBuyish = bistRes.action == .aggressiveBuy || bistRes.action == .accumulate
+            let bistSellish = bistRes.action == .trim || bistRes.action == .liquidate
+            if whaleScore.totalScore >= 70 && bistBuyish {
+                bistAdvisors.append(AdvisorNote(module: "Poseidon", advice: "Toplama tespit edildi — alım uyumlu. \(whaleScore.summary)", tone: .positive))
+            } else if whaleScore.totalScore >= 70 && bistSellish {
+                bistAdvisors.append(AdvisorNote(module: "Poseidon", advice: "Büyük oyuncular topluyor ama karar satış yönlü. \(whaleScore.summary)", tone: .caution))
+            } else if whaleScore.totalScore <= 30 && bistBuyish {
+                bistAdvisors.append(AdvisorNote(module: "Poseidon", advice: "Dağıtım riski — alımda dikkat. \(whaleScore.summary)", tone: .warning))
+            } else if whaleScore.totalScore <= 30 && bistSellish {
+                bistAdvisors.append(AdvisorNote(module: "Poseidon", advice: "Dağıtım tespit edildi — satış uyumlu. \(whaleScore.summary)", tone: .positive))
+            }
+
+            // Multi-timeframe alignment (BIST)
+            if let daily = dailyMF, let weekly = weeklyMF {
+                let dBull = daily.signal == .strongBuy || daily.signal == .buy
+                let dBear = daily.signal == .strongSell || daily.signal == .sell
+                let wBull = weekly.signal == .strongBuy || weekly.signal == .buy
+                let wBear = weekly.signal == .strongSell || weekly.signal == .sell
+                if dBull && wBull {
+                    bistAdvisors.append(AdvisorNote(module: "MultiFrame", advice: "Günlük + haftalık uyumlu yükseliş.", tone: .positive))
+                } else if dBear && wBear {
+                    bistAdvisors.append(AdvisorNote(module: "MultiFrame", advice: "Günlük + haftalık uyumlu düşüş.", tone: .positive))
+                } else if (dBull && wBear) || (dBear && wBull) {
+                    bistAdvisors.append(AdvisorNote(module: "MultiFrame", advice: "Günlük/haftalık çatışma — dikkat.", tone: .caution))
+                }
+            }
+
             let finalDecision = ArgusGrandDecision(
                 id: bistRes.id,
                 symbol: symbol,
                 action: bistRes.action,
-                strength: .normal, // Strength is calculated inside BistResult but mapped simply here
+                strength: .normal,
                 confidence: bistRes.confidence / 100.0,
                 reasoning: bistRes.reasoning,
-                contributors: [], // Contributors logic is inside BistResult.modules now
+                contributors: [],
                 vetoes: [],
-                advisors: [],
+                advisors: bistAdvisors,
                 orionDecision: orionDecision,
                 atlasDecision: atlasDecision,
                 aetherDecision: trueMacroDecision,
@@ -413,9 +454,12 @@ actor ArgusGrandCouncil {
             athena: athena,
             demeter: demeter,
             prometheus: prometheusForecast,
+            poseidon: whaleScore,
+            dailyMF: dailyMF,
+            weeklyMF: weeklyMF,
             kellyMultiplier: kellyMult
         )
-        
+
         // ARGUS 3.0: THE HOOK (GLOBAL)
         ArgusLedger.shared.logDecision(
             decisionId: grandDecision.id,
@@ -525,7 +569,9 @@ actor ArgusGrandCouncil {
         athena: AthenaFactorResult?,
         demeter: DemeterScore?,
         prometheus: PrometheusForecast?,
-        // chiron: ChronosResult? (REMOVED)
+        poseidon: WhaleScore? = nil,
+        dailyMF: OrionMultiFrameEngine.TimeframeAnalysis? = nil,
+        weeklyMF: OrionMultiFrameEngine.TimeframeAnalysis? = nil,
         kellyMultiplier: Double = 1.0
     ) -> ArgusGrandDecision {
         
@@ -1107,6 +1153,76 @@ actor ArgusGrandCouncil {
             }
         }
 
+        // --- POSEIDON ADVISORY (Hacim / Akıllı Para) ---
+        if let whale = poseidon, whale.totalScore > 0 {
+            let buyish = finalAction == .aggressiveBuy || finalAction == .accumulate
+            let sellish = finalAction == .trim || finalAction == .liquidate
+
+            if whale.totalScore >= 70 {
+                if buyish {
+                    advisorNotes.append(AdvisorNote(
+                        module: "Poseidon",
+                        advice: "Toplama (accumulation) tespit edildi — alım sinyaliyle uyumlu. \(whale.summary)",
+                        tone: .positive
+                    ))
+                } else if sellish {
+                    advisorNotes.append(AdvisorNote(
+                        module: "Poseidon",
+                        advice: "Büyük oyuncular topluyor ama karar satış yönlü — dikkat. \(whale.summary)",
+                        tone: .caution
+                    ))
+                }
+            } else if whale.totalScore <= 30 {
+                if buyish {
+                    advisorNotes.append(AdvisorNote(
+                        module: "Poseidon",
+                        advice: "Dağıtım (distribution) riski — alım kararında dikkatli ol. \(whale.summary)",
+                        tone: .warning
+                    ))
+                } else if sellish {
+                    advisorNotes.append(AdvisorNote(
+                        module: "Poseidon",
+                        advice: "Dağıtım tespit edildi — satış sinyaliyle uyumlu. \(whale.summary)",
+                        tone: .positive
+                    ))
+                }
+            }
+        }
+
+        // --- MULTI-TIMEFRAME ALIGNMENT ADVISORY ---
+        if let daily = dailyMF, let weekly = weeklyMF {
+            let dailyBullish = daily.signal == .strongBuy || daily.signal == .buy
+            let dailyBearish = daily.signal == .strongSell || daily.signal == .sell
+            let weeklyBullish = weekly.signal == .strongBuy || weekly.signal == .buy
+            let weeklyBearish = weekly.signal == .strongSell || weekly.signal == .sell
+
+            if dailyBullish && weeklyBullish {
+                advisorNotes.append(AdvisorNote(
+                    module: "MultiFrame",
+                    advice: "Günlük + haftalık trend uyumlu (ikisi de yukarı). Güçlü alım ortamı.",
+                    tone: .positive
+                ))
+            } else if dailyBearish && weeklyBearish {
+                advisorNotes.append(AdvisorNote(
+                    module: "MultiFrame",
+                    advice: "Günlük + haftalık trend uyumlu (ikisi de aşağı). Güçlü satış ortamı.",
+                    tone: .positive
+                ))
+            } else if dailyBullish && weeklyBearish {
+                advisorNotes.append(AdvisorNote(
+                    module: "MultiFrame",
+                    advice: "Günlük yükseliş ama haftalık düşüş — kısa vadeli toparlanma, uzun vade aşağı. Dikkat.",
+                    tone: .caution
+                ))
+            } else if dailyBearish && weeklyBullish {
+                advisorNotes.append(AdvisorNote(
+                    module: "MultiFrame",
+                    advice: "Günlük düşüş ama haftalık yükseliş — geri çekilme fırsatı olabilir.",
+                    tone: .caution
+                ))
+            }
+        }
+
         // Nihai güven hesabı — kararın "gücü" (yön strength değil).
         // 2026-05-04 FIX: Eski formül `confidence = netSupport` kullanıyordu,
         // -1..+1 aralığındaki bir değeri direkt 0..1 confidence yerine geçirmek
@@ -1157,9 +1273,32 @@ actor ArgusGrandCouncil {
         )
     }
 
+    // MARK: - Weekly Candle Aggregation
+    private static func aggregateToWeekly(_ dailyCandles: [Candle]) -> [Candle] {
+        guard dailyCandles.count >= 10 else { return [] }
+        let calendar = Calendar.current
+        var weekBuckets: [Int: [Candle]] = [:]
+        for c in dailyCandles {
+            let weekOfYear = calendar.component(.weekOfYear, from: c.date)
+            let year = calendar.component(.yearForWeekOfYear, from: c.date)
+            let key = year * 100 + weekOfYear
+            weekBuckets[key, default: []].append(c)
+        }
+        return weekBuckets.keys.sorted().compactMap { key -> Candle? in
+            guard let week = weekBuckets[key], !week.isEmpty else { return nil }
+            let sorted = week.sorted { $0.date < $1.date }
+            return Candle(
+                date: sorted.first!.date,
+                open: sorted.first!.open,
+                high: sorted.map(\.high).max()!,
+                low: sorted.map(\.low).min()!,
+                close: sorted.last!.close,
+                volume: sorted.map(\.volume).reduce(0, +)
+            )
+        }
+    }
+
     // MARK: - Sector-Based News Multiplier
-    /// Haberin sektöre göre etkisini ayarlar
-    /// Biotech/Healthcare: Haber daha önemli
     /// Utilities: Haber daha az önemli
     /// Technology: Orta düzeyde
     private func getSectorBasedNewsMultiplier(symbol: String, isPositive: Bool, isNegative: Bool) -> Double {

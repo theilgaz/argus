@@ -15,7 +15,8 @@ final class AthenaFactorService {
         financials: FinancialsData?,
         atlasResult: FundamentalScoreResult?,
         candles: [Candle],
-        orionScore: OrionScoreResult? = nil
+        orionScore: OrionScoreResult? = nil,
+        regime: MarketRegime = .neutral
     ) -> AthenaFactorResult {
         
         // 1. Extract Features (Rule-Based Feature Engineering)
@@ -34,8 +35,8 @@ final class AthenaFactorService {
             riskScore: riskScore
         )
         
-        // 3. AI Inference (Predict)
-        let prediction = AthenaInferenceEngine.shared.predict(features: features)
+        // 3. AI Inference (Non-Linear Polynomial + Regime Conditioning)
+        let prediction = AthenaInferenceEngine.shared.predict(features: features, regime: regime)
         
         // 4. Generate Human-Readable Label (Explainability)
         let styleLabel = generateStyleLabel(features: features, prediction: prediction)

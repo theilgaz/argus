@@ -24,14 +24,14 @@ struct MimirView: View {
                             HStack(spacing: 10) {
                                 ProgressView().scaleEffect(0.8)
                                 Text("Taranıyor...")
-                                    .font(.system(size: 12, design: .monospaced))
+                                    .font(DesignTokens.Fonts.custom(size: 12, design: .monospaced))
                                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                             }
                         } else {
                             HStack(spacing: 8) {
                                 ArgusDot(color: InstitutionalTheme.Colors.aurora, size: 6)
                                 Text("Sistem Stabil · Sorun Yok")
-                                    .font(.system(size: 12, weight: .semibold))
+                                    .font(DesignTokens.Fonts.custom(size: 12, weight: .semibold))
                                     .foregroundColor(InstitutionalTheme.Colors.aurora)
                             }
                         }
@@ -51,12 +51,12 @@ struct MimirView: View {
                             Text("Atlas → Finnhub / TwelveData")
                             Text("Phoenix → Yahoo")
                         }
-                        .font(.system(size: 12, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 12, design: .monospaced))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         .padding()
                     } label: {
                         Text("Data Source Map")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(DesignTokens.Fonts.custom(size: 12, weight: .semibold))
                     }
                 } header: {
                     ArgusSectionCaption("PROVENANCE")

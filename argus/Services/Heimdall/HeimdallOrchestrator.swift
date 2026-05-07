@@ -102,6 +102,13 @@ final class HeimdallOrchestrator {
                 await SymbolBlocklist.shared.reportFailure(symbol: symbol, reason: "quote auth/paywall")
             }
             await HeimdallLogger.shared.error("fetch_failed", provider: provider, errorClass: classifyError(error), errorMessage: error.localizedDescription, endpoint: endpoint)
+
+            // Fallback: Finnhub (API key varsa)
+            if let fallbackQuote = try? await FinnhubProvider.shared.fetchQuote(symbol: symbol) {
+                await HeimdallLogger.shared.info("fallback_success", provider: "finnhub", endpoint: endpoint, symbol: symbol, latencyMs: 0)
+                return fallbackQuote
+            }
+
             throw error
         }
     }
@@ -317,6 +324,14 @@ final class HeimdallOrchestrator {
                 await SymbolBlocklist.shared.reportFailure(symbol: symbol, reason: "candles auth/paywall")
             }
             await HeimdallLogger.shared.error("fetch_failed", provider: provider, errorClass: classifyError(error), errorMessage: error.localizedDescription, endpoint: endpoint)
+
+            // Fallback: Finnhub (API key varsa)
+            if let fallbackCandles = try? await FinnhubProvider.shared.fetchCandles(symbol: symbol, timeframe: timeframe, limit: limit),
+               !fallbackCandles.isEmpty {
+                await HeimdallLogger.shared.info("fallback_success", provider: "finnhub", endpoint: endpoint, symbol: symbol, latencyMs: 0)
+                return fallbackCandles
+            }
+
             throw error
         }
     }

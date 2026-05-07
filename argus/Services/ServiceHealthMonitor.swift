@@ -15,7 +15,8 @@ enum APIProvider: String, CaseIterable, Identifiable, Codable {
     case massive = "Massive" // New Options Provider
     case groq = "Groq (Llama)"
     case deepSeek = "DeepSeek"
-    
+    case finnhub = "Finnhub"
+
     var id: String { rawValue }
 }
 

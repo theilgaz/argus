@@ -17,14 +17,41 @@ struct AthenaFeatureVector: Codable, Sendable {
 struct AthenaModelWeights: Codable, Sendable {
     var version: String
     var lastUpdated: Date = Date()
-    
-    // Factor Weights
+
+    // Linear factor weights
     var bias: Double
     var valueWeight: Double
     var qualityWeight: Double
     var momentumWeight: Double
     var sizeWeight: Double
     var riskWeight: Double
+
+    // Polynomial interaction weights (pairwise)
+    var interactionWeights: InteractionWeights?
+
+    // Regime conditioning multipliers
+    var regimeModifiers: [String: RegimeModifier]?
+
+    struct InteractionWeights: Codable, Sendable {
+        var valueQuality: Double
+        var valueMomentum: Double
+        var qualityMomentum: Double
+        var momentumRisk: Double
+        var valueRisk: Double
+        // Quadratic (diminishing returns)
+        var valueSq: Double
+        var qualitySq: Double
+        var momentumSq: Double
+        var riskSq: Double
+    }
+
+    struct RegimeModifier: Codable, Sendable {
+        var valueMult: Double
+        var qualityMult: Double
+        var momentumMult: Double
+        var sizeMult: Double
+        var riskMult: Double
+    }
 }
 
 /// Model Tahmini

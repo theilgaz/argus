@@ -86,12 +86,14 @@ class PortfolioViewModel: ObservableObject {
         return getEquity() - balance
     }
 
+    private var liveQuotes: [String: Quote] { MarketViewModel.shared.quotes }
+
     func getEquity() -> Double {
-        return PortfolioStore.shared.getGlobalEquity(quotes: [:])
+        return PortfolioStore.shared.getGlobalEquity(quotes: liveQuotes)
     }
 
     func getUnrealizedPnL() -> Double {
-        return PortfolioStore.shared.getGlobalUnrealizedPnL(quotes: [:])
+        return PortfolioStore.shared.getGlobalUnrealizedPnL(quotes: liveQuotes)
     }
 
     func getBistPortfolioValue() -> Double {
@@ -99,11 +101,11 @@ class PortfolioViewModel: ObservableObject {
     }
 
     func getBistEquity() -> Double {
-        return PortfolioStore.shared.getBistEquity(quotes: [:])
+        return PortfolioStore.shared.getBistEquity(quotes: liveQuotes)
     }
 
     func getBistUnrealizedPnL() -> Double {
-        return PortfolioStore.shared.getBistUnrealizedPnL(quotes: [:])
+        return PortfolioStore.shared.getBistUnrealizedPnL(quotes: liveQuotes)
     }
 
     func getRealizedPnL(market: TradeMarket? = nil) -> Double {

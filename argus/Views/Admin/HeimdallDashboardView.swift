@@ -62,11 +62,11 @@ struct HeimdallDashboardView: View {
                 ForEach(endpointStates.sorted(by: <), id: \.key) { key, state in
                     HStack {
                         Text(key)
-                            .font(.system(size: 11, design: .monospaced))
+                            .font(DesignTokens.Fonts.custom(size: 11, design: .monospaced))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         Spacer()
                         Text(state)
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .font(DesignTokens.Fonts.custom(size: 10, weight: .bold, design: .monospaced))
                             .foregroundColor(state == "Locked"
                                              ? InstitutionalTheme.Colors.crimson
                                              : InstitutionalTheme.Colors.titan)
@@ -97,13 +97,13 @@ struct HeimdallDashboardView: View {
                 }
             } label: {
                 Text("RESET ALL BANS")
-                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .bold, design: .monospaced))
                     .tracking(1.2)
                     .foregroundColor(InstitutionalTheme.Colors.crimson)
             }
         } footer: {
             Text("Argus Data Core 2.0 · Scheduler Active · Dedup On")
-                .font(.system(size: 10, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 10, design: .monospaced))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
     }
@@ -115,7 +115,7 @@ struct HeimdallDashboardView: View {
             Spacer()
             ArgusDot(color: color(for: score), size: 6)
             Text(score >= 0.8 ? "OK" : "Degraded")
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 10, weight: .bold, design: .monospaced))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
     }
@@ -140,25 +140,25 @@ struct HeimdallTraceRow: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text("[\(trace.engine.rawValue)]")
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 10, weight: .bold, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.holo)
                 Text(trace.provider.rawValue)
-                    .font(.system(size: 10, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 10, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Spacer()
                 Text(String(format: "%.0fms", trace.durationMs))
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 10, weight: .bold, design: .monospaced))
                     .foregroundColor(trace.isSuccess
                                      ? InstitutionalTheme.Colors.aurora
                                      : InstitutionalTheme.Colors.crimson)
             }
             Text("\(trace.symbol) @ \(trace.endpoint)")
-                .font(.system(size: 11, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 11, design: .monospaced))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
             if let error = trace.errorMessage {
                 Text("Error: \(error)")
-                    .font(.system(size: 10, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 10, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.crimson)
             }
         }
