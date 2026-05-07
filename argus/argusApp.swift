@@ -19,10 +19,7 @@ struct argusApp: App {
     private static var cleanupTimer: Timer?
     private static var ragRetryTimer: Timer?
 
-    // Unified Singleton ViewModel (Legacy - Geçiş döneminde korunuyor)
-    @StateObject private var tradingViewModel = TradingViewModel()
-
-    // FAZ 2: Yeni modüler koordinatör (Paralel çalışıyor)
+    // FAZ 2: Modüler koordinatör — TVM yerine geçti
     @StateObject private var coordinator = AppStateCoordinator.shared
 
     // Intro State
@@ -132,7 +129,7 @@ struct argusApp: App {
                             .environmentObject(coordinator.portfolio)
                             .task {
                                 // One-time startup logic
-                                tradingViewModel.bootstrap()
+                                coordinator.bootstrap()
 
                                 // 🧠 Chiron: Start background learning analysis
                                 Task.detached(priority: .background) {
