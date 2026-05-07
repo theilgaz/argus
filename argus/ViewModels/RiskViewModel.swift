@@ -30,32 +30,13 @@ final class RiskViewModel: ObservableObject {
     // ETF Summaries
     @Published var etfSummaries: [String: ArgusEtfSummary] = [:]
     @Published var isLoadingEtf = false
-    
-    // Services
-    // In a real refactor, we might inject stores here.
-    // For now, we assume this VM owns this state or syncs with a Store driven by TradingVM originally.
-    // Since TradingVM was the source of truth, we are moving that truth here.
-    
-    // Cancellables
-    private var cancellables = Set<AnyCancellable>()
-    
+
     init() {
-        // Future: Bind to Persistence Stores if applicable
-    }
-    
-    // MARK: - Public Actions
-    
-    func updatePortfolio(_ newPortfolio: [Trade]) {
-        self.portfolio = newPortfolio
-    }
-    
-    func updateBalance(usd: Double, tryBalance: Double) {
-        self.balance = usd
-        self.bistBalance = tryBalance
-    }
-    
-    func addTransaction(_ transaction: Transaction) {
-        self.transactionHistory.append(transaction)
+        let store = PortfolioStore.shared
+        store.$trades.assign(to: &$portfolio)
+        store.$globalBalance.assign(to: &$balance)
+        store.$bistBalance.assign(to: &$bistBalance)
+        store.$transactions.assign(to: &$transactionHistory)
     }
     
     // Logic for loading ETFs or Whales could move here in future steps.
