@@ -26,19 +26,8 @@ actor YahooCandleAdapter {
             symbol: symbol
         )
         
-        // HOOK-1: Data Snapshot
-        let latency = Date().timeIntervalSince(start) * 1000
-        let blobHash = ArgusLedger.shared.logDataSnapshot(
-            symbol: symbol,
-            type: "CANDLES_OHLCV",
-            blobData: data,
-            marketTime: nil,
-            provider: "Yahoo",
-            latencyMs: Int(latency)
-        ) ?? "ERROR"
-        
         let candles = try parseResponse(data, limit: limit)
-        return (candles, blobHash)
+        return (candles, "N/A")
     }
     
     private func parseResponse(_ data: Data, limit: Int) throws -> [Candle] {

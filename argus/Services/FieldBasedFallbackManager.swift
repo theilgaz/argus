@@ -2,9 +2,8 @@ import Foundation
 
 // MARK: - DORMANT
 // 2026-04-30: Yahoo-Only Mode aktif olduğundan bu orkestratör çağrılmıyor.
-// İçinde tutulan YahooFallbackProvider, CoinGeckoProvider ve commented-out
-// EODHDProviderAdapter de bu nedenle ölü zincir. Canlandırmadan önce
-// tasks/lessons.md L13 (zombie kod canlandırma cezası) hatırla.
+// EODHDProviderAdapter, dead provider dosyaları silindi (2026-05-07).
+// Canlandırmadan önce: tasks/lessons.md L13.
 
 /// Orchestrates data fetching by trying providers in sequence.
 @available(*, deprecated, message: "Yahoo-Only Mode aktif; orkestratör çağrılmıyor. Lessons L13.")
@@ -22,12 +21,7 @@ final class FieldBasedFallbackManager: Sendable {
     
     private init() {
         // Setup default chain
-        // Note: Real 'EODHDProvider' etc should be injected here.
-        // For now, we only have YahooFallback implemented purely as DataProvider.
-        // We will add placeholders or adapters for others.
-        
-        // Example:
-        // providers.append(EODHDProviderAdapter())
+        // Dead providers (EODHD, TwelveData, Massive, FMP) silindi.
         
         // Add CoinGecko for Crypto
         providers.append(coinGecko)

@@ -17,70 +17,47 @@ struct DataHealthReport {
     var errors: [String]
 }
 
-/// "The Hydra" - Legacy Provider Manager -> Streaming Engine
-/// Refactored to be a Streaming-Only Service. Data is pushed to MarketDataStore.
-/// Fetch logic has moved to MarketDataStore (SSoT).
+/// "The Hydra" - Legacy Provider Manager
+/// Yahoo Direct Mode aktif: TwelveData streaming kaldırıldı.
+/// Fetch logic MarketDataStore (SSoT) ve HeimdallOrchestrator'da.
 class MarketDataProvider: ObservableObject {
     static let shared = MarketDataProvider()
-    
-    // MARK: - Services (Heads of the Hydra)
-    private let twelveData = TwelveDataService.shared
-    
+
     // MARK: - Streaming Publisher
-    // We keep this for now to avoid breaking too many listeners, 
-    // but ideally listeners should observe MarketDataStore.
+    // Legacy publisher -- callers should migrate to MarketDataStore observation.
     let priceUpdate = PassthroughSubject<Quote, Never>()
     private var cancellables = Set<AnyCancellable>()
-    
+
     // MARK: - State
     @Published var dataHealth = DataHealthReport(
         timestamp: Date(),
         overallStatus: .healthy,
         apiLatency: 0,
         dataFreshness: 0,
-        activeProvider: "Twelve Data",
+        activeProvider: "Yahoo",
         errors: []
     )
-    
-    private init() {
-        setupStreaming()
-    }
-    
-    // MARK: - Streaming Logic
-    
-    private func setupStreaming() {
-        // Primary: Twelve Data
-        twelveData.priceUpdate
-            .sink { [weak self] quote in
-                self?.handleIncomingStream(quote, source: "Twelve Data (Stream)")
-            }
-            .store(in: &cancellables)
-    }
-    
-    private func handleIncomingStream(_ quote: Quote, source: String) {
-        // K4 fail-closed: timestamp yoksa veya 15s'den eskiyse güncelleme yap.
-        // Motive: timestamp=nil Date(0) default'u "her zaman taze" gibi davranıyordu;
-        // sessiz stale tick'leri SSoT'ye yazıp trigger'ları tetikliyordu.
+
+    private init() {}
+
+    // MARK: - Streaming (no-op, TwelveData removed)
+
+    func injectLiveQuote(_ quote: Quote, source: String) {
         guard let ts = quote.timestamp, Date().timeIntervalSince(ts) <= 15 else {
             return
         }
-        
-        // 1. Update Internal Publisher (Legacy)
         DispatchQueue.main.async {
             self.priceUpdate.send(quote)
             self.dataHealth.activeProvider = source
             self.dataHealth.dataFreshness = 0
-            
-            // 2. PUSH TO SSOT (Unified Store)
-            // This ensures anyone observing the Store gets the update
             Task { @MainActor in
                 MarketDataStore.shared.injectLiveQuote(quote, source: source)
             }
         }
     }
-    
+
     func connectStream(symbols: [String]) {
-        twelveData.subscribe(symbols: symbols)
+        // no-op: TwelveData WebSocket streaming removed (Yahoo Direct Mode)
     }
     
     // MARK: - DEPRECATED / REMOVED METHODS

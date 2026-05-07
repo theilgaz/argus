@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		477929EC5673401646E6E7DA /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 10BBE2B6F9DCE47D31CFCEA1 /* Foundation.framework */; };
-		582DF28CCE5F7663336DF001 /* SymbolMapperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CCB955EFD419A811E067DCF /* SymbolMapperTests.swift */; };
+
 		64E7EA0BAC54B67230EB7812 /* RiskEscapePolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1492F29D86376D1C4CC546B0 /* RiskEscapePolicyTests.swift */; };
 		81D696466A0111B912D68DAD /* CachePolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0283C4A3BA0D41C0B5F480C /* CachePolicyTests.swift */; };
 		8AFF37EAA21CE2182ACD8D6F /* V2AdapterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55DA450A3FA73951B71CD5C /* V2AdapterTests.swift */; };
@@ -32,7 +32,7 @@
 		10BBE2B6F9DCE47D31CFCEA1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		1492F29D86376D1C4CC546B0 /* RiskEscapePolicyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RiskEscapePolicyTests.swift; sourceTree = "<group>"; };
 		35ED3317CB184C016BF90764 /* TradeValidatorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TradeValidatorTests.swift; sourceTree = "<group>"; };
-		3CCB955EFD419A811E067DCF /* SymbolMapperTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SymbolMapperTests.swift; sourceTree = "<group>"; };
+
 		578DC6BD61064A0B294EF85D /* argusTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = argusTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A6E351BA28975EDAC0E1BA62 /* PulsingFABViewTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PulsingFABViewTests.swift; sourceTree = "<group>"; };
 		B0283C4A3BA0D41C0B5F480C /* CachePolicyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CachePolicyTests.swift; sourceTree = "<group>"; };
@@ -88,7 +88,7 @@
 			children = (
 				B0283C4A3BA0D41C0B5F480C /* CachePolicyTests.swift */,
 				1492F29D86376D1C4CC546B0 /* RiskEscapePolicyTests.swift */,
-				3CCB955EFD419A811E067DCF /* SymbolMapperTests.swift */,
+
 				35ED3317CB184C016BF90764 /* TradeValidatorTests.swift */,
 			);
 			path = Utilities;
@@ -256,7 +256,7 @@
 				621C39A2DFD04C5184E8A83C /* PortfolioStoreSmokeTests.swift in Sources */,
 				81D696466A0111B912D68DAD /* CachePolicyTests.swift in Sources */,
 				64E7EA0BAC54B67230EB7812 /* RiskEscapePolicyTests.swift in Sources */,
-				582DF28CCE5F7663336DF001 /* SymbolMapperTests.swift in Sources */,
+
 				AB436D70FE7B5F8B78356C03 /* TradeValidatorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
