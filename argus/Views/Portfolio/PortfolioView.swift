@@ -10,7 +10,11 @@ import SwiftUI
 // Demo veri sıfır — boş durumlar ArgusEmptyState ile anlatılır.
 
 struct PortfolioView: View {
-    @ObservedObject var viewModel: TradingViewModel
+    @ObservedObject private var market = MarketViewModel.shared
+    @ObservedObject private var execution = ExecutionStateViewModel.shared
+    @ObservedObject private var portfolioStore = PortfolioStore.shared
+    @ObservedObject private var autoPilotStore = AutoPilotStore.shared
+    @EnvironmentObject private var legacyVM: TradingViewModel
     @State private var selectedEngine: AutoPilotEngineFilter = .all
     @State private var showNewTradeSheet = false
     @State private var showHistory = false
@@ -72,7 +76,7 @@ struct PortfolioView: View {
                             tradeBrainBand
                                 .padding(.horizontal)
 
-                            PortfolioReportsView(viewModel: viewModel, mode: selectedMarket)
+                            PortfolioReportsView(mode: selectedMarket)
 
                             if selectedMarket == .global {
                                 EngineSelector(selected: $selectedEngine)
@@ -94,7 +98,7 @@ struct PortfolioView: View {
                             Image(systemName: "plus")
                                 .font(.title2)
                                 .fontWeight(.bold)
-                                .foregroundColor(.white)
+                                .foregroundColor(DesignTokens.Colors.textPrimary)
                                 .frame(width: 56, height: 56)
                                 .background(InstitutionalTheme.Colors.primary)
                                 .clipShape(Circle())
@@ -120,7 +124,7 @@ struct PortfolioView: View {
             }
             .navigationBarHidden(true)
             .sheet(isPresented: $showNewTradeSheet) {
-                NewTradeSheet(viewModel: viewModel)
+                NewTradeSheet()
                     .presentationDetents([.fraction(0.6)])
                     .preferredColorScheme(.dark)
             }
@@ -134,14 +138,14 @@ struct PortfolioView: View {
             }
             .sheet(isPresented: $showTradeBrain) {
                 TradeBrainView()
-                    .environmentObject(viewModel)
+                    .environmentObject(legacyVM)
                     .preferredColorScheme(.dark)
             }
             .sheet(item: $tradeToEdit) { trade in
                 if let plan = PositionPlanStore.shared.getPlan(for: trade.id) {
                     PlanEditorSheet(
                         trade: trade,
-                        currentPrice: viewModel.quotes[trade.symbol]?.currentPrice ?? trade.entryPrice,
+                        currentPrice: market.quotes[trade.symbol]?.currentPrice ?? trade.entryPrice,
                         plan: plan
                     )
                     .preferredColorScheme(.dark)
@@ -154,9 +158,9 @@ struct PortfolioView: View {
             .alert("Satış Emri", isPresented: $showSellConfirmation) {
                 Button("Sat", role: .destructive) {
                     if let trade = tradeToSell {
-                        viewModel.sell(
+                        PortfolioStore.shared.sell(
                             tradeId: trade.id,
-                            currentPrice: viewModel.quotes[trade.symbol]?.currentPrice ?? trade.entryPrice,
+                            currentPrice: market.quotes[trade.symbol]?.currentPrice ?? trade.entryPrice,
                             reason: "Portfolio User manual sell"
                         )
                     }
@@ -187,7 +191,7 @@ struct PortfolioView: View {
     @ViewBuilder
     private var globalList: some View {
         if selectedEngine == .all {
-            let openTrades = viewModel.globalPortfolio.filter { $0.isOpen }
+            let openTrades = portfolioStore.globalOpenTrades
             if !openTrades.isEmpty {
                 ForEach(openTrades) { trade in
                     positionCard(for: trade, market: .global)
@@ -196,8 +200,9 @@ struct PortfolioView: View {
                 EmptyPortfolioState()
             }
         } else if selectedEngine == .scouting {
-            if !viewModel.globalScoutLogs.isEmpty {
-                ForEach(viewModel.globalScoutLogs.sorted(by: { $0.timestamp > $1.timestamp }), id: \.id) { log in
+            let scoutLogs = autoPilotStore.scoutLogs.filter { !$0.symbol.contains(".E") }
+            if !scoutLogs.isEmpty {
+                ForEach(scoutLogs.sorted(by: { $0.timestamp > $1.timestamp }), id: \.id) { log in
                     ScoutHistoryRow(log: log)
                 }
             } else {
@@ -210,7 +215,7 @@ struct PortfolioView: View {
             }
         } else {
             let targetEngine: AutoPilotEngine? = (selectedEngine == .corse) ? .corse : .pulse
-            let filtered = viewModel.globalPortfolio.filter { $0.isOpen && $0.engine == targetEngine }
+            let filtered = portfolioStore.globalOpenTrades.filter { $0.engine == targetEngine }
             if !filtered.isEmpty {
                 ForEach(filtered) { trade in
                     positionCard(for: trade, market: .global)
@@ -228,8 +233,8 @@ struct PortfolioView: View {
 
     @ViewBuilder
     private var bistList: some View {
-        if !viewModel.bistOpenPortfolio.isEmpty {
-            ForEach(viewModel.bistOpenPortfolio) { trade in
+        if !portfolioStore.bistOpenTrades.isEmpty {
+            ForEach(portfolioStore.bistOpenTrades) { trade in
                 positionCard(for: trade, market: .bist)
             }
         } else {
@@ -243,12 +248,12 @@ struct PortfolioView: View {
     }
 
     @ViewBuilder
-    private func positionCard(for trade: Trade, market: TradeMarket) -> some View {
-        let symbolAlerts = viewModel.planAlerts.filter { $0.symbol == trade.symbol }
+    private func positionCard(for trade: Trade, market tradeMarket: TradeMarket) -> some View {
+        let symbolAlerts = execution.planAlerts.filter { $0.symbol == trade.symbol }
         UnifiedPositionCard(
             trade: trade,
-            currentPrice: viewModel.quotes[trade.symbol]?.currentPrice ?? trade.entryPrice,
-            market: market,
+            currentPrice: self.market.quotes[trade.symbol]?.currentPrice ?? trade.entryPrice,
+            market: tradeMarket,
             onEdit: { openPlanEditor(for: trade) },
             onSell: {
                 tradeToSell = trade
@@ -271,7 +276,7 @@ struct PortfolioView: View {
 
     @ViewBuilder
     private var tradeBrainBand: some View {
-        let alerts = viewModel.planAlerts
+        let alerts = execution.planAlerts
         Button(action: { showTradeBrain = true }) {
             HStack(spacing: 10) {
                 ZStack(alignment: .topTrailing) {
@@ -346,7 +351,7 @@ struct PortfolioView: View {
         if PositionPlanStore.shared.getPlan(for: trade.id) == nil {
             PositionPlanStore.shared.syncWithPortfolio(
                 trades: [trade],
-                grandDecisions: viewModel.grandDecisions
+                grandDecisions: SignalStateViewModel.shared.grandDecisions
             )
         }
         tradeToEdit = trade
@@ -645,7 +650,7 @@ struct PortfolioHeader: View {
 struct PortfolioCard: View {
     let trade: Trade
     @Binding var selectedTrade: Trade?
-    @ObservedObject var viewModel: TradingViewModel
+    @ObservedObject private var market = MarketViewModel.shared
 
     var onInfoTap: ((AutoPilotEngine) -> Void)?
 
@@ -655,15 +660,15 @@ struct PortfolioCard: View {
                 AssetChipView(
                     symbol: trade.symbol,
                     quantity: trade.quantity,
-                    currentPrice: viewModel.quotes[trade.symbol]?.currentPrice,
+                    currentPrice: market.quotes[trade.symbol]?.currentPrice,
                     entryPrice: trade.entryPrice,
                     engine: trade.engine
                 )
             }
             .contextMenu {
                 Button(role: .destructive) {
-                    if let price = viewModel.quotes[trade.symbol]?.currentPrice {
-                        viewModel.sell(tradeId: trade.id, currentPrice: price)
+                    if let price = market.quotes[trade.symbol]?.currentPrice {
+                        PortfolioStore.shared.sell(tradeId: trade.id, currentPrice: price)
                     }
                 } label: {
                     Label("Pozisyonu Kapat", systemImage: "xmark.circle")
@@ -702,7 +707,7 @@ struct EmptyPortfolioState: View {
 // MARK: - NewTradeSheet
 
 struct NewTradeSheet: View {
-    @ObservedObject var viewModel: TradingViewModel
+    @ObservedObject private var market = MarketViewModel.shared
     @Environment(\.presentationMode) var presentationMode
     @State private var symbol: String = ""
     @State private var quantity: Double = 1.0
@@ -728,7 +733,13 @@ struct NewTradeSheet: View {
                                 .font(.system(.callout, design: .monospaced))
                                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                 .onChange(of: symbol) { _, newValue in
-                                    viewModel.search(query: newValue)
+                                    if newValue.isEmpty {
+                                        market.searchResults = []
+                                    } else {
+                                        market.search(query: newValue) { results in
+                                            MarketViewModel.shared.searchResults = results
+                                        }
+                                    }
                                 }
                         }
                         .padding(.horizontal, 12)
@@ -742,13 +753,13 @@ struct NewTradeSheet: View {
                                 .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 1)
                         )
 
-                        if !viewModel.searchResults.isEmpty {
+                        if !market.searchResults.isEmpty {
                             ScrollView {
                                 LazyVStack(spacing: 0) {
-                                    ForEach(viewModel.searchResults, id: \.symbol) { result in
+                                    ForEach(market.searchResults, id: \.symbol) { result in
                                         Button(action: {
                                             self.symbol = result.symbol
-                                            viewModel.searchResults = []
+                                            market.searchResults = []
                                         }) {
                                             HStack {
                                                 Text(result.symbol)
@@ -826,7 +837,7 @@ struct NewTradeSheet: View {
                     }
 
                     // Summary
-                    if let quote = viewModel.quotes[symbol.uppercased()] {
+                    if let quote = market.quotes[symbol.uppercased()] {
                         VStack(spacing: 10) {
                             HStack {
                                 Text("Birim Fiyat")
@@ -876,7 +887,7 @@ struct NewTradeSheet: View {
                     Button(action: executeTrade) {
                         Text("Satın al")
                             .font(DesignTokens.Fonts.custom(size: 15, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundColor(DesignTokens.Colors.textPrimary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
                             .frame(minHeight: 48)
@@ -906,7 +917,7 @@ struct NewTradeSheet: View {
 
     func executeTrade() {
         guard !symbol.isEmpty else { return }
-        viewModel.buy(symbol: symbol.uppercased(), quantity: quantity)
+        ExecutionStateViewModel.shared.buy(symbol: symbol.uppercased(), quantity: quantity)
         presentationMode.wrappedValue.dismiss()
     }
 }

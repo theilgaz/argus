@@ -3,7 +3,6 @@ import SwiftUI
 // MARK: - Symbol Debate View (Council Room)
 struct SymbolDebateView: View {
     let decision: ArgusGrandDecision
-    @ObservedObject var viewModel: TradingViewModel // Added ViewModel Dependency
     @Binding var isPresented: Bool
     
     private var education: CouncilEducationStage {
@@ -37,14 +36,14 @@ struct SymbolDebateView: View {
                                 .overlay(
                                     Image(systemName: "graduationcap.fill")
                                         .font(.largeTitle)
-                                        .foregroundColor(.white)
+                                        .foregroundColor(DesignTokens.Colors.textPrimary)
                                 )
                                 .shadow(color: education.color.opacity(0.5), radius: 20, x: 0, y: 0)
                             
                             Text(education.badgeText)
                                 .font(.system(.title, design: .monospaced))
                                 .fontWeight(.black)
-                                .foregroundColor(.white)
+                                .foregroundColor(DesignTokens.Colors.textPrimary)
                             
                             Text(education.title.uppercased())
                                 .font(.system(.headline, design: .monospaced))
@@ -57,7 +56,7 @@ struct SymbolDebateView: View {
                             Text(education.why)
                                 .font(.caption)
                                 .multilineTextAlignment(.center)
-                                .foregroundColor(.gray)
+                                .foregroundColor(DesignTokens.Colors.textTertiary)
                                 .padding(.horizontal)
                             
                             HStack {
@@ -67,18 +66,18 @@ struct SymbolDebateView: View {
                             }
                             .padding(.vertical, 8)
                             .padding(.horizontal, 16)
-                            .background(Color.white.opacity(0.05))
+                            .background(DesignTokens.Colors.Overlay.l05)
                             .cornerRadius(20)
 
                             Text(education.disclaimer)
-                                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                .font(DesignTokens.Fonts.custom(size: 11, weight: .semibold, design: .rounded))
                                 .foregroundColor(.orange.opacity(0.95))
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 18)
                         }
                         .padding(.top, 24)
                         
-                        Divider().background(Color.white.opacity(0.1))
+                        Divider().background(DesignTokens.Colors.Overlay.l10)
                         
                         // 2. EDUCATIONAL BLOCKS
                         VStack(alignment: .leading, spacing: 10) {
@@ -134,7 +133,7 @@ struct SymbolDebateView: View {
                                             
                                             Text(veto.reason)
                                                 .font(.caption)
-                                                .foregroundColor(.white)
+                                                .foregroundColor(DesignTokens.Colors.textPrimary)
                                         }
                                         Spacer()
                                     }
@@ -182,7 +181,7 @@ struct SymbolDebateView: View {
                         }
 
                         // 6. DETAILED AI REPORT
-                        NavigationLink(destination: ArgusAnalystReportView(symbol: decision.symbol, viewModel: viewModel)) {
+                        NavigationLink(destination: ArgusAnalystReportView(symbol: decision.symbol)) {
                            HStack {
                                Image(systemName: "doc.text.magnifyingglass")
                                    .font(.headline)
@@ -243,7 +242,7 @@ private struct EducationInfoRow: View {
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title.uppercased())
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .bold, design: .monospaced))
                     .foregroundColor(tint.opacity(0.95))
                 Text(text)
                     .font(.caption)
@@ -254,7 +253,7 @@ private struct EducationInfoRow: View {
             Spacer(minLength: 0)
         }
         .padding(12)
-        .background(Color.white.opacity(0.04))
+        .background(DesignTokens.Colors.Overlay.l04)
         .cornerRadius(10)
         .overlay(
             RoundedRectangle(cornerRadius: 10)
@@ -297,7 +296,7 @@ struct VoteRow: View {
                     Text(vote.module)
                         .font(.body)
                         .fontWeight(.semibold)
-                        .foregroundColor(.white)
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                     
                     Spacer()
                     
@@ -313,7 +312,7 @@ struct VoteRow: View {
                 
                 Text(vote.reasoning)
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                 
                 // Momentum Bar if confidence boosting
                 if vote.confidence > 1.0 {
@@ -334,7 +333,7 @@ struct VoteRow: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.05), lineWidth: 1)
+                .stroke(DesignTokens.Colors.Overlay.l05, lineWidth: 1)
         )
         .padding(.horizontal)
     }
@@ -354,15 +353,15 @@ struct PatternChip: View {
                 Text(pattern.type.rawValue)
                     .font(.caption2)
                     .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                 
                 Text("%\(Int(pattern.confidence)) Güven")
-                    .font(.system(size: 9))
-                    .foregroundColor(.gray)
+                    .font(DesignTokens.Fonts.custom(size: 9))
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
             }
         }
         .padding(8)
-        .background(Color.white.opacity(0.05))
+        .background(DesignTokens.Colors.Overlay.l05)
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)

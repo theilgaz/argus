@@ -9,7 +9,7 @@ extension NavigationRouter {
             ArgusCockpitView()
 
         case .portfolio:
-            PortfolioView(viewModel: viewModel)
+            PortfolioView()
 
         case .settings:
             SettingsView(settingsViewModel: SettingsViewModel())
@@ -123,7 +123,7 @@ extension NavigationRouter {
 
         // MARK: - Council & Debate
         case .symbolDebate(let symbol):
-            SymbolDebateRouterView(symbol: symbol, viewModel: viewModel)
+            SymbolDebateRouterView(symbol: symbol)
 
         // MARK: - Legacy/Specialty Views
         case .splash:

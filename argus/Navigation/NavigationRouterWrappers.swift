@@ -24,7 +24,7 @@ struct PoseidonRouterView: View {
                     .background(InstitutionalTheme.Colors.background)
             } else {
                 Text("Poseidon verisi bulunamadı")
-                    .foregroundColor(.secondary)
+                    .foregroundColor(DesignTokens.Colors.textSecondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(InstitutionalTheme.Colors.background)
             }
@@ -65,9 +65,9 @@ struct SectorDetailRouterView: View {
                 VStack(spacing: 16) {
                     Image(systemName: "chart.pie")
                         .font(.largeTitle)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(DesignTokens.Colors.textSecondary)
                     Text("Sektör verisi henüz yüklenmedi")
-                        .foregroundColor(.secondary)
+                        .foregroundColor(DesignTokens.Colors.textSecondary)
                     Text("Lütfen ana ekrandan bir sektöre tıklayın")
                         .font(.caption)
                         .foregroundColor(.secondary.opacity(0.7))
@@ -107,7 +107,7 @@ struct PhoenixDetailRouterView: View {
                     .background(InstitutionalTheme.Colors.background)
             } else {
                 Text("Phoenix verisi bulunamadı: \(symbol)")
-                    .foregroundColor(.secondary)
+                    .foregroundColor(DesignTokens.Colors.textSecondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(InstitutionalTheme.Colors.background)
             }
@@ -147,7 +147,7 @@ struct AetherDetailRouterView: View {
                     .background(InstitutionalTheme.Colors.background)
             } else {
                 Text("Aether verisi bulunamadı")
-                    .foregroundColor(.secondary)
+                    .foregroundColor(DesignTokens.Colors.textSecondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(InstitutionalTheme.Colors.background)
             }
@@ -161,24 +161,23 @@ struct AetherDetailRouterView: View {
 }
 
 // MARK: - Symbol Debate Wrapper
-/// Route: .symbolDebate(symbol: String) → SymbolDebateView(decision:, viewModel:, isPresented:)
+/// Route: .symbolDebate(symbol: String) → SymbolDebateView(decision:, isPresented:)
 /// Note: SymbolDebateView requires @Binding isPresented, so we wrap it with local state
 struct SymbolDebateRouterView: View {
     let symbol: String
-    let viewModel: TradingViewModel
     @State private var isPresented = true
 
     var body: some View {
         let decisions = SignalStateViewModel.shared.grandDecisions
         if let decision = decisions[symbol] {
-            SymbolDebateView(decision: decision, viewModel: viewModel, isPresented: $isPresented)
+            SymbolDebateView(decision: decision, isPresented: $isPresented)
         } else {
             VStack(spacing: 16) {
                 Image(systemName: "bubble.left.and.bubble.right")
                     .font(.largeTitle)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(DesignTokens.Colors.textSecondary)
                 Text("\(symbol) için council kararı bulunamadı")
-                    .foregroundColor(.secondary)
+                    .foregroundColor(DesignTokens.Colors.textSecondary)
                 Text("Önce hisse detay sayfasından analiz başlatın")
                     .font(.caption)
                     .foregroundColor(.secondary.opacity(0.7))
