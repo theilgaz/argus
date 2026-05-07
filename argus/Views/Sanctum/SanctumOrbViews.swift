@@ -22,7 +22,7 @@ import SwiftUI
 
 struct OrbView: View {
     let module: SanctumModuleType
-    @ObservedObject var viewModel: TradingViewModel
+    @ObservedObject var hermesVM = HermesNewsViewModel.shared
     let symbol: String
 
     // 2026-04-24 H-27: Eski orb 10px blur glow + 1.5px parlak stroke + mono
@@ -190,7 +190,7 @@ struct OrbView: View {
                 return .active(valueText: "\(Int(round(argus.hermesScore)))")
             }
             // Haber sayısı "hermes çizgi ama veri var" dertini çözer.
-            let newsCount = viewModel.newsInsightsBySymbol[symbol]?.count ?? 0
+            let newsCount = hermesVM.newsInsightsBySymbol[symbol]?.count ?? 0
             if newsCount > 0 {
                 return .pending(label: "\(newsCount) haber")
             }

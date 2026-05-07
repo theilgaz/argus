@@ -1,20 +1,20 @@
 import SwiftUI
 
 struct HermesEventTeachingCard: View {
-    @ObservedObject var viewModel: TradingViewModel
+    @ObservedObject var hermesVM = HermesNewsViewModel.shared
     let symbol: String
     let scope: HermesEventScope
-    var injectedEvent: HermesEvent? = nil // Optional injection
-    
+    var injectedEvent: HermesEvent? = nil
+
     private var events: [HermesEvent] {
         switch scope {
         case .global:
-            if let events = viewModel.hermesEventsBySymbol[symbol], !events.isEmpty {
+            if let events = hermesVM.hermesEventsBySymbol[symbol], !events.isEmpty {
                 return events
             }
-            return viewModel.hermesEventsBySymbol["GENERAL"] ?? []
+            return hermesVM.hermesEventsBySymbol["GENERAL"] ?? []
         case .bist:
-            return viewModel.kulisEventsBySymbol[symbol] ?? []
+            return hermesVM.kulisEventsBySymbol[symbol] ?? []
         }
     }
     

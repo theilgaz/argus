@@ -84,14 +84,14 @@ struct TradeBrainAlertBanner: View {
 // MARK: - Alert List View (For Settings/History)
 
 struct TradeBrainAlertListView: View {
-    @ObservedObject var viewModel: TradingViewModel
-    
+    @ObservedObject var coordinator = AppStateCoordinator.shared
+
     var body: some View {
         NavigationStack {
             ZStack {
                 InstitutionalTheme.Colors.background.ignoresSafeArea()
-                
-                if viewModel.planAlerts.isEmpty {
+
+                if coordinator.planAlerts.isEmpty {
                     VStack(spacing: 16) {
                         Image(systemName: "bell.slash")
                             .font(.system(size: 60))
@@ -110,7 +110,7 @@ struct TradeBrainAlertListView: View {
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 12) {
-                            ForEach(viewModel.planAlerts) { alert in
+                            ForEach(coordinator.planAlerts) { alert in
                                 TradeBrainAlertBanner(
                                     alert: alert,
                                     onDismiss: {
@@ -127,7 +127,7 @@ struct TradeBrainAlertListView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    if !viewModel.planAlerts.isEmpty {
+                    if !coordinator.planAlerts.isEmpty {
                         Button("Tümünü Temizle") {
                             ExecutionStateViewModel.shared.planAlerts.removeAll()
                         }

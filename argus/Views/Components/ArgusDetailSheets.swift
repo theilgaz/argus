@@ -210,7 +210,6 @@ struct HermesSheetView: View {
 
                         ForEach(events.sorted { $0.publishedAt > $1.publishedAt }) { event in
                             HermesEventTeachingCard(
-                                viewModel: viewModel,
                                 symbol: symbol,
                                 scope: isBist ? .bist : .global
                             )

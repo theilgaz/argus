@@ -78,7 +78,7 @@ struct SanctumModuleGrid: View {
             let angle = Double(i) * (360.0 / Double(globalModules.count)) - 90
             let mod = globalModules[i]
 
-            OrbView(module: mod, viewModel: viewModel, symbol: symbol)
+            OrbView(module: mod, symbol: symbol)
                 .offset(
                     x: cos(angle * .pi / 180) * orbitRadius,
                     y: sin(angle * .pi / 180) * orbitRadius

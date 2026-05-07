@@ -540,7 +540,6 @@ struct HoloPanelView: View {
                             sectionTitle("Haber analizi")
                             ForEach(Array(vm.hermesEvents.prefix(5))) { event in
                                 HermesEventTeachingCard(
-                                    viewModel: viewModel,
                                     symbol: symbol,
                                     scope: .global,
                                     injectedEvent: event
