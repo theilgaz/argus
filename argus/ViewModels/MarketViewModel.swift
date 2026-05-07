@@ -353,9 +353,17 @@ final class MarketViewModel: ObservableObject {
     }
 
     func loadMacroEnvironment() {
+        // Fast path — cache varsa anında AnalysisVM'e yansıt, ağ çağrısını
+        // arka planda tazele.
+        if let cached = MacroRegimeService.shared.getCachedRating() {
+            AnalysisViewModel.shared.macroRating = cached
+        }
+
         Task {
             let rating = await MacroRegimeService.shared.computeMacroEnvironment(forceRefresh: false)
             await MainActor.run {
+                AnalysisViewModel.shared.macroRating = rating
+
                 let context = ChironContext(
                     atlasScore: nil,
                     orionScore: nil,
