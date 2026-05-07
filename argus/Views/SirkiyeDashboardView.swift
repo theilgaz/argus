@@ -50,10 +50,10 @@ struct SirkiyeDashboardView: View {
         }
         .onAppear {
             Task {
+                // refreshBistAtmosphere → HermesNewsVM.bistAtmosphere @Published
+                // güncellenir, AnalysisVM Combine ile otomatik mirror eder
+                // (analysisVM.bistAtmosphere okuyan UI yenilenir).
                 await HermesNewsViewModel.shared.refreshBistAtmosphere()
-                let state = HermesNewsViewModel.shared.currentBistAtmosphereState()
-                AppStateCoordinator.shared.environment.bistAtmosphere = state.decision
-                AppStateCoordinator.shared.environment.bistAtmosphereLastUpdated = state.lastUpdated
                 await loadFallbackMacroScore()
                 await loadXU100()
                 await loadTickerData()

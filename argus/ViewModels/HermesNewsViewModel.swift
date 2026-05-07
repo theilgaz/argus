@@ -60,18 +60,11 @@ final class HermesNewsViewModel: ObservableObject {
     // Macro Rating from MacroRegimeService
     private var macroRating: MacroEnvironmentRating? { MacroRegimeService.shared.getCachedRating() }
 
-    // BIST Atmosphere - stored locally
-    @Published private var _bistAtmosphere: AetherDecision? = nil
-    @Published private var _bistAtmosphereLastUpdated: Date? = nil
-
-    private var bistAtmosphere: AetherDecision? {
-        get { _bistAtmosphere }
-        set { _bistAtmosphere = newValue }
-    }
-    private var bistAtmosphereLastUpdated: Date? {
-        get { _bistAtmosphereLastUpdated }
-        set { _bistAtmosphereLastUpdated = newValue }
-    }
+    // BIST Atmosphere - public so AnalysisViewModel can mirror via Combine.
+    // Eski TVM facade'i bu property'yi forward ediyordu; private kalsa
+    // SirkiyeDashboard'un okuduğu AnalysisVM.bistAtmosphere asla update olmuyordu.
+    @Published var bistAtmosphere: AetherDecision? = nil
+    @Published var bistAtmosphereLastUpdated: Date? = nil
 
     // MARK: - Initialization
     private init() {}

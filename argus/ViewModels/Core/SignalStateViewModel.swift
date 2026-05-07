@@ -59,6 +59,23 @@ final class SignalStateViewModel: ObservableObject {
     private init() {
         setupOrionStoreBinding()
         setupOrionScoresCache()
+        // SignalViewModel.init() AnalysisViewModel.shared erişiyor; bu init zinciri
+        // sırasında SignalVM.shared erişimi cyclic crash yapabilir. Defer.
+        DispatchQueue.main.async { [weak self] in
+            self?.setupDemeterMirror()
+        }
+    }
+
+    /// Demeter sektör skorları kanonik olarak SignalViewModel.shared'da yazılıyor
+    /// (`runDemeterAnalysis`). View'ların bir kısmı SignalStateVM'i observe ettiği
+    /// için (SanctumHoloPanelView, ModuleSummaryCard) burada mirror tutuyoruz.
+    /// TVM facade'i silindiğinde bu zincir koptu — eski TVM `analysis.demeterScores`'a
+    /// forward ediyordu, view'lar oradan okuyordu.
+    private func setupDemeterMirror() {
+        SignalViewModel.shared.$demeterScores
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in self?.demeterScores = $0 }
+            .store(in: &cancellables)
     }
 
     // MARK: - Orion Store Binding

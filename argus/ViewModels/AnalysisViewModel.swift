@@ -60,23 +60,54 @@ final class AnalysisViewModel: ObservableObject {
     @Published var isRunningDemeter: Bool = false
     @Published var activeShocks: [ShockFlag] = []
     
+    private var cancellables = Set<AnyCancellable>()
+
     init() {
-        // Manuel objectWillChange relay'i kaldırıldı (2026-04-30).
-        //
-        // Önceki kod SignalStateViewModel'in objectWillChange yayınını sink'leyip
-        // AVM'in kendi objectWillChange'ini fire ediyordu. Bu, SignalState'teki
-        // HER property değişimini AVM'e yansıtıyordu — bu da AVM'i observe eden
-        // SignalViewModel.shared'a kademeli olarak relay ediliyordu.
-        //
-        // Sorun: ne AVM ne SignalViewModel'i doğrudan observe eden view yok.
-        // Tüm view'lar TradingViewModel üzerinden gidiyor ve TVM bu chain'in
-        // çıktısını dinlemiyor. Yani bu relay tamamen ölü iş — her
-        // SignalState güncellemesinde 2 ekstra sink çalışıyordu, sıfır görünür
-        // etkisi olan re-render tetikliyordu.
-        //
-        // Bir gün view AVM'i doğrudan observe ederse, dar (per-property)
-        // binding kullan: `SignalStateViewModel.shared.$orionAnalysis
-        //   .sink { ... }`. Tek property için tek emit, tüm chain için değil.
+        // Cyclic singleton init guard: SignalViewModel.init() AnalysisViewModel.shared
+        // erişiyor. Burada SignalVM.shared'a doğrudan erişersek re-entry crash olur.
+        // Mirror'ları runloop sonraki turda kur — o zamana kadar tüm singleton'lar
+        // tamamlanmış olur.
+        DispatchQueue.main.async { [weak self] in
+            self?.setupSourceMirrors()
+        }
+    }
+
+    /// View-facing AnalysisVM, kanonik kaynaklardan (HermesNewsVM, SignalViewModel)
+    /// per-property mirror eder. TVM facade'inin yerini tutar: engine'ler kendi
+    /// VM'lerine yazar, view'lar AnalysisVM'i observe eder, bu binding bridge'i
+    /// sağlar. Dar binding — tek property güncellemesi tek emit üretir.
+    private func setupSourceMirrors() {
+        // BIST Atmosphere — HermesNewsVM canonical writer
+        HermesNewsViewModel.shared.$bistAtmosphere
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in self?.bistAtmosphere = $0 }
+            .store(in: &cancellables)
+
+        HermesNewsViewModel.shared.$bistAtmosphereLastUpdated
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in self?.bistAtmosphereLastUpdated = $0 }
+            .store(in: &cancellables)
+
+        // Demeter (Sektör Analizi) — SignalViewModel canonical writer
+        SignalViewModel.shared.$demeterScores
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in self?.demeterScores = $0 }
+            .store(in: &cancellables)
+
+        SignalViewModel.shared.$demeterMatrix
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in self?.demeterMatrix = $0 }
+            .store(in: &cancellables)
+
+        SignalViewModel.shared.$isRunningDemeter
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in self?.isRunningDemeter = $0 }
+            .store(in: &cancellables)
+
+        SignalViewModel.shared.$activeShocks
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in self?.activeShocks = $0 }
+            .store(in: &cancellables)
     }
 
     func generateAISignals() async {
