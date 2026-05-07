@@ -23,6 +23,12 @@ extension AppStateCoordinator {
 
         // PHASE 1: HIZLI — UI'ı bloklamayan işlemler (~100ms hedef)
         // Stores (WatchlistStore, PortfolioStore) kendi kendilerine init oluyor.
+
+        // Eski TVM.init()'te çağrılan one-shot işler:
+        Task { @MainActor in
+            EconomicCalendarService.shared.checkAndNotifyMissingExpectations()
+        }
+
         ArgusLogger.success(.bootstrap, "Faz 1: UI hazır")
 
         // PHASE 2: GECİKTİRİLMİŞ — Ağır işlemler background'da
