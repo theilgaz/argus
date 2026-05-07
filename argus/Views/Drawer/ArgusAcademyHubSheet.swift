@@ -88,7 +88,6 @@ struct ArgusAcademyHubSheet: View {
             Text("Öneri: Dersi aç -> aynı sembolde Sanctum’a dön -> tekrar yorumla.")
                 .font(InstitutionalTheme.Typography.micro)
                 .foregroundColor(InstitutionalTheme.Colors.primary)
-                .tracking(0.3)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -215,11 +214,11 @@ struct ArgusAcademyHubSheet: View {
         .padding(.vertical, 4)
     }
 
+    /// 2026-05-05 H-67: caps mono tracking 0.8 → sentence sade.
     private func sectionTitle(_ text: String) -> some View {
-        Text(text)
-            .font(InstitutionalTheme.Typography.micro)
-            .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-            .tracking(0.8)
+        Text(text.capitalized)
+            .font(.system(size: 13, weight: .medium))
+            .foregroundColor(InstitutionalTheme.Colors.textPrimary)
     }
 
     @ViewBuilder

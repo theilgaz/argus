@@ -216,12 +216,11 @@ struct FeedbackSheet: View {
         }
     }
 
+    /// 2026-05-05 H-67: caps tracking 0.5 → sentence sade.
     private func sectionHeader(_ title: String) -> some View {
-        Text(title)
-            .font(.caption)
-            .fontWeight(.semibold)
-            .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-            .tracking(0.5)
+        Text(title.capitalized)
+            .font(.system(size: 13, weight: .medium))
+            .foregroundColor(InstitutionalTheme.Colors.textPrimary)
     }
 }
 

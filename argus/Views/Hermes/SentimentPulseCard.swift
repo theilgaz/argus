@@ -1,18 +1,25 @@
 import SwiftUI
 
-/// Hermes V2 — Sentiment Pulse.
-///
-/// **2026-04-23 V5.C estetik refactor.**
-/// Eski kart hardcoded `.purple/.gray/.blue` ve `Color(hex: "1C1C1E")`
-/// dolu "bilgi yığını" karışımıydı. Artık tamamı V5 primitive'leriyle
-/// çalışıyor: `InstitutionalTheme` renkleri, motor-tint kenarlık,
-/// mono caps section caption, `ArgusBar`, `ArgusChip`, `ArgusDot`,
-/// `ArgusHair`. Ring gauge korundu ama tema renkleriyle çizildi.
-///
-/// Data sözleşmesi aynı: `HermesQuickSentiment`, `HermesLLMService`,
-/// `HermesSummary`. Yalnızca görsel dil değişti.
+// MARK: - SentimentPulseCard (Haber modülü duygu nabzı)
+//
+// 2026-05-05 H-67 — sade refactor.
+//
+// Eski V5: MotorLogo(.hermes) + "SENTIMENT PULSE" caps section caption,
+// 80pt circle ring + 22pt black mono score, interpretation.uppercased()
+// 8pt bold mono tracking 0.7, "BOĞA / AYI" 9pt bold mono tracking 0.6
+// caps satırlar, ArgusDot bullet'lı commentary ve recent list, "SON
+// ANALİZLER" caps section caption, "MOMENTUM × 1.15" caps chip, hermes
+// motor tinted border opacity 0.3, "LLM · 5 / FINNHUB · 5 / FALLBACK"
+// caps source badge.
+//
+// Yeni dil: sade "Duygu nabzı" başlık + sağda "N haber" muted, 80pt
+// halkanın içinde 22pt medium skor + sentence durum, "Boğa / Ayı"
+// sentence + sade ArgusBar, plain commentary metni (bullet yok),
+// "Son analizler" sentence, sade hairline borderSubtle.
+
 struct SentimentPulseCard: View {
     let symbol: String
+
     @State private var sentiment: HermesQuickSentiment?
     @State private var isLoading = true
     @State private var cachedNews: [HermesSummary] = []
@@ -24,16 +31,20 @@ struct SentimentPulseCard: View {
 
             if isLoading {
                 loadingBlock
-            } else if let sentiment = sentiment {
-                heroRow(sentiment)
-                ArgusHair()
-                commentaryRow(sentiment)
+            } else if let s = sentiment {
+                heroRow(s)
+
+                Rectangle()
+                    .fill(InstitutionalTheme.Colors.borderSubtle)
+                    .frame(height: 0.5)
+
+                commentaryLine
 
                 if !cachedNews.isEmpty {
                     recentList
                 }
 
-                if sentiment.newsCount == 0 {
+                if s.newsCount == 0 {
                     fallbackNote
                 }
             } else {
@@ -44,69 +55,70 @@ struct SentimentPulseCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.Motors.hermes.opacity(0.3), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
-        .clipShape(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-        )
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .task { await loadSentiment() }
     }
 
     // MARK: - Sections
 
     private var header: some View {
-        HStack(spacing: 8) {
-            MotorLogo(.hermes, size: 14)
-            ArgusSectionCaption("SENTIMENT PULSE")
+        HStack {
+            Text("Duygu nabzı")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Spacer()
-            ArgusChip(sourceBadgeText(), tone: .neutral)
+            Text(sourceBadgeText())
+                .font(.system(size: 12))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
     }
 
     private func heroRow(_ s: HermesQuickSentiment) -> some View {
-        let tone = sentimentTone(s.score)
+        let color = sentimentColor(s.score)
         return HStack(spacing: 16) {
-            ringGauge(score: s.score, interpretation: s.interpretation, tone: tone)
+            ringGauge(score: s.score, interpretation: s.interpretation, color: color)
 
             VStack(alignment: .leading, spacing: 10) {
-                if let multiplier = momentumChip(for: s.score) {
-                    ArgusChip(multiplier.text, tone: multiplier.tone)
+                if let mom = momentumText(for: s.score) {
+                    Text(mom.text)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(mom.color)
                 }
-                sentimentRow(label: "BOĞA",
+                sentimentRow(label: "Boğa",
                              value: s.bullishPercent,
-                             color: InstitutionalTheme.Colors.aurora,
-                             icon: "arrow.up.right")
-                sentimentRow(label: "AYI",
+                             color: InstitutionalTheme.Colors.aurora)
+                sentimentRow(label: "Ayı",
                              value: s.bearishPercent,
-                             color: InstitutionalTheme.Colors.crimson,
-                             icon: "arrow.down.right")
+                             color: InstitutionalTheme.Colors.crimson)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
     private func ringGauge(score: Double,
-                            interpretation: String,
-                            tone: ArgusChipTone) -> some View {
+                           interpretation: String,
+                           color: Color) -> some View {
         ZStack {
             Circle()
-                .stroke(InstitutionalTheme.Colors.surface3, lineWidth: 7)
+                .stroke(InstitutionalTheme.Colors.surface3, lineWidth: 6)
             Circle()
                 .trim(from: 0, to: CGFloat(max(0, min(100, score)) / 100))
-                .stroke(tone.foreground,
-                        style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                .stroke(color,
+                        style: StrokeStyle(lineWidth: 6, lineCap: .round))
                 .rotationEffect(.degrees(-90))
                 .animation(.easeOut(duration: 0.6), value: score)
 
             VStack(spacing: 2) {
                 Text("\(Int(score))")
-                    .font(.system(size: 22, weight: .black, design: .monospaced))
+                    .font(.system(size: 22, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                Text(interpretation.uppercased())
-                    .font(.system(size: 8, weight: .bold, design: .monospaced))
-                    .tracking(0.7)
-                    .foregroundColor(tone.foreground)
+                    .monospacedDigit()
+                Text(interpretation.lowercased())
+                    .font(.system(size: 10))
+                    .foregroundColor(color)
                     .lineLimit(1)
             }
         }
@@ -114,138 +126,134 @@ struct SentimentPulseCard: View {
     }
 
     private func sentimentRow(label: String,
-                               value: Double,
-                               color: Color,
-                               icon: String) -> some View {
+                              value: Double,
+                              color: Color) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 6) {
-                Image(systemName: icon)
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundColor(color)
+            HStack {
                 Text(label)
-                    .font(.system(size: 9, weight: .bold, design: .monospaced))
-                    .tracking(0.6)
+                    .font(.system(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Spacer()
                 Text("%\(Int(value))")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    .font(.system(size: 12, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .monospacedDigit()
             }
             ArgusBar(value: max(0, min(1, value / 100)), color: color, height: 4)
         }
     }
 
-    private func commentaryRow(_ s: HermesQuickSentiment) -> some View {
-        let tone = sentimentTone(s.score)
-        return HStack(alignment: .top, spacing: 10) {
-            ArgusDot(color: tone.foreground, size: 6)
-                .padding(.top, 5)
-            Text(commentary)
-                .font(.system(size: 11.5))
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
+    private var commentaryLine: some View {
+        Text(commentary)
+            .font(.system(size: 12))
+            .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+            .lineSpacing(2)
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     private var recentList: some View {
         VStack(alignment: .leading, spacing: 8) {
-            ArgusSectionCaption("SON ANALİZLER")
-            VStack(alignment: .leading, spacing: 0) {
-                ForEach(cachedNews.prefix(2), id: \.id) { item in
+            Text("Son analizler")
+                .font(.system(size: 12))
+                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+
+            VStack(spacing: 0) {
+                ForEach(Array(cachedNews.prefix(2).enumerated()), id: \.offset) { idx, item in
                     HStack(alignment: .top, spacing: 10) {
-                        ArgusDot(color: impactColor(for: item.impactScore).opacity(0.85))
-                            .padding(.top, 5)
+                        Circle()
+                            .fill(impactColor(for: item.impactScore))
+                            .frame(width: 5, height: 5)
+                            .padding(.top, 6)
                         Text(item.summaryTR)
-                            .font(.system(size: 11))
+                            .font(.system(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                             .lineLimit(2)
                             .fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 0)
                     }
-                    .padding(.vertical, 6)
-                    .overlay(ArgusHair(), alignment: .bottom)
+                    .padding(.vertical, 7)
+                    if idx < min(cachedNews.count, 2) - 1 {
+                        Rectangle()
+                            .fill(InstitutionalTheme.Colors.borderSubtle)
+                            .frame(height: 0.5)
+                    }
                 }
             }
         }
     }
 
     private var fallbackNote: some View {
-        HStack(spacing: 6) {
-            ArgusDot(color: InstitutionalTheme.Colors.titan, size: 5)
-            Text("Varsayılan skor — haber analizi yok.")
-                .font(.system(size: 10, weight: .medium, design: .monospaced))
-                .tracking(0.4)
-                .foregroundColor(InstitutionalTheme.Colors.titan)
-        }
+        Text("Varsayılan skor — haber analizi yok.")
+            .font(.system(size: 11))
+            .foregroundColor(InstitutionalTheme.Colors.titan)
     }
 
     private var loadingBlock: some View {
-        VStack(spacing: 8) {
-            ProgressView()
-            Text("Haber taranıyor")
+        HStack(spacing: 10) {
+            ProgressView().scaleEffect(0.7)
+            Text("Haber taranıyor…")
                 .font(.system(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+            Spacer()
         }
-        .frame(maxWidth: .infinity, minHeight: 96)
+        .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
     }
 
     private var emptyBlock: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "waveform.slash")
-                .font(.system(size: 18))
-                .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+        VStack(alignment: .leading, spacing: 4) {
             Text("Haber taraması bekleniyor")
-                .font(InstitutionalTheme.Typography.caption)
-                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-            Text("Hermes · Haberleri Tara")
-                .font(.system(size: 9, weight: .medium, design: .monospaced))
-                .tracking(0.7)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+            Text("Haber modülünden \"Haberleri tara\" deyince burada görünür.")
+                .font(.system(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
-        .frame(maxWidth: .infinity, minHeight: 96)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 8)
     }
 
-    // MARK: - Helpers (visual mapping)
+    // MARK: - Helpers
 
     private func sourceBadgeText() -> String {
-        guard let sentiment else { return "HERMES" }
+        guard let sentiment else { return "Henüz haber yok" }
         switch sentiment.source {
-        case .llm:      return "LLM · \(sentiment.newsCount)"
-        case .finnhub:  return "FINNHUB · \(sentiment.newsCount)"
-        case .fallback: return "FALLBACK"
+        case .llm, .finnhub: return "\(sentiment.newsCount) haber"
+        case .fallback:      return "Varsayılan"
         }
     }
 
-    /// V5 dilinde momentum modifier.
-    /// Çok boğa (>=70): hermes motor rengi pozitif multiplier.
-    /// Çok ayı (<=30): crimson negatif multiplier.
-    private func momentumChip(for score: Double) -> (text: String, tone: ArgusChipTone)? {
-        if score >= 70 { return ("MOMENTUM × 1.15", .motor(.hermes)) }
-        if score <= 30 { return ("DRAG × 0.85", .crimson) }
+    /// Yüksek/düşük momentum mesajı, sentence dilinde.
+    private func momentumText(for score: Double) -> (text: String, color: Color)? {
+        if score >= 70 {
+            return ("Pozitif momentum · 1.15×", InstitutionalTheme.Colors.aurora)
+        }
+        if score <= 30 {
+            return ("Negatif baskı · 0.85×", InstitutionalTheme.Colors.crimson)
+        }
         return nil
     }
 
-    /// 5 kademeli sentiment → 4 V5 tone (aurora / motor(.hermes) / titan / crimson).
-    private func sentimentTone(_ score: Double) -> ArgusChipTone {
-        if score >= 65 { return .aurora }
-        if score >= 45 { return .motor(.hermes) }
-        if score >= 30 { return .titan }
-        return .crimson
+    private func sentimentColor(_ score: Double) -> Color {
+        if score >= 65 { return InstitutionalTheme.Colors.aurora }
+        if score >= 45 { return InstitutionalTheme.Colors.textPrimary }
+        if score >= 30 { return InstitutionalTheme.Colors.titan }
+        return InstitutionalTheme.Colors.crimson
     }
 
     private func impactColor(for impact: Int) -> Color {
         let v = Double(impact)
         if v >= 65 { return InstitutionalTheme.Colors.aurora }
-        if v >= 45 { return InstitutionalTheme.Colors.Motors.hermes }
+        if v >= 45 { return InstitutionalTheme.Colors.textSecondary }
         if v >= 30 { return InstitutionalTheme.Colors.titan }
         return InstitutionalTheme.Colors.crimson
     }
 
-    // MARK: - Data loading (unchanged)
+    // MARK: - Data loading (korundu)
 
     private func loadSentiment() async {
         isLoading = true
 
-        // UX: Ensure loading message is visible
+        // UX: loading mesajının görünür olması için kısa bekleme.
         try? await Task.sleep(nanoseconds: 2_000_000_000)
 
         cachedNews = HermesLLMService.shared.getCachedSummaries(for: symbol, count: 3)
@@ -268,7 +276,7 @@ struct SentimentPulseCard: View {
         isLoading = false
     }
 
-    // MARK: - Commentary Generator (unchanged)
+    // MARK: - Commentary Generator (korundu)
 
     private func generateCommentary(for score: Double) -> String {
         let veryBullish = [
@@ -312,16 +320,11 @@ struct SentimentPulseCard: View {
         ]
 
         switch score {
-        case 70...100:
-            return veryBullish.randomElement() ?? veryBullish[0]
-        case 55..<70:
-            return bullish.randomElement() ?? bullish[0]
-        case 45..<55:
-            return neutral.randomElement() ?? neutral[0]
-        case 30..<45:
-            return bearish.randomElement() ?? bearish[0]
-        default:
-            return veryBearish.randomElement() ?? veryBearish[0]
+        case 70...100: return veryBullish.randomElement() ?? veryBullish[0]
+        case 55..<70:  return bullish.randomElement()    ?? bullish[0]
+        case 45..<55:  return neutral.randomElement()    ?? neutral[0]
+        case 30..<45:  return bearish.randomElement()    ?? bearish[0]
+        default:       return veryBearish.randomElement() ?? veryBearish[0]
         }
     }
 }

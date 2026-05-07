@@ -154,11 +154,11 @@ struct RegimeGuideSheet: View {
         }
     }
 
+    /// 2026-05-05 H-67: caps mono tracking 0.8 → sentence sade.
     private func sectionTitle(_ text: String) -> some View {
-        Text(text)
-            .font(InstitutionalTheme.Typography.micro)
-            .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-            .tracking(0.8)
+        Text(text.capitalized)
+            .font(.system(size: 13, weight: .medium))
+            .foregroundColor(InstitutionalTheme.Colors.textPrimary)
     }
 }
 

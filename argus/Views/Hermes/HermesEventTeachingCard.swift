@@ -39,21 +39,30 @@ struct HermesEventTeachingCard: View {
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
 
-                // Meta chips
-                HStack(spacing: 6) {
-                    ArgusChip("ETKİ · \(Int(event.finalScore))", tone: .motor(.hermes))
-                    ArgusChip("UFUK · \(event.horizonHint.rawValue.uppercased())",
-                              tone: .neutral)
-                    ArgusChip("GÜVEN · \(String(format: "%.0f", event.confidence * 100))%",
-                              tone: .holo)
+                // 2026-05-05 H-67: caps mono chip'ler "ETKİ/UFUK/GÜVEN" →
+                // sade tek satır meta.
+                HStack(spacing: 8) {
+                    Text("Etki \(Int(event.finalScore))")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    Text("·")
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                    Text(event.horizonHint.rawValue.lowercased())
+                        .font(.system(size: 12))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
+                    Text("·")
+                        .foregroundColor(InstitutionalTheme.Colors.textTertiary)
+                    Text(String(format: "Güven %%%.0f", event.confidence * 100))
+                        .font(.system(size: 12))
+                        .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
 
-                // Sentiment + rationale + kanıt
-                teachingLine(label: "SENTIMENT", value: sentimentLabel(for: event))
-                teachingLine(label: "DERS NOTU", value: event.rationaleShort)
+                // Sentiment + rationale + kanıt — sentence label.
+                teachingLine(label: "Duygu", value: sentimentLabel(for: event))
+                teachingLine(label: "Ders notu", value: event.rationaleShort)
 
                 if let quote = event.evidenceQuotes.first, !quote.isEmpty {
-                    teachingLine(label: "KANIT", value: "\"\(quote)\"", italicize: true)
+                    teachingLine(label: "Kanıt", value: "\"\(quote)\"", italicize: true)
                 }
 
                 HermesWhyScoreView(event: event)
@@ -90,32 +99,33 @@ struct HermesEventTeachingCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(InstitutionalTheme.Colors.surface1)
         .overlay(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-                .stroke(InstitutionalTheme.Colors.Motors.hermes.opacity(0.3), lineWidth: 1)
+            // 2026-05-05 H-67: hermes motor tinted border (opacity 0.3) →
+            // hairline borderSubtle.
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(InstitutionalTheme.Colors.borderSubtle, lineWidth: 0.5)
         )
-        .clipShape(
-            RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.lg, style: .continuous)
-        )
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private var header: some View {
-        HStack(spacing: 8) {
-            MotorLogo(.hermes, size: 14)
-            ArgusSectionCaption(scope == .bist ? "KULİS · DERS NOTU" : "HERMES · DERS NOTU")
-            Spacer()
-        }
+        // 2026-05-05 H-67: MotorLogo + caps "KULİS · DERS NOTU / HERMES ·
+        // DERS NOTU" → sade sentence başlık.
+        Text(scope == .bist ? "Kulis ders notu" : "Haber ders notu")
+            .font(.system(size: 14, weight: .medium))
+            .foregroundColor(InstitutionalTheme.Colors.textPrimary)
     }
 
     private func teachingLine(label: String, value: String, italicize: Bool = false) -> some View {
+        // 2026-05-05 H-67: caps mono label tracking 0.7 → sentence label
+        // sade dilde, padding daha açık.
         HStack(alignment: .top, spacing: 10) {
             Text(label)
-                .font(.system(size: 9, weight: .bold, design: .monospaced))
-                .tracking(0.7)
+                .font(.system(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                .frame(width: 66, alignment: .leading)
+                .frame(width: 78, alignment: .leading)
                 .padding(.top, 1)
             Text(value)
-                .font(.system(size: 11, weight: italicize ? .regular : .medium))
+                .font(.system(size: 12))
                 .italic(italicize)
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)

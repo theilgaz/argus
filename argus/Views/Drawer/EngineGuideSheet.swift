@@ -119,11 +119,11 @@ struct EngineGuideSheet: View {
         )
     }
 
+    /// 2026-05-05 H-67: caps mono tracking 1.2 → sentence sade.
     private func sectionTitle(_ text: String) -> some View {
-        Text(text)
-            .font(.system(size: 11, weight: .bold, design: .monospaced))
-            .tracking(1.2)
-            .foregroundColor(InstitutionalTheme.Colors.primary)
+        Text(text.capitalized)
+            .font(.system(size: 13, weight: .medium))
+            .foregroundColor(InstitutionalTheme.Colors.textPrimary)
     }
 
     private func bullet(_ text: String) -> some View {

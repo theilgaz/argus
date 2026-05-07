@@ -212,19 +212,22 @@ struct BistHoloPanelView: View {
             foreignFlowScore: foreignFlow                                                  // P2-5
         )
 
+        // Hermes news: BIST cache'den al, yoksa nil (graceful degradation)
+        let hermesNews = await HermesNewsSnapshot.fromBistCache(symbol: symbol)
+
         let decision = await ArgusGrandCouncil.shared.convene(
             symbol: symbol,
             candles: candleList,
             snapshot: nil,
             macro: macro,
-            news: nil,
+            news: hermesNews,
             engine: .pulse,
             sirkiyeInput: sirkiyeInput
         )
         
         await MainActor.run {
             SignalStateViewModel.shared.grandDecisions[symbol] = decision
-            print("✅ BistHoloPanel: \(symbol) için BIST kararı (Sirkülasyon) tazelendi.")
+            print("✅ BistHoloPanel: \(symbol) için BIST kararı tazelendi.")
         }
     }
     
@@ -234,16 +237,8 @@ struct BistHoloPanelView: View {
         // MARK: - YENİ KONSOLİDE MODÜLLER
 
         case .tahta:
-            // TAHTA MERKEZİ: Teknik + Sirkülasyon + Takas
-            VStack(spacing: 24) {
-                 // 1. Orion (Teknik)
-                 TahtaView(symbol: symbol)
-                 
-                 Divider().background(SanctumTheme.orionColor.opacity(0.3))
-                 
-                 // 2. Sirkülasyon (Hacim / Para Akışı)
-                 CirculationAnalysisView(symbol: symbol, viewModel: viewModel)
-            }
+            // TAHTA MERKEZİ: Teknik Analiz
+            TahtaView(symbol: symbol)
 
         case .kasa:
             // KASA MERKEZİ: Bilanço + Faktörler + Analist

@@ -124,9 +124,8 @@ struct MiniPantheonOrb: View {
             }
 
             Text(name)
-                .font(.system(size: fontSize, weight: .bold, design: .monospaced))
+                .font(.system(size: fontSize, weight: .medium))
                 .foregroundColor(color.opacity(0.9))
-                .tracking(0.5)
         }
     }
 }
@@ -160,13 +159,13 @@ struct PantheonFlankView: View {
             
             VStack(spacing: 1) {
                 Text(name)
-                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    .font(.system(size: 9, weight: .medium))
                     .foregroundColor(color.opacity(0.9))
-                    .tracking(1)
-                
+
                 Text(score)
-                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+                    .monospacedDigit()
             }
         }
     }

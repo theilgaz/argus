@@ -33,9 +33,7 @@ enum NavigationRoute: Hashable, Identifiable {
     case chironPerformance
 
     // MARK: - Analysis Views
-    case marketReport
     case analystReport(symbol: String)
-    case debateSimulator
 
     // MARK: - Discovery & Signals
     case discover
@@ -50,24 +48,14 @@ enum NavigationRoute: Hashable, Identifiable {
     case observatoryHealth
     case tradeHistory
 
-    // MARK: - Admin/Debug
-    case debugPersistence
-
     // MARK: - Settings Sub-views
     case priceAlerts
     case guide
     case voice
-    case serviceHealth
-
-    // MARK: - Portfolio Management
-    case chronosDetail(id: String)
 
     // MARK: - Watchlist & Aether
     case aetherDetail(id: String)
     case aetherDashboard
-
-    // MARK: - Voice & Assistant
-    case voiceAssistant
 
     // MARK: - Council & Debate
     case symbolDebate(symbol: String)

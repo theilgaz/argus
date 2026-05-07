@@ -6,7 +6,7 @@ import SwiftUI
 // TradingViewModel'dan extract edilmiş watchlist yönetim modülü
 
 @MainActor
-final class WatchlistManager: ObservableObject, WatchlistManaging {
+final class WatchlistManager: ObservableObject {
     
     // MARK: - Singleton (Legacy Support)
     static let shared = WatchlistManager()
@@ -30,7 +30,7 @@ final class WatchlistManager: ObservableObject, WatchlistManaging {
         loadWatchlist()
     }
     
-    // MARK: - WatchlistManaging Protocol
+    // MARK: - Watchlist Operations
     
     func add(_ symbol: String) {
         guard !watchlist.contains(symbol) else { return }

@@ -71,14 +71,8 @@ extension NavigationRouter {
             ChironPerformanceView()
 
         // MARK: - Analysis Views
-        case .marketReport:
-            MarketReportRouterView()
-
         case .analystReport(let symbol):
             ArgusAnalystReportView(symbol: symbol, viewModel: viewModel)
-
-        case .debateSimulator:
-            DebateSimulatorRouterView()
 
         // MARK: - Discovery & Signals
         case .discover:
@@ -110,10 +104,6 @@ extension NavigationRouter {
         case .tradeHistory:
             TradeHistoryView()
 
-        // MARK: - Admin/Debug
-        case .debugPersistence:
-            DebugPersistenceView()
-
         // MARK: - Settings Sub-views
         case .priceAlerts:
             PriceAlertSettingsView()
@@ -124,23 +114,12 @@ extension NavigationRouter {
         case .voice:
             ArgusVoiceView()
 
-        case .serviceHealth:
-            ServiceHealthView()
-
-        // MARK: - Portfolio Management
-        case .chronosDetail(let id):
-            ChronosDetailView(symbol: id)
-
         // MARK: - Watchlist & Aether
         case .aetherDetail(let id):
             AetherDetailRouterView(id: id)
 
         case .aetherDashboard:
             AetherDetailRouterView(id: "GLOBAL")
-
-        // MARK: - Voice & Assistant
-        case .voiceAssistant:
-            VoiceAssistantView()
 
         // MARK: - Council & Debate
         case .symbolDebate(let symbol):

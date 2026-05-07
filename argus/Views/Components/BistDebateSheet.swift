@@ -13,8 +13,7 @@ struct BistDebateSheet: View {
             decision.kulis,
             decision.grafik,
             decision.bilanco,
-            decision.rejim,
-            decision.sirkulasyon
+            decision.rejim
         ]
     }
     
@@ -221,13 +220,11 @@ struct DebateCard: View {
                 }
                 
                 Text(title)
-                    .font(.caption)
-                    .fontWeight(.black)
-                    .tracking(1)
+                    .font(.system(size: 13, weight: .medium))
                     .foregroundColor(color)
-                
+
                 Spacer()
-                
+
                 // Module Names (if summarized)
                 if !showDetails {
                     Text(modules.map { $0.name }.joined(separator: ", "))
@@ -311,11 +308,9 @@ struct EmptyStateCard: View {
                     .foregroundColor(.gray)
             }
             
-            Text(type == .support ? "DESTEK" : "İTİRAZ")
-                .font(.caption)
-                .fontWeight(.black)
-                .tracking(1)
-                .foregroundColor(.gray)
+            Text(type == .support ? "Destek" : "İtiraz")
+                .font(.system(size: 13))
+                .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             
             Spacer()
             
@@ -348,17 +343,15 @@ struct BistVerdictCard: View {
                         .foregroundColor(.white)
                 }
                 
-                Text("NİHAİ KARAR")
-                    .font(.caption)
-                    .fontWeight(.black)
-                    .tracking(1)
-                    .foregroundColor(.blue)
-                
+                Text("Nihai karar")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(InstitutionalTheme.Colors.textPrimary)
+
                 Spacer()
-                
-                Text("KONSEY")
-                    .font(.caption)
-                    .foregroundColor(.gray)
+
+                Text("Konsey")
+                    .font(.system(size: 12))
+                    .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             
             HStack(alignment: .top, spacing: 12) {
