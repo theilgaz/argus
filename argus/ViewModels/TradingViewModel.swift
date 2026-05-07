@@ -113,8 +113,11 @@ class TradingViewModel: ObservableObject {
     }
 
     // Terminal Optimized Data Source
-    // MIRROR: AppStateCoordinator.shared.$terminalItems
-    @Published var terminalItems: [TerminalItem] = []
+    // FORWARD: AppStateCoordinator.shared.environment.terminalItems
+    var terminalItems: [TerminalItem] {
+        get { AppStateCoordinator.shared.environment.terminalItems }
+        set { AppStateCoordinator.shared.environment.terminalItems = newValue }
+    }
 
     /// Per-symbol input signature for incremental update.
     /// Eğer bir sembolün tüm input'ları aynıysa, o item'a `getFundamentalScore`,
@@ -328,8 +331,11 @@ class TradingViewModel: ObservableObject {
     }
     // autoPilotTimer REMOVED (Handled by ExecVM)
     var autoPilotLogs: [String] { ExecutionStateViewModel.shared.autoPilotLogs }
-    // MIRROR: AppStateCoordinator.shared.$lastAction (kaynak: ExecutionStateViewModel)
-    @Published var lastAction: String = ""
+    // FORWARD: AppStateCoordinator.shared.environment.lastAction
+    var lastAction: String {
+        get { AppStateCoordinator.shared.environment.lastAction }
+        set { AppStateCoordinator.shared.environment.lastAction = newValue }
+    }
 
     
     // PERFORMANCE: PortfolioStore'daki cache'lenmiş @Published alt kümelere forward et.
@@ -386,17 +392,29 @@ class TradingViewModel: ObservableObject {
     var scoutingCandidates: [TradeSignal] { AutoPilotStore.shared.scoutingCandidates }
     var scoutLogs: [ScoutLog] { AutoPilotStore.shared.scoutLogs }
     
-    // MIRROR: AppStateCoordinator.shared.$planAlerts (kaynak: ExecutionStateViewModel)
-    @Published var planAlerts: [TradeBrainAlert] = []
+    // FORWARD: AppStateCoordinator.shared.executionMirror.planAlerts (kaynak: AlertManager)
+    var planAlerts: [TradeBrainAlert] {
+        get { AppStateCoordinator.shared.executionMirror.planAlerts }
+        set { AppStateCoordinator.shared.executionMirror.planAlerts = newValue }
+    }
 
-    // MIRROR: AppStateCoordinator.shared.$agoraSnapshots (kaynak: ExecutionStateViewModel)
-    @Published var agoraSnapshots: [DecisionSnapshot] = []
+    // FORWARD: AppStateCoordinator.shared.executionMirror.agoraSnapshots (kaynak: ScanOrchestrator)
+    var agoraSnapshots: [DecisionSnapshot] {
+        get { AppStateCoordinator.shared.executionMirror.agoraSnapshots }
+        set { AppStateCoordinator.shared.executionMirror.agoraSnapshots = newValue }
+    }
 
-    // MIRROR: AppStateCoordinator.shared.$lastTradeTimes (kaynak: ExecutionStateViewModel)
-    @Published var lastTradeTimes: [String: Date] = [:]
+    // FORWARD: AppStateCoordinator.shared.executionMirror.lastTradeTimes (kaynak: ExecutionLogger)
+    var lastTradeTimes: [String: Date] {
+        get { AppStateCoordinator.shared.executionMirror.lastTradeTimes }
+        set { AppStateCoordinator.shared.executionMirror.lastTradeTimes = newValue }
+    }
 
-    // MIRROR: AppStateCoordinator.shared.$universeCache
-    @Published var universeCache: [String: UniverseItem] = [:]
+    // FORWARD: AppStateCoordinator.shared.universe.cache
+    var universeCache: [String: UniverseItem] {
+        get { AppStateCoordinator.shared.universe.cache }
+        set { AppStateCoordinator.shared.universe.cache = newValue }
+    }
 
     @MainActor
     func fetchUniverseDetails(for symbol: String) async {

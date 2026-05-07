@@ -2,80 +2,42 @@ import Foundation
 import Combine
 
 // MARK: - SSoT Store Bindings (extracted from TradingViewModel)
+//
+// 2026-05-06 — Aşama A 4B: Eski sink relay subscription'ları silindi.
+//
+// Niye: TVM'in mirror @Published'ları (planAlerts, agoraSnapshots,
+// lastTradeTimes, universeCache, lastAction) computed pass-through'a
+// dönüştürüldü — artık AppStateCoordinator/HermesNewsViewModel'den
+// doğrudan okunuyorlar. Çift state ve circular relay ortadan kalktı.
+//
+// Geride sadece child VM'lerin objectWillChange'ını parent'a forward
+// eden minimum relay kaldı (L61: computed property reaktif zinciri).
 
 extension TradingViewModel {
 
     func setupStoreBindings() {
-        // MarketDataStore.$quotes subscription'ı MarketViewModel.setupBindings() içinde
-        // kuruluyor (1s throttle ile + diff check). Burada tekrar 0.5s throttle ile
-        // subscribe etmek aynı veriyi market.quotes'a 2 farklı zamanda yazıyordu —
-        // setter yine market.quotes'a yazıp MarketViewModel.objectWillChange'i
-        // gereksiz yere tetikliyordu. Bu yüzden kaldırıldı; tek kanal: MarketViewModel.
-
-        // PortfolioStore subscription'ları setupPortfolioStoreBridge() içinde init()'te
-        // kuruluyor. Burada tekrarlamak ikinci sink eklerdi ve her PortfolioStore
-        // güncellemesinde 2x setter çağrısına yol açardı (setter yine risk.portfolio'ya
-        // yazıyor — gereksiz ek iş). Bu yüzden kaldırıldı.
-
-        AlertManager.shared.$planAlerts
-            .receive(on: RunLoop.main)
-            .sink { [weak self] alerts in
-                self?.planAlerts = alerts
-            }
+        // Child VM objectWillChange relay — TVM'i observe eden view'lar
+        // child değişimlerinde re-render olsun (planAlerts, agoraSnapshots,
+        // lastTradeTimes, universeCache vb. computed pass-through olduğu için
+        // parent'ın objectWillChange'ı otomatik tetiklenmez).
+        AppStateCoordinator.shared.objectWillChange
+            .sink { [weak self] in self?.objectWillChange.send() }
             .store(in: &cancellables)
 
-        ScanOrchestrator.shared.$agoraSnapshots
-            .receive(on: RunLoop.main)
-            .sink { [weak self] snaps in
-                self?.agoraSnapshots = snaps
-            }
+        HermesNewsViewModel.shared.objectWillChange
+            .sink { [weak self] in self?.objectWillChange.send() }
             .store(in: &cancellables)
 
-        ExecutionLogger.shared.$lastTradeTimes
-            .receive(on: RunLoop.main)
-            .sink { [weak self] times in
-                self?.lastTradeTimes = times
-            }
+        AlertManager.shared.objectWillChange
+            .sink { [weak self] in self?.objectWillChange.send() }
             .store(in: &cancellables)
 
-        HermesStateViewModel.shared.$newsBySymbol
-            .receive(on: RunLoop.main)
-            .sink { [weak self] v in self?.newsBySymbol = v }
+        ScanOrchestrator.shared.objectWillChange
+            .sink { [weak self] in self?.objectWillChange.send() }
             .store(in: &cancellables)
 
-        HermesStateViewModel.shared.$newsInsightsBySymbol
-            .receive(on: RunLoop.main)
-            .sink { [weak self] v in self?.newsInsightsBySymbol = v }
-            .store(in: &cancellables)
-
-        HermesStateViewModel.shared.$hermesEventsBySymbol
-            .receive(on: RunLoop.main)
-            .sink { [weak self] v in self?.hermesEventsBySymbol = v }
-            .store(in: &cancellables)
-
-        HermesStateViewModel.shared.$kulisEventsBySymbol
-            .receive(on: RunLoop.main)
-            .sink { [weak self] v in self?.kulisEventsBySymbol = v }
-            .store(in: &cancellables)
-
-        HermesStateViewModel.shared.$watchlistNewsInsights
-            .receive(on: RunLoop.main)
-            .sink { [weak self] v in self?.watchlistNewsInsights = v }
-            .store(in: &cancellables)
-
-        HermesStateViewModel.shared.$generalNewsInsights
-            .receive(on: RunLoop.main)
-            .sink { [weak self] v in self?.generalNewsInsights = v }
-            .store(in: &cancellables)
-
-        HermesStateViewModel.shared.$isLoadingNews
-            .receive(on: RunLoop.main)
-            .sink { [weak self] v in self?.isLoadingNews = v }
-            .store(in: &cancellables)
-
-        HermesStateViewModel.shared.$newsErrorMessage
-            .receive(on: RunLoop.main)
-            .sink { [weak self] v in self?.newsErrorMessage = v }
+        ExecutionLogger.shared.objectWillChange
+            .sink { [weak self] in self?.objectWillChange.send() }
             .store(in: &cancellables)
     }
 }
