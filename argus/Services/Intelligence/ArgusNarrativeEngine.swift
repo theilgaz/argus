@@ -18,13 +18,12 @@ struct ArgusNarrativeEngine {
 
     // MARK: - Main API (Fallback - Senkron veri özeti)
 
-    /// Senkron fallback rapor. AI rapor başarısız olursa kullanılır.
-    static func generateReport(symbol: String, viewModel: TradingViewModel) -> String {
-        let decision = viewModel.grandDecisions[symbol]
-        let atlas = viewModel.getFundamentalScore(for: symbol)
-        let orion = viewModel.orionScores[symbol]
-        let news = viewModel.newsInsightsBySymbol[symbol] ?? []
-        let patterns = viewModel.patterns[symbol]
+    static func generateReport(symbol: String) -> String {
+        let decision = SignalStateViewModel.shared.grandDecisions[symbol]
+        let atlas = FundamentalScoreStore.shared.getScore(for: symbol)
+        let orion = SignalStateViewModel.shared.orionScores[symbol]
+        let news = HermesNewsViewModel.shared.newsInsightsBySymbol[symbol] ?? []
+        let patterns = SignalStateViewModel.shared.patterns[symbol]
 
         return generateDataDrivenReport(
             symbol: symbol,
@@ -37,12 +36,12 @@ struct ArgusNarrativeEngine {
     }
 
     /// Async AI rapor - Chat veya detaylı analiz için
-    static func generateAIReport(symbol: String, viewModel: TradingViewModel, type: ReportType = .comprehensive) async -> String {
-        let decision = viewModel.grandDecisions[symbol]
-        let atlas = viewModel.getFundamentalScore(for: symbol)
-        let orion = viewModel.orionScores[symbol]
-        let news = viewModel.newsInsightsBySymbol[symbol] ?? []
-        let patterns = viewModel.patterns[symbol]
+    static func generateAIReport(symbol: String, type: ReportType = .comprehensive) async -> String {
+        let decision = await MainActor.run { SignalStateViewModel.shared.grandDecisions[symbol] }
+        let atlas = FundamentalScoreStore.shared.getScore(for: symbol)
+        let orion = await MainActor.run { SignalStateViewModel.shared.orionScores[symbol] }
+        let news = await MainActor.run { HermesNewsViewModel.shared.newsInsightsBySymbol[symbol] ?? [] }
+        let patterns = await MainActor.run { SignalStateViewModel.shared.patterns[symbol] }
 
         let dataPacket = buildDataPacket(
             symbol: symbol,
