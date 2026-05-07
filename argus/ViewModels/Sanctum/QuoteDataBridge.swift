@@ -29,10 +29,15 @@ final class QuoteDataBridge: ObservableObject {
             .store(in: &cancellables)
     }
 
-    /// Initial quote + candle fetch.
+    /// Initial quote + candle fetch — paralel.
+    /// Quote ve candle bağımsız network çağrıları; sequential bekleme yerine
+    /// async-let ile aynı anda başlat.
     func ensureQuote() async {
-        _ = await marketStore.ensureQuote(symbol: symbol)
-        await loadCandles(for: selectedTimeframe)
+        async let quoteJob: () = { [marketStore, symbol] in
+            _ = await marketStore.ensureQuote(symbol: symbol)
+        }()
+        async let candleJob: () = loadCandles(for: selectedTimeframe)
+        _ = await (quoteJob, candleJob)
     }
 
     /// Timeframe değişince hem state hem candle'ları günceller.

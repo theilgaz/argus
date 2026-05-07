@@ -86,14 +86,23 @@ final class AnalysisBridge: ObservableObject {
             .store(in: &cancellables)
     }
 
-    /// Snapshot + macro rating fetch (loadData içinde çağrılır).
+    /// Snapshot + macro rating fetch — paralel.
+    /// Snapshot per-symbol (FinancialSnapshotService), macro global
+    /// (MacroRegimeService). Bağımsız network çağrıları, async-let ile paralel.
     func loadAnalysisCore() async {
-        do {
-            self.snapshot = try await analysisService.fetchSnapshot(symbol: symbol)
-        } catch {
-            print("⚠️ AnalysisBridge: Snapshot hatası: \(error)")
-        }
-        self.macroRating = await MacroRegimeService.shared.computeMacroEnvironment()
+        async let snapshotResult: FinancialSnapshot? = {
+            do {
+                return try await analysisService.fetchSnapshot(symbol: symbol)
+            } catch {
+                print("⚠️ AnalysisBridge: Snapshot hatası: \(error)")
+                return nil
+            }
+        }()
+        async let macroResult: MacroEnvironmentRating = MacroRegimeService.shared.computeMacroEnvironment()
+
+        let (snapshot, macro) = await (snapshotResult, macroResult)
+        self.snapshot = snapshot
+        self.macroRating = macro
     }
 
     /// Konsey kararı: Tüm modülleri toplayıp nihai karar üretir.

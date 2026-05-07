@@ -64,8 +64,15 @@ final class SanctumViewModel: ObservableObject {
         self.isLoading = true
         defer { self.isLoading = false }
 
-        await quoteBridge.ensureQuote()
-        await analysisBridge.loadAnalysisCore()
+        // 2026-05-07: Sequential await zinciri 30+30+30=90sn'lik beklemeye yol
+        // açıyordu (her ağ çağrısı önceki bitmeden başlamıyordu). ensureQuote
+        // (quote + candle) ile loadAnalysisCore (snapshot + macro) bağımsız —
+        // paralel başlatılıyor. conveneCouncil ikisinin de bitmesini bekliyor
+        // (snapshot + candle gerekli), önceki davranış korunmuş oluyor.
+        async let quoteJob: () = quoteBridge.ensureQuote()
+        async let analysisJob: () = analysisBridge.loadAnalysisCore()
+        _ = await (quoteJob, analysisJob)
+
         await analysisBridge.conveneCouncil()
     }
 
