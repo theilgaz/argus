@@ -50,7 +50,10 @@ struct SirkiyeDashboardView: View {
         }
         .onAppear {
             Task {
-                await viewModel.refreshBistAtmosphere()
+                await HermesNewsViewModel.shared.refreshBistAtmosphere()
+                let state = HermesNewsViewModel.shared.currentBistAtmosphereState()
+                AppStateCoordinator.shared.environment.bistAtmosphere = state.decision
+                AppStateCoordinator.shared.environment.bistAtmosphereLastUpdated = state.lastUpdated
                 await loadFallbackMacroScore()
                 await loadXU100()
                 await loadTickerData()

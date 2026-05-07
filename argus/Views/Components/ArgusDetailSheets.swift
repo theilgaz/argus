@@ -143,7 +143,7 @@ struct HermesSheetView: View {
                     // Manual Scan Button
                     Button(action: {
                         Task {
-                            await viewModel.analyzeOnDemand(symbol: symbol)
+                            await HermesNewsViewModel.shared.analyzeOnDemand(symbol: symbol)
                         }
                     }) {
                         HStack {
