@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ArgusVoiceView: View {
     @StateObject private var viewModel = ChatViewModel()
-    @EnvironmentObject var tradingVM: TradingViewModel
     @Environment(\.dismiss) var dismiss
     @State private var isListening = false
     @State private var showSuggestions = true
@@ -40,16 +39,16 @@ struct ArgusVoiceView: View {
                                 .frame(width: 40, height: 40)
                             // 2026-05-05 H-67: MotorLogo(.argus) → SF Symbol sade.
                             Image(systemName: "waveform")
-                                .font(.system(size: 18, weight: .medium))
+                                .font(DesignTokens.Fonts.custom(size: 18, weight: .medium))
                                 .foregroundColor(InstitutionalTheme.Colors.holo)
                         }
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Sesli asistan")
-                                .font(.system(size: 17, weight: .medium))
+                                .font(DesignTokens.Fonts.custom(size: 17, weight: .medium))
                                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                             Text("Çevrimiçi")
-                                .font(.system(size: 11))
+                                .font(DesignTokens.Fonts.custom(size: 11))
                                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         }
 
@@ -57,7 +56,7 @@ struct ArgusVoiceView: View {
 
                         Button(action: { dismiss() }) {
                             Image(systemName: "xmark")
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(DesignTokens.Fonts.custom(size: 13, weight: .semibold))
                                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                                 .frame(width: 32, height: 32)
                                 .background(InstitutionalTheme.Colors.surface2)
@@ -101,12 +100,12 @@ struct ArgusVoiceView: View {
                                                 .frame(width: 96, height: 96)
                                             // 2026-05-05 H-67: MotorLogo argus → SF Symbol sade.
                                             Image(systemName: "waveform")
-                                                .font(.system(size: 38, weight: .medium))
+                                                .font(DesignTokens.Fonts.custom(size: 38, weight: .medium))
                                                 .foregroundColor(.white)
                                         }
 
                                         Text("Merhaba, ben Argus.")
-                                            .font(.system(size: 22, weight: .medium))
+                                            .font(DesignTokens.Fonts.custom(size: 22, weight: .medium))
                                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
                                         Text("Piyasalar, portföyün veya hisseler hakkında bana soru sorabilirsin.")
@@ -153,7 +152,7 @@ struct ArgusVoiceView: View {
                     if viewModel.messages.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Öneriler")
-                                .font(.system(size: 13))
+                                .font(DesignTokens.Fonts.custom(size: 13))
                                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                                 .padding(.horizontal, 16)
 
@@ -176,7 +175,7 @@ struct ArgusVoiceView: View {
                     HStack(spacing: 8) {
                         Button(action: {}) {
                             Image(systemName: "mic.fill")
-                                .font(.system(size: 14))
+                                .font(DesignTokens.Fonts.custom(size: 14))
                                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                                 .frame(width: 36, height: 36)
                                 .background(InstitutionalTheme.Colors.surface3)
@@ -186,7 +185,7 @@ struct ArgusVoiceView: View {
 
                         TextField("Argus'a sor...", text: $viewModel.inputMessage, axis: .vertical)
                             .lineLimit(1...4)
-                            .font(.system(size: 13))
+                            .font(DesignTokens.Fonts.custom(size: 13))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
                         Button {
@@ -195,7 +194,7 @@ struct ArgusVoiceView: View {
                             }
                         } label: {
                             Image(systemName: viewModel.inputMessage.isEmpty ? "waveform" : "arrow.up")
-                                .font(.system(size: 14, weight: .bold))
+                                .font(DesignTokens.Fonts.custom(size: 14, weight: .bold))
                                 .foregroundColor(.white)
                                 .frame(width: 36, height: 36)
                                 .background(InstitutionalTheme.Colors.holo)
@@ -218,8 +217,8 @@ struct ArgusVoiceView: View {
             }
             .navigationBarHidden(true)
             .onAppear {
-                let decisions = Array(tradingVM.argusDecisions.values)
-                viewModel.updateContext(decisions: decisions, portfolio: tradingVM.portfolio)
+                let decisions = Array(SignalStateViewModel.shared.argusDecisions.values)
+                viewModel.updateContext(decisions: decisions, portfolio: RiskViewModel.shared.portfolio)
             }
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("SpeechFinished"))) { notification in
                 if let text = notification.object as? String {
@@ -288,15 +287,15 @@ private extension ArgusVoiceView {
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: motorIconName(motor))
-                    .font(.system(size: 14))
+                    .font(DesignTokens.Fonts.custom(size: 14))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .frame(width: 28, height: 28)
                 Text(text)
-                    .font(.system(size: 13))
+                    .font(DesignTokens.Fonts.custom(size: 13))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 10, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             .padding(12)
@@ -347,7 +346,7 @@ struct ChatMessageBubble: View {
                         .fill(InstitutionalTheme.Colors.holo.opacity(0.15))
                         .frame(width: 28, height: 28)
                     Image(systemName: "waveform")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.holo)
                 }
             } else {

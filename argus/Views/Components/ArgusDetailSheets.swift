@@ -95,14 +95,13 @@ struct ArgusAetherSheet: View {
 // MARK: - Hermes Sheet
 // MARK: - Hermes Sheet
 struct ArgusHermesSheet: View {
-    @ObservedObject var viewModel: TradingViewModel
     let symbol: String
-    
+
     var body: some View {
         if symbol.uppercased().hasSuffix(".IS") || SymbolResolver.shared.isBistSymbol(symbol) {
-            ArgusBistHub(symbol: symbol, viewModel: viewModel)
+            ArgusBistHub(symbol: symbol)
         } else {
-            HermesSheetView(viewModel: viewModel, symbol: symbol)
+            HermesSheetView(symbol: symbol)
         }
     }
 }
@@ -110,7 +109,8 @@ struct ArgusHermesSheet: View {
 // MARK: - Hermes Shared Views
 
 struct HermesSheetView: View {
-    @ObservedObject var viewModel: TradingViewModel
+    @ObservedObject private var hermesVM = HermesNewsViewModel.shared
+    @ObservedObject private var analysisVM = AnalysisViewModel.shared
     let symbol: String
     
     private var isBist: Bool {
@@ -148,7 +148,7 @@ struct HermesSheetView: View {
                     }) {
                         HStack {
                             Image(systemName: "magnifyingglass.circle.fill")
-                            Text(viewModel.isLoadingNews ? "Taranıyor..." : "Haberleri Şimdi Tara")
+                            Text(hermesVM.isLoadingNews ? "Taranıyor..." : "Haberleri Şimdi Tara")
                                 .bold()
                         }
                         .frame(maxWidth: .infinity)
@@ -157,15 +157,15 @@ struct HermesSheetView: View {
                         .foregroundColor(isBist ? Color.red : InstitutionalTheme.Colors.holo)
                         .cornerRadius(12)
                     }
-                    .disabled(viewModel.isLoadingNews)
+                    .disabled(hermesVM.isLoadingNews)
                     .padding(.horizontal)
                     
                     // KAP Bildirimleri (Sadece BIST)
-                    if isBist, let disclosures = viewModel.kapDisclosures[symbol], !disclosures.isEmpty {
+                    if isBist, let disclosures = analysisVM.kapDisclosures[symbol], !disclosures.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
                             Label("KAP Bildirimleri", systemImage: "bell.badge.fill")
                                 .font(.headline)
-                                .foregroundColor(.primary)
+                                .foregroundColor(DesignTokens.Colors.textPrimary)
                                 .padding(.horizontal)
                             
                             ForEach(disclosures) { news in
@@ -175,9 +175,9 @@ struct HermesSheetView: View {
                         .padding(.bottom)
                     }
                     
-                    let events = isBist ? (viewModel.kulisEventsBySymbol[symbol] ?? []) : (viewModel.hermesEventsBySymbol[symbol] ?? [])
+                    let events = isBist ? (hermesVM.kulisEventsBySymbol[symbol] ?? []) : (hermesVM.hermesEventsBySymbol[symbol] ?? [])
                     if events.isEmpty {
-                        if viewModel.isLoadingNews {
+                        if hermesVM.isLoadingNews {
                             HStack {
                                 Spacer()
                                 ProgressView("Yapay Zeka Analiz Ediyor...")
@@ -186,7 +186,7 @@ struct HermesSheetView: View {
                             .padding()
                         } else {
 
-                            if let error = viewModel.newsErrorMessage {
+                            if let error = hermesVM.newsErrorMessage {
                                 VStack(spacing: 8) {
                                     Image(systemName: "exclamationmark.triangle.fill")
                                         .foregroundColor(Sanctum2Theme.crimsonRed)
@@ -281,7 +281,7 @@ struct NewsInsightRow: View {
             
             Text(insight.summaryTRLong)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(DesignTokens.Colors.textSecondary)
             
             Divider()
             

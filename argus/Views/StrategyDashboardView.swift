@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct StrategyDashboardView: View {
-    @ObservedObject var viewModel: TradingViewModel
+    @ObservedObject private var marketVM = MarketViewModel.shared
     
     @State private var selectedBucket: OrionMultiFrameEngine.StrategyBucket = .swing
     @State private var multiFrameReports: [String: OrionMultiFrameEngine.MultiFrameReport] = [:]
@@ -176,7 +176,7 @@ struct StrategyDashboardView: View {
     private var timeframeConsensusSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Zaman dilimi konsensüsü")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             
             if multiFrameReports.isEmpty {
@@ -306,11 +306,11 @@ struct StrategyDashboardView: View {
     private var alkindusInsightsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Strateji önerileri")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
             Text("Bu strateji için öneriler yükleniyor.")
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
         .padding()
@@ -334,11 +334,11 @@ struct StrategyDashboardView: View {
     private func loadData() async {
         isLoading = true
         
-        let symbols = Array(viewModel.quotes.keys.prefix(10))
+        let symbols = Array(marketVM.quotes.keys.prefix(10))
         
         for symbol in symbols {
             let report = await OrionMultiFrameEngine.shared.analyzeMultiFrame(symbol: symbol) { sym, tf in
-                return viewModel.candles[symbol]
+                return marketVM.candles[symbol]
             }
             
             await MainActor.run {
@@ -354,6 +354,6 @@ struct StrategyDashboardView: View {
 
 #Preview {
     NavigationStack {
-        StrategyDashboardView(viewModel: TradingViewModel())
+        StrategyDashboardView()
     }
 }

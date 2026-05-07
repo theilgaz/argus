@@ -56,7 +56,6 @@ struct PortfolioView: View {
                     ScrollView {
                         VStack(spacing: 16) {
                             LiquidDashboardHeader(
-                                viewModel: viewModel,
                                 selectedMarket: $selectedMarket,
                                 onBrainTap:   { showTradeBrain = true },
                                 onHistoryTap: { showHistory   = true },
@@ -126,11 +125,11 @@ struct PortfolioView: View {
                     .preferredColorScheme(.dark)
             }
             .sheet(item: $selectedTrade) { trade in
-                TradeDetailSheet(trade: trade, viewModel: viewModel)
+                TradeDetailSheet(trade: trade)
                     .preferredColorScheme(.dark)
             }
             .sheet(isPresented: $showHistory) {
-                TransactionHistorySheet(viewModel: viewModel, marketMode: selectedMarket)
+                TransactionHistorySheet(marketMode: selectedMarket)
                     .preferredColorScheme(.dark)
             }
             .sheet(isPresented: $showTradeBrain) {
@@ -296,18 +295,18 @@ struct PortfolioView: View {
                 VStack(alignment: .leading, spacing: 1) {
                     HStack(spacing: 6) {
                         Text("Trade Brain")
-                            .font(.system(size: 13, weight: .medium))
+                            .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         if !alerts.isEmpty {
                             Text("\(alerts.count) bildirim")
-                                .font(.system(size: 11))
+                                .font(DesignTokens.Fonts.custom(size: 11))
                                 .foregroundColor(hasHighPriorityAlert(alerts)
                                                  ? InstitutionalTheme.Colors.crimson
                                                  : InstitutionalTheme.Colors.textSecondary)
                         }
                     }
                     Text(tradeBrainSummary(alerts))
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .lineLimit(1)
                 }
@@ -315,7 +314,7 @@ struct PortfolioView: View {
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             .padding(.horizontal, 12)
@@ -557,7 +556,7 @@ struct EngineSelector: View {
                                     : InstitutionalTheme.Colors.textSecondary
                             )
                         Text(engineLabel(filter))
-                            .font(.system(size: 13, weight: selected == filter ? .medium : .regular))
+                            .font(DesignTokens.Fonts.custom(size: 13, weight: selected == filter ? .medium : .regular))
                             .foregroundColor(
                                 selected == filter
                                     ? InstitutionalTheme.Colors.textPrimary
@@ -634,10 +633,8 @@ struct EngineSelector: View {
 // MARK: - PortfolioHeader (legacy — HolographicBalanceCard sarmalayıcısı)
 
 struct PortfolioHeader: View {
-    @ObservedObject var viewModel: TradingViewModel
-
     var body: some View {
-        HolographicBalanceCard(viewModel: viewModel)
+        HolographicBalanceCard()
             .padding(.horizontal)
             .padding(.top, 10)
     }
@@ -721,7 +718,7 @@ struct NewTradeSheet: View {
                     // → sentence "Hisse" iOS form label dilinde.
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Hisse")
-                            .font(.system(size: 13))
+                            .font(DesignTokens.Fonts.custom(size: 13))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
 
                         HStack(spacing: 8) {
@@ -784,7 +781,7 @@ struct NewTradeSheet: View {
                     // → sentence "Adet".
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Adet")
-                            .font(.system(size: 13))
+                            .font(DesignTokens.Fonts.custom(size: 13))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
 
                         HStack {
@@ -878,7 +875,7 @@ struct NewTradeSheet: View {
                     // "Satın al", iOS primary button dilinde.
                     Button(action: executeTrade) {
                         Text("Satın al")
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(DesignTokens.Fonts.custom(size: 15, weight: .semibold))
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)

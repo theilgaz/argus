@@ -1,11 +1,12 @@
 import SwiftUI
 struct HoloPanelView: View {
     let module: ArgusSanctumView.ModuleType
-    @ObservedObject var viewModel: TradingViewModel
     @ObservedObject var vm: SanctumViewModel
     let symbol: String
     let router: NavigationRouter
     let onClose: () -> Void
+    @ObservedObject private var signalState = SignalStateViewModel.shared
+    @ObservedObject private var analysis = AnalysisViewModel.shared
     
     // State for async data loading
     @State private var chironPulseWeights: ChironModuleWeights?
@@ -193,7 +194,7 @@ struct HoloPanelView: View {
                         symbol: symbol,
                         orion: orion,
                         candles: vm.candles,
-                        patterns: viewModel.patterns[symbol] ?? []
+                        patterns: signalState.patterns[symbol] ?? []
                     )
                 } else {
                     if vm.isLoading {
@@ -255,7 +256,7 @@ struct HoloPanelView: View {
 
             .sheet(isPresented: $showStrategySheet) {
                 NavigationStack {
-                    StrategyDashboardView(viewModel: viewModel)
+                    StrategyDashboardView()
                         .navigationBarItems(trailing: Button("Kapat") { showStrategySheet = false })
                 }
             }
@@ -268,7 +269,7 @@ struct HoloPanelView: View {
                 // 2026-04-30 H-42 — sade Aether (global sembol)
                 VStack(alignment: .leading, spacing: 16) {
                     // 1) Konsey duruşu — pill kalktı, sayı body'de
-                    if let grandDecision = viewModel.grandDecisions[symbol] {
+                    if let grandDecision = signalState.grandDecisions[symbol] {
                         let aetherDecision = grandDecision.aetherDecision
                         let stanceLabel: String = {
                             switch aetherDecision.stance {
@@ -327,7 +328,7 @@ struct HoloPanelView: View {
                         .frame(height: 0.5)
 
                     // 2) Makro dashboard
-                    if let macro = viewModel.macroRating {
+                    if let macro = analysis.macroRating {
                         AetherDashboardCard(rating: macro, isCompact: true)
                     } else {
                         HStack(spacing: 10) {
@@ -429,7 +430,7 @@ struct HoloPanelView: View {
                         .frame(height: 0.5)
 
                     // 2) Konsey duruşu — pill kalktı, üstte muted satır
-                    if let grandDecision = viewModel.grandDecisions[symbol],
+                    if let grandDecision = signalState.grandDecisions[symbol],
                        let hermesDecision = grandDecision.hermesDecision {
                         let toneColor: Color = hermesDecision.isHighImpact
                             ? (hermesDecision.netSupport >= 0
@@ -554,7 +555,7 @@ struct HoloPanelView: View {
             
         case .athena:
             // 2026-04-30 H-42 — sade Athena (faktör skoru)
-            if let athena = viewModel.athenaResults[symbol] {
+            if let athena = signalState.athenaResults[symbol] {
                 let scoreColor: Color = athena.factorScore > 50
                     ? InstitutionalTheme.Colors.aurora
                     : InstitutionalTheme.Colors.crimson
@@ -606,7 +607,7 @@ struct HoloPanelView: View {
             
         case .demeter:
             // 2026-04-30 H-42 — sade Demeter (sektör)
-            let demeterScore = viewModel.demeterScores.first(where: { $0.sector == .XLK }) ?? viewModel.demeterScores.first
+            let demeterScore = signalState.demeterScores.first(where: { $0.sector == .XLK }) ?? signalState.demeterScores.first
 
             if let demeter = demeterScore {
                 let scoreColor = v5ScoreColor(demeter.totalScore)
@@ -687,7 +688,7 @@ struct HoloPanelView: View {
             // ağırlık tabloları sentence case + sade hairline ayrımla geliyor.
             VStack(alignment: .leading, spacing: 18) {
                 // 1) Sembol rejimi
-                if let decision = viewModel.argusDecisions[symbol],
+                if let decision = signalState.argusDecisions[symbol],
                    let chironResult = decision.chironResult {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Şu anki rejim — \(chironResult.regime.descriptor.lowercased())")
@@ -783,7 +784,7 @@ struct HoloPanelView: View {
 
         case .council:
             VStack {
-                ArgusAnalystReportView(symbol: symbol, viewModel: viewModel)
+                ArgusAnalystReportView(symbol: symbol)
             }
         }
     }
