@@ -31,9 +31,9 @@ class TradingViewModel: ObservableObject {
     
     // Discovery Lists
     // MARK: - Market Proxy (Refactored Phase 2)
-    let market = MarketViewModel()
-    let risk = RiskViewModel()
-    let analysis = AnalysisViewModel()
+    let market = MarketViewModel.shared
+    let risk = RiskViewModel.shared
+    let analysis = AnalysisViewModel.shared
     
     var quotes: [String: Quote] {
         get { market.quotes }

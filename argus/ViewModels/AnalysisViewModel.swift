@@ -7,7 +7,8 @@ import SwiftUI
 /// Handles: Orion, Council, Chimera, Reports, Demeter
 @MainActor
 final class AnalysisViewModel: ObservableObject {
-    
+    static let shared = AnalysisViewModel()
+
     // MARK: - Signal Facade (Delegated to SignalStateViewModel)
     
     var orionAnalysis: [String: MultiTimeframeAnalysis] { SignalStateViewModel.shared.orionAnalysis }

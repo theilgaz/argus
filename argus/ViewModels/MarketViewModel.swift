@@ -7,6 +7,8 @@ import SwiftUI
 /// Handles: Quotes, Candles, Discovery Lists, Macro Data (TCMB/Flow)
 @MainActor
 final class MarketViewModel: ObservableObject {
+    static let shared = MarketViewModel()
+
     // MARK: - Market Data State
     @Published var quotes: [String: Quote] = [:]
     @Published var candles: [String: [Candle]] = [:]

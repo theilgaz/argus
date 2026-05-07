@@ -7,7 +7,8 @@ import SwiftUI
 /// Handles: Portfolio, Balance, Backtesting, Whales, ETFs
 @MainActor
 final class RiskViewModel: ObservableObject {
-    
+    static let shared = RiskViewModel()
+
     // MARK: - Portfolio State
     @Published var portfolio: [Trade] = []
     @Published var balance: Double = 100000.0 // USD Balance

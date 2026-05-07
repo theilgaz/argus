@@ -43,7 +43,7 @@ final class SignalViewModel: ObservableObject {
 
     // MARK: - Initialization
     private init(analysisViewModel: AnalysisViewModel? = nil) {
-        self.analysisViewModel = analysisViewModel ?? AnalysisViewModel()
+        self.analysisViewModel = analysisViewModel ?? AnalysisViewModel.shared
         // Manuel objectWillChange relay'i kaldırıldı (2026-04-30).
         //
         // Önceki kod AVM'in objectWillChange yayınını sink'leyip kendi
@@ -138,7 +138,7 @@ final class SignalViewModel: ObservableObject {
 
     func runScout() async {
         // 1. Refresh market pulse
-        let marketVM = MarketViewModel()
+        let marketVM = MarketViewModel.shared
         await marketVM.refreshMarketPulse()
 
         // 2. Gather symbols from multiple sources
@@ -193,7 +193,7 @@ final class SignalViewModel: ObservableObject {
         // handle üzerinden await yapıyoruz. @MainActor-isolated self nedeniyle
         // her task ana aktörde çalışır; IO suspend noktalarında diğerlerine yer açar.
         let candleTask = Task { @MainActor in
-            let marketVM = MarketViewModel()
+            let marketVM = MarketViewModel.shared
             if marketVM.candles[symbol]?.isEmpty ?? true {
                 await marketVM.loadCandles(for: symbol, timeframe: "1D")
             }
@@ -236,7 +236,7 @@ final class SignalViewModel: ObservableObject {
     }
 
     private func checkIsEtf(symbol: String) async -> Bool {
-        let marketVM = MarketViewModel()
+        let marketVM = MarketViewModel.shared
         return marketVM.isETF(symbol: symbol)
     }
 
@@ -272,7 +272,7 @@ final class SignalViewModel: ObservableObject {
         defer { isGeneratingVoiceReport = false }
 
         do {
-            let marketVM = MarketViewModel()
+            let marketVM = MarketViewModel.shared
             let quote = marketVM.quotes[symbol]
             let atlas = FundamentalScoreStore.shared.getScore(for: symbol)
             let orion = orionScores[symbol]
@@ -304,7 +304,7 @@ final class SignalViewModel: ObservableObject {
 
     func loadSarTsiLab(symbol: String) async {
         // SAR + TSI technical analysis
-        let marketVM = MarketViewModel()
+        let marketVM = MarketViewModel.shared
         if let candles = marketVM.candles[symbol] {
             print("📊 SAR TSI Lab analysis for \(symbol): \(candles.count) candles")
         }
@@ -312,7 +312,7 @@ final class SignalViewModel: ObservableObject {
 
     func analyzeOverreaction(symbol: String, atlas: Double?, aether: Double?) {
         // Check if stock is oversold (overreaction)
-        let marketVM = MarketViewModel()
+        let marketVM = MarketViewModel.shared
         if let quote = marketVM.quotes[symbol] {
             let isOversold = (quote.percentChange ?? 0) < -5.0 && (atlas ?? 0) > 75
             if isOversold {
@@ -328,7 +328,7 @@ final class SignalViewModel: ObservableObject {
 
     func hydrateAtlas() async {
         // Pre-load fundamental data for watchlist
-        let marketVM = MarketViewModel()
+        let marketVM = MarketViewModel.shared
         for symbol in marketVM.watchlist.prefix(10) {
             _ = await calculateFundamentalScore(for: symbol, assetType: .stock)
         }
