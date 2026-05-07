@@ -10,7 +10,7 @@ struct SectionHeader: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: icon)
-                .font(.system(size: 13, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .semibold))
                 .foregroundColor(color)
             Text(title)
                 .font(InstitutionalTheme.Typography.bodyStrong)
@@ -29,10 +29,10 @@ struct QuickStatBadge: View {
     var body: some View {
         VStack(spacing: 5) {
             Image(systemName: icon)
-                .font(.system(size: 14, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .semibold))
                 .foregroundColor(color)
             Text(value)
-                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .bold, design: .rounded))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Text(label)
                 .font(InstitutionalTheme.Typography.micro)
@@ -60,7 +60,7 @@ struct DecisionStatPill: View {
     var body: some View {
         VStack(spacing: 4) {
             Text(value)
-                .font(.system(size: 16, weight: .bold, design: .rounded))
+                .font(DesignTokens.Fonts.custom(size: 16, weight: .bold, design: .rounded))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Text(title)
                 .font(InstitutionalTheme.Typography.micro)
@@ -142,7 +142,7 @@ struct BrainEmptyCard: View {
     var body: some View {
         VStack(spacing: 10) {
             Image(systemName: icon)
-                .font(.system(size: 30, weight: .light))
+                .font(DesignTokens.Fonts.custom(size: 30, weight: .light))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Text(title)
                 .font(InstitutionalTheme.Typography.bodyStrong)
@@ -169,7 +169,7 @@ struct EducationCard: View {
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: icon)
-                .font(.system(size: 16, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 16, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.primary)
                 .frame(width: 22)
 
@@ -204,11 +204,11 @@ struct LessonCard: View {
                     .frame(width: 28, height: 28)
                 if isCompleted {
                     Image(systemName: "checkmark")
-                        .font(.system(size: 10, weight: .bold))
+                        .font(DesignTokens.Fonts.custom(size: 10, weight: .bold))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 } else {
                     Text("\(number)")
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .font(DesignTokens.Fonts.custom(size: 11, weight: .bold, design: .rounded))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 }
             }
@@ -258,7 +258,7 @@ struct RiskLimitCard: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: icon)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .semibold))
                     .foregroundColor(metricColor)
                 Text(title)
                     .font(InstitutionalTheme.Typography.bodyStrong)
@@ -314,7 +314,7 @@ struct EventCard: View {
         HStack(spacing: 12) {
             VStack(spacing: 0) {
                 Text(event.date.formatted(.dateTime.day()))
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .font(DesignTokens.Fonts.custom(size: 20, weight: .bold, design: .rounded))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text(event.date.formatted(.dateTime.month(.abbreviated)))
                     .font(InstitutionalTheme.Typography.micro)
@@ -623,7 +623,7 @@ struct PositionPlanDetailView: View {
                         HStack(alignment: .top) {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(plan.originalSnapshot.symbol)
-                                    .font(.system(size: 30, weight: .bold, design: .rounded))
+                                    .font(DesignTokens.Fonts.custom(size: 30, weight: .bold, design: .rounded))
                                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
                                 HStack(spacing: 8) {
@@ -644,7 +644,7 @@ struct PositionPlanDetailView: View {
                             Spacer()
                             VStack(alignment: .trailing, spacing: 4) {
                                 Text(String(format: "%.2f", currentPrice))
-                                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                                    .font(DesignTokens.Fonts.custom(size: 22, weight: .bold, design: .rounded))
                                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                 Text("\(pnlPercent >= 0 ? "+" : "")\(String(format: "%.2f", pnlPercent))%")
                                     .font(InstitutionalTheme.Typography.bodyStrong)
@@ -812,7 +812,7 @@ struct ScenarioCard: View {
                 Spacer()
                 if scenario.isActive {
                     Text("Aktif")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 11, weight: .medium))
                         .foregroundColor(scenarioColor)
                 }
             }
@@ -831,7 +831,7 @@ struct ScenarioCard: View {
                                 .strikethrough(executedSteps.contains(step.id))
                             if step.id == nextStepID {
                                 Text("Sıradaki")
-                                    .font(.system(size: 11, weight: .medium))
+                                    .font(DesignTokens.Fonts.custom(size: 11, weight: .medium))
                                     .foregroundColor(InstitutionalTheme.Colors.holo)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
@@ -856,8 +856,6 @@ struct ScenarioCard: View {
 
 #Preview {
     TradeBrainView()
-        .environmentObject(TradingViewModel()
-        )
 }
 
 // MARK: - Trade Brain 3.0 Helper Components

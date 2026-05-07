@@ -23,17 +23,15 @@ struct ArgusOrionSheet: View {
     let orion: OrionScoreResult?
     let candles: [Candle]?
     let patterns: [OrionChartPattern]? // Orion V3
-    var viewModel: TradingViewModel? = nil // Optional for backward compatibility
 
     // Dedicated SanctumViewModel for reactive timeframe updates
     @StateObject private var sanctumVM: SanctumViewModel
 
-    init(symbol: String, orion: OrionScoreResult? = nil, candles: [Candle]? = nil, patterns: [OrionChartPattern]? = nil, viewModel: TradingViewModel? = nil) {
+    init(symbol: String, orion: OrionScoreResult? = nil, candles: [Candle]? = nil, patterns: [OrionChartPattern]? = nil) {
         self.symbol = symbol
         self.orion = orion
         self.candles = candles
         self.patterns = patterns
-        self.viewModel = viewModel
         self._sanctumVM = StateObject(wrappedValue: SanctumViewModel(symbol: symbol))
     }
 
@@ -57,7 +55,7 @@ struct ArgusOrionSheet: View {
                         ProgressView()
                         Text("Orion analizi yukleniyor...")
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                     }
                 }
             }
@@ -131,7 +129,7 @@ struct HermesSheetView: View {
                                 .fontWeight(.semibold)
                             Text("Yerel RSS Kaynakları")
                                 .font(.caption2)
-                                .foregroundColor(.gray)
+                                .foregroundColor(DesignTokens.Colors.textTertiary)
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
@@ -198,7 +196,7 @@ struct HermesSheetView: View {
                                 .padding()
                             } else {
                                 Text(isBist ? "Kulis verisi bulunamadı" : "Hermes verisi bulunamadı")
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(DesignTokens.Colors.textTertiary)
                                     .padding()
                             }
                         }
@@ -231,7 +229,7 @@ private struct HermesEventRow: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(event.headline)
                 .font(.subheadline)
-                .foregroundColor(.white)
+                .foregroundColor(DesignTokens.Colors.textPrimary)
             
             Text(event.eventType.displayTitleTR)
                 .font(.caption)
@@ -266,7 +264,7 @@ private struct HermesEventRow: View {
             .font(.caption2)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(Color.white.opacity(0.08))
+            .background(DesignTokens.Colors.Overlay.l08)
             .cornerRadius(8)
     }
 }
@@ -295,13 +293,13 @@ struct NewsInsightRow: View {
                 
                 Text(String(format: "%.0f%% Güven", insight.confidence * 100))
                     .font(.caption2)
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
             }
         }
         .padding()
         .background(InstitutionalTheme.Colors.surface1)
         .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.1), radius: 2, y: 1)
+        .shadow(color: DesignTokens.Colors.Scrim.s10, radius: 2, y: 1)
     }
 }
 
@@ -324,7 +322,7 @@ struct KAPDisclosureRow: View {
                 
                 Text(news.date.formatted(date: .numeric, time: .shortened))
                     .font(.caption2)
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
             }
             
             Text(news.title)

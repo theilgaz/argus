@@ -6,7 +6,6 @@ struct ArgusHeroPanel: View {
     let decision: ArgusDecisionResult?
     let explanation: ArgusExplanation?
     let isLoading: Bool
-    let viewModel: TradingViewModel?
 
     @State private var showArgusDetail = false
 
@@ -21,8 +20,8 @@ struct ArgusHeroPanel: View {
                 HStack(spacing: 12) {
                     ProgressView().scaleEffect(0.9)
                     Text("Analiz ediliyor...")
-                        .font(.system(size: 14))
-                        .foregroundColor(.gray)
+                        .font(DesignTokens.Fonts.custom(size: 14))
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(20)
@@ -32,7 +31,7 @@ struct ArgusHeroPanel: View {
                     HStack(spacing: 16) {
                         // Aksiyon — tek büyük mesaj
                         Text(humanAction(d.finalActionCore))
-                            .font(.system(size: 32, weight: .heavy))
+                            .font(DesignTokens.Fonts.custom(size: 32, weight: .heavy))
                             .foregroundColor(actionColor(d.finalActionCore))
 
                         VStack(alignment: .leading, spacing: 5) {
@@ -40,7 +39,7 @@ struct ArgusHeroPanel: View {
                             HStack(spacing: 6) {
                                 GeometryReader { geo in
                                     ZStack(alignment: .leading) {
-                                        Capsule().fill(Color.white.opacity(0.1)).frame(height: 5)
+                                        Capsule().fill(DesignTokens.Colors.Overlay.l10).frame(height: 5)
                                         Capsule()
                                             .fill(actionColor(d.finalActionCore))
                                             .frame(width: geo.size.width * CGFloat(finalScore / 100), height: 5)
@@ -50,15 +49,15 @@ struct ArgusHeroPanel: View {
                             }
 
                             Text(confidenceLabel(finalScore))
-                                .font(.system(size: 12))
-                                .foregroundColor(.gray)
+                                .font(DesignTokens.Fonts.custom(size: 12))
+                                .foregroundColor(DesignTokens.Colors.textTertiary)
                         }
 
                         Spacer()
 
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 13))
-                            .foregroundColor(.gray)
+                            .font(DesignTokens.Fonts.custom(size: 13))
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                     }
                     .padding(.horizontal, 20)
                     .padding(.vertical, 18)
@@ -74,7 +73,7 @@ struct ArgusHeroPanel: View {
                 // ── Ana Sebep — açık dil ──────────────────────────────
                 if let exp = explanation {
                     Text(exp.summary)
-                        .font(.system(size: 14))
+                        .font(DesignTokens.Fonts.custom(size: 14))
                         .foregroundColor(.white.opacity(0.8))
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.horizontal, 4)
@@ -87,7 +86,7 @@ struct ArgusHeroPanel: View {
                             .fill(chironColor(chiron.regime))
                             .frame(width: 7, height: 7)
                         Text(chironLabel(chiron.regime))
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(.white.opacity(0.7))
                         Spacer()
                     }
@@ -96,30 +95,38 @@ struct ArgusHeroPanel: View {
 
             } else {
                 Text("Bu hisse için analiz henüz hazır değil.")
-                    .font(.system(size: 14))
-                    .foregroundColor(.gray)
+                    .font(DesignTokens.Fonts.custom(size: 14))
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                     .frame(maxWidth: .infinity)
                     .padding(20)
             }
 
             // ── Aksiyon Butonu — sadece AL/SAT ────────────────────────
-            if let d = decision, let vm = viewModel, let q = quote {
+            if let d = decision, let q = quote {
                 if d.finalActionCore == .buy || d.finalActionCore == .sell {
                     Button(action: {
                         if d.finalActionCore == .buy {
                             let price = q.currentPrice
                             if price > 0 {
-                                vm.buy(symbol: symbol, quantity: 1000.0 / price,
-                                       source: .user, rationale: "Manuel AL sinyali")
+                                ExecutionStateViewModel.shared.buy(
+                                    symbol: symbol,
+                                    quantity: 1000.0 / price,
+                                    source: .user,
+                                    rationale: "Manuel AL sinyali"
+                                )
                             }
                         } else {
-                            vm.closeAllPositions(for: symbol)
+                            let openTrades = PortfolioStore.shared.trades.filter { $0.symbol == symbol && $0.isOpen }
+                            for trade in openTrades {
+                                let price = MarketViewModel.shared.quotes[trade.symbol]?.currentPrice ?? trade.entryPrice
+                                PortfolioStore.shared.sell(tradeId: trade.id, currentPrice: price, reason: "Manuel SAT sinyali")
+                            }
                         }
                         UINotificationFeedbackGenerator().notificationOccurred(.success)
                     }) {
                         Text(d.finalActionCore == .buy ? "Alım Emri Ver" : "Pozisyonu Kapat")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.white)
+                            .font(DesignTokens.Fonts.custom(size: 15, weight: .semibold))
+                            .foregroundColor(DesignTokens.Colors.textPrimary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
                             .background(actionColor(d.finalActionCore))
@@ -133,8 +140,7 @@ struct ArgusHeroPanel: View {
             ArgusDetailSheet(
                 decision: decision,
                 explanation: explanation,
-                symbol: symbol,
-                viewModel: viewModel
+                symbol: symbol
             )
         }
     }
@@ -191,7 +197,6 @@ struct ArgusDetailSheet: View {
     let decision: ArgusDecisionResult?
     let explanation: ArgusExplanation?
     let symbol: String
-    let viewModel: TradingViewModel?
 
     @Environment(\.presentationMode) var presentationMode
 
@@ -209,7 +214,7 @@ struct ArgusDetailSheet: View {
                             )
                         } else {
                             Text("Karar verisi yok.")
-                                .foregroundColor(.gray)
+                                .foregroundColor(DesignTokens.Colors.textTertiary)
                         }
                     }
                     .padding()
@@ -242,10 +247,10 @@ struct SystemScoreCard: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(name)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text(String(format: "%.0f / 100", score))
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             }
 
@@ -254,7 +259,7 @@ struct SystemScoreCard: View {
             // Minimal bar
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(Color.white.opacity(0.08)).frame(height: 4)
+                    Capsule().fill(DesignTokens.Colors.Overlay.l08).frame(height: 4)
                     Capsule()
                         .fill(mode.color.opacity(0.8))
                         .frame(width: geo.size.width * CGFloat(score / 100), height: 4)
