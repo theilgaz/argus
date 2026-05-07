@@ -1,11 +1,11 @@
 import SwiftUI
 
-// MARK: - BIST Portfolio View (Refactored to use main PortfolioEngine)
 // MARK: - BIST Portfolio View (Refactored to use main PortfolioStore)
-// Artık TradingViewModel ve PortfolioStore kullanıyor
+// Artık singleton ViewModels + PortfolioStore kullanıyor
 
 struct BistPortfolioView: View {
-    @EnvironmentObject var viewModel: TradingViewModel
+    @ObservedObject private var market = MarketViewModel.shared
+    @ObservedObject private var autoPilot = AutoPilotController.shared
     @EnvironmentObject private var router: NavigationRouter
     @Environment(\.dismiss) private var dismiss
     @State private var showSearch = false
@@ -44,16 +44,16 @@ struct BistPortfolioView: View {
                     VStack(alignment: .leading, spacing: 14) {
                         HStack {
                             Text("BIST değeri")
-                                .font(.system(size: 12, weight: .medium))
+                                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                             Spacer()
                             Text("TL")
-                                .font(.system(size: 11))
+                                .font(DesignTokens.Fonts.custom(size: 11))
                                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         }
 
                         Text("₺\(String(format: "%.2f", bistBalance + portfolioValue))")
-                            .font(.system(size: 30, weight: .medium))
+                            .font(DesignTokens.Fonts.custom(size: 30, weight: .medium))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                             .monospacedDigit()
                             .lineLimit(1)
@@ -79,18 +79,18 @@ struct BistPortfolioView: View {
                         HStack(spacing: 12) {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Otopilot")
-                                    .font(.system(size: 11))
+                                    .font(DesignTokens.Fonts.custom(size: 11))
                                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
-                                Text(viewModel.isAutoPilotEnabled
+                                Text(autoPilot.isAutoPilotEnabled
                                      ? "Aktif · piyasa taranıyor"
                                      : "Pasif · manuel mod")
-                                    .font(.system(size: 13))
-                                    .foregroundColor(viewModel.isAutoPilotEnabled
+                                    .font(DesignTokens.Fonts.custom(size: 13))
+                                    .foregroundColor(autoPilot.isAutoPilotEnabled
                                                      ? InstitutionalTheme.Colors.aurora
                                                      : InstitutionalTheme.Colors.textSecondary)
                             }
                             Spacer()
-                            Toggle("", isOn: $viewModel.isAutoPilotEnabled)
+                            Toggle("", isOn: $autoPilot.isAutoPilotEnabled)
                                 .labelsHidden()
                                 .tint(InstitutionalTheme.Colors.aurora)
                         }
@@ -109,22 +109,22 @@ struct BistPortfolioView: View {
                     if bistTrades.isEmpty {
                         VStack(spacing: 14) {
                             Image(systemName: "case")
-                                .font(.system(size: 28))
+                                .font(DesignTokens.Fonts.custom(size: 28))
                                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                             VStack(spacing: 4) {
                                 Text("Portföyün boş")
-                                    .font(.system(size: 14, weight: .medium))
+                                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                 Text("BIST hisseleri ekleyerek başla.")
-                                    .font(.system(size: 12))
+                                    .font(DesignTokens.Fonts.custom(size: 12))
                                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                             }
                             Button(action: { showSearch = true }) {
                                 HStack(spacing: 6) {
                                     Image(systemName: "plus")
-                                        .font(.system(size: 12))
+                                        .font(DesignTokens.Fonts.custom(size: 12))
                                     Text("Hisse ekle")
-                                        .font(.system(size: 13, weight: .medium))
+                                        .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                                 }
                                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                 .padding(.horizontal, 14)
@@ -140,7 +140,7 @@ struct BistPortfolioView: View {
                             ForEach(bistTrades) { trade in
                                 UnifiedPositionCard(
                                     trade: trade,
-                                    currentPrice: viewModel.quotes[trade.symbol]?.currentPrice ?? trade.entryPrice,
+                                    currentPrice: market.quotes[trade.symbol]?.currentPrice ?? trade.entryPrice,
                                     market: .bist,
                                     onEdit: {
                                         // Plan düzenleme sayfasına git (TODO)
@@ -163,7 +163,6 @@ struct BistPortfolioView: View {
         .navigationBarHidden(true)
         .sheet(isPresented: $showSearch) {
             BistMarketView()
-                .environmentObject(viewModel)
         }
         .overlay {
             if showDrawer {
@@ -178,7 +177,7 @@ struct BistPortfolioView: View {
     // Computed
     var portfolioValue: Double {
         bistTrades.reduce(0) { total, trade in
-            let price = viewModel.quotes[trade.symbol]?.currentPrice ?? trade.entryPrice
+            let price = market.quotes[trade.symbol]?.currentPrice ?? trade.entryPrice
             return total + (trade.quantity * price)
         }
     }
@@ -187,10 +186,10 @@ struct BistPortfolioView: View {
     private func sadeStatTile(title: String, value: String, tone: Color) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(title)
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Text(value)
-                .font(.system(size: 14, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                 .foregroundColor(tone)
                 .monospacedDigit()
                 .lineLimit(1)

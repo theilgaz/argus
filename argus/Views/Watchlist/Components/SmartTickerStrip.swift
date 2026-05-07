@@ -22,7 +22,8 @@ struct TickerItem: Identifiable {
 // MARK: - Smart Ticker Strip
 
 struct SmartTickerStrip: View {
-    @ObservedObject var viewModel: TradingViewModel
+    @ObservedObject private var market = MarketViewModel.shared
+    @ObservedObject private var analysis = AnalysisViewModel.shared
     @StateObject private var router = SafeHavenRouter.shared
     @State private var refreshTimer: Timer?
 
@@ -55,7 +56,7 @@ struct SmartTickerStrip: View {
 
         // 1. Core indices
         for (symbol, label) in coreSymbols {
-            let quote = viewModel.quotes[symbol]
+            let quote = market.quotes[symbol]
             items.append(TickerItem(
                 id: symbol,
                 label: label,
@@ -68,7 +69,7 @@ struct SmartTickerStrip: View {
 
         // 2. Safe haven candidates — only show when router is active OR when quote is available
         for (symbol, label) in safeHavenSymbols {
-            guard let quote = viewModel.quotes[symbol] else { continue }
+            guard let quote = market.quotes[symbol] else { continue }
             let status: TickerItem.TickerStatus
             if router.isActive {
                 if router.isRecommended(symbol) {
@@ -110,22 +111,22 @@ struct SmartTickerStrip: View {
             MarqueeTicker(items: tickerItems)
         }
         .animation(.easeInOut(duration: 0.4), value: router.isActive)
-        .onChange(of: viewModel.macroRating?.numericScore) { _ in
+        .onChange(of: analysis.macroRating?.numericScore) { _ in
             router.evaluate(
-                quotes: viewModel.quotes,
-                aetherScore: viewModel.macroRating?.numericScore
+                quotes: market.quotes,
+                aetherScore: analysis.macroRating?.numericScore
             )
         }
-        .onChange(of: viewModel.quotes.count) { _ in
+        .onChange(of: market.quotes.count) { _ in
             router.evaluate(
-                quotes: viewModel.quotes,
-                aetherScore: viewModel.macroRating?.numericScore
+                quotes: market.quotes,
+                aetherScore: analysis.macroRating?.numericScore
             )
         }
         .onAppear {
             router.evaluate(
-                quotes: viewModel.quotes,
-                aetherScore: viewModel.macroRating?.numericScore
+                quotes: market.quotes,
+                aetherScore: analysis.macroRating?.numericScore
             )
             // İlk yüklemede core indeksleri çek.
             ensureCoreQuotesLoaded()
@@ -134,19 +135,19 @@ struct SmartTickerStrip: View {
         .onDisappear { stopPeriodicRefresh() }
     }
 
-    /// Core indeksleri eksikse TradingViewModel üstünden tazeler.
+    /// Core indeksleri eksikse MarketViewModel üstünden tazeler.
     /// Zaten cache'deyse refreshSymbol no-op.
     private func ensureCoreQuotesLoaded() {
         let all = coreSymbols.map(\.symbol) + safeHavenSymbols.map(\.symbol)
         for symbol in all {
             // Quote yoksa VEYA 2 dk'dan eskiyse yenile.
             let shouldRefresh: Bool = {
-                guard let q = viewModel.quotes[symbol] else { return true }
+                guard let q = market.quotes[symbol] else { return true }
                 // Quote.timestamp varsa onu kullan, yoksa koşulsuz refresh
                 return q.currentPrice <= 0
             }()
             if shouldRefresh {
-                viewModel.refreshSymbol(symbol)
+                market.refreshSymbol(symbol)
             }
         }
     }
@@ -176,7 +177,7 @@ private struct SafeHavenStatusBar: View {
             BlinkingDot(color: alertColor)
 
             Text("⚓ GÜVENLİ LİMAN MODU")
-                .font(.system(size: 9, weight: .black, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 9, weight: .black, design: .monospaced))
                 .foregroundColor(alertColor)
                 .tracking(1.2)
 
@@ -184,7 +185,7 @@ private struct SafeHavenStatusBar: View {
                 .foregroundColor(alertColor.opacity(0.4))
 
             Text(router.crisisType.rawValue.uppercased())
-                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 9, weight: .bold, design: .monospaced))
                 .foregroundColor(alertColor.opacity(0.85))
                 .tracking(0.8)
 
@@ -194,7 +195,7 @@ private struct SafeHavenStatusBar: View {
             let tops = router.topRecommendations(limit: 2)
             if !tops.isEmpty {
                 Text(tops.joined(separator: " · "))
-                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 9, weight: .bold, design: .monospaced))
                     .foregroundColor(.green.opacity(0.9))
             }
         }
@@ -393,22 +394,22 @@ private struct TickerCell: View {
     var body: some View {
         HStack(spacing: 6) {
             Text(item.label)
-                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .semibold, design: .monospaced))
                 .foregroundColor(labelColor)
 
             if let price = item.price, price > 0 {
                 Text(formatPrice(price))
-                    .font(.system(size: 12, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 12, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             }
 
             if let pct = item.percentChange {
                 Text(formattedChange(pct))
-                    .font(.system(size: 12, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 12, design: .monospaced))
                     .foregroundColor(changeColor(pct))
             } else {
                 Text("—")
-                    .font(.system(size: 12, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 12, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
         }

@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - MarketView (in-place refactor — ArgusDesignKit v1)
 //
 // Kural:
-//   • Demo veri yok — tüm liste/kart WatchlistViewModel + TradingViewModel'den.
+//   • Demo veri yok — tüm liste/kart WatchlistViewModel + MarketViewModel'den.
 //   • View imzaları aynı: ContentView MarketView() olarak çağırıyor, değişmiyor.
 //   • Tab (Global / SİRKİYE) davranışı + AppStorage anahtarı korunuyor.
 //   • ArgusDrawerView, Search, Notifications, AetherDetail, Education, Discover sheet'leri değişmedi.

@@ -14,7 +14,7 @@ import SwiftUI
 //       - Skor + `ArgusBar`.
 //       - En güçlü faktöre "EN GÜÇLÜ" rozeti + vurgulu arka plan.
 //       - Alt-satır gerçek veri cümlesi (F/K, ROE, Beta, trendDesc) —
-//         sadece `TradingViewModel`'da o alan mevcutsa render edilir.
+//         sadece veri kaynağında o alan mevcutsa render edilir.
 //         **Veri yoksa satır gizlenir.** Uydurma yok.
 //   • Athena yargısı: en güçlü 1-2 faktör + styleLabel birleşimi.
 //   • Pedagoji footer: 4 faktörün akademik tanımları (statik öğretici).
@@ -31,24 +31,24 @@ import SwiftUI
 
 struct ArgusAthenaSheet: View {
     let symbol: String
-    @ObservedObject var viewModel: TradingViewModel
+    @ObservedObject private var signalState = SignalStateViewModel.shared
 
     // MARK: - Veri erişim
 
     private var result: AthenaFactorResult? {
-        viewModel.athenaResults[symbol]
+        signalState.athenaResults[symbol]
     }
 
     private var financials: FinancialsData? {
-        viewModel.getFundamentalScore(for: symbol)?.financials
+        FundamentalScoreStore.shared.getScore(for: symbol)?.financials
     }
 
     private var snapshot: FinancialSnapshot? {
-        viewModel.getFinancialSnapshot(for: symbol)
+        AnalysisViewModel.shared.snapshots[symbol]
     }
 
     private var orionTrendDesc: String? {
-        let d = viewModel.orionScores[symbol]?.components.trendDesc
+        let d = signalState.orionScores[symbol]?.components.trendDesc
         return (d?.isEmpty == false) ? d : nil
     }
 
@@ -97,15 +97,15 @@ struct ArgusAthenaSheet: View {
         return HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Faktör skoru")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text("\(Int(r.factorScore))")
-                        .font(.system(size: 32, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 32, weight: .medium))
                         .foregroundColor(scoreColor(r.factorScore))
                         .monospacedDigit()
                     Text("/ 100")
-                        .font(.system(size: 13))
+                        .font(DesignTokens.Fonts.custom(size: 13))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
             }
@@ -114,10 +114,10 @@ struct ArgusAthenaSheet: View {
 
             VStack(alignment: .trailing, spacing: 2) {
                 Text("Strateji")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Text(r.styleLabel)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .multilineTextAlignment(.trailing)
             }
@@ -143,10 +143,10 @@ struct ArgusAthenaSheet: View {
     private var educationalIntroCard: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Nasıl okunur")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Text("Hisse 4 akademik faktöre göre puanlanır. En yüksek 2 faktör strateji etiketini belirler.")
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
                 .lineSpacing(2)
@@ -166,7 +166,7 @@ struct ArgusAthenaSheet: View {
     private var factorCaption: some View {
         HStack {
             Text("4 faktör kırılımı")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Spacer()
         }
@@ -185,19 +185,19 @@ struct ArgusAthenaSheet: View {
         return VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(factor.title)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text(factor.microCaption)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Spacer(minLength: 0)
                 if isStrongest {
                     Text("en güçlü")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 11, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.aurora)
                 }
                 Text("\(Int(clamped))")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                     .foregroundColor(scoreColor(clamped))
                     .monospacedDigit()
             }
@@ -206,7 +206,7 @@ struct ArgusAthenaSheet: View {
 
             if let line = factorDataLine(factor) {
                 Text(line)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, 2)
@@ -266,7 +266,7 @@ struct ArgusAthenaSheet: View {
         // Orion trendDesc varsa onu kullan; yoksa satır gizle.
         // "Son 3-12 ay getirisi" için kayıtlı field yok — uydurmuyoruz.
         if let desc = orionTrendDesc {
-            if let age = viewModel.orionScores[symbol]?.components.trendAge {
+            if let age = signalState.orionScores[symbol]?.components.trendAge {
                 return "Trend · \(desc) · \(age) gün önce başladı"
             }
             return "Trend · \(desc)"
@@ -290,10 +290,10 @@ struct ArgusAthenaSheet: View {
 
         return VStack(alignment: .leading, spacing: 8) {
             Text("Yorum")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Text(summary)
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
                 .lineSpacing(2)
@@ -332,7 +332,7 @@ struct ArgusAthenaSheet: View {
     private var pedagogyFooter: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Faktör yatırımı nedir")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
             VStack(alignment: .leading, spacing: 8) {
@@ -358,11 +358,11 @@ struct ArgusAthenaSheet: View {
     private func pedagogyRow(_ factor: AthenaSheetFactor) -> some View {
         HStack(alignment: .top, spacing: 10) {
             Text(factor.title)
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .frame(width: 84, alignment: .leading)
             Text(factor.pedagogy)
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
                 .lineSpacing(2)

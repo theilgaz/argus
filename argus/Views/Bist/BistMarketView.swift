@@ -1,10 +1,11 @@
 import SwiftUI
 
-// MARK: - BIST Market View (Refactored to use main TradingViewModel)
-// Artık TradingViewModel ve PortfolioEngine kullanıyor
+// MARK: - BIST Market View
+// MarketViewModel + SignalStateViewModel singleton'larını kullanıyor
 
 struct BistMarketView: View {
-    @EnvironmentObject var viewModel: TradingViewModel
+    @ObservedObject private var market = MarketViewModel.shared
+    @ObservedObject private var signalState = SignalStateViewModel.shared
     @State private var searchText = ""
     @Environment(\.dismiss) var dismiss
     @State private var showDrawer = false
@@ -49,9 +50,9 @@ struct BistMarketView: View {
         "ISMEN.IS": "İş Yatırım"
     ]
     
-    // BIST Watchlist from TradingViewModel
+    // BIST Watchlist from MarketViewModel
     private var bistWatchlist: [String] {
-        viewModel.watchlist.filter { $0.hasSuffix(".IS") }
+        market.watchlist.filter { $0.hasSuffix(".IS") }
     }
     
     var body: some View {
@@ -89,7 +90,7 @@ struct BistMarketView: View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
-                .font(.system(size: 13, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .semibold))
             TextField("BIST hissesi ara · THYAO, ASELS…", text: $searchText)
                 .font(InstitutionalTheme.Typography.caption)
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
@@ -151,33 +152,33 @@ struct BistMarketView: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text(symbol.replacingOccurrences(of: ".IS", with: ""))
-                        .font(.system(size: 14, weight: .black, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 14, weight: .black, design: .monospaced))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
-                    if let score = viewModel.orionScores[symbol]?.score {
+                    if let score = signalState.orionScores[symbol]?.score {
                         ArgusChip("ORION \(Int(score))",
                                   tone: score >= 60 ? .aurora :
                                         (score <= 40 ? .crimson : .titan))
                     }
                 }
                 Text(universe[symbol] ?? symbol)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     .lineLimit(1)
             }
 
             Spacer()
 
-            if let q = viewModel.quotes[symbol] {
+            if let q = market.quotes[symbol] {
                 let change = q.percentChange
                 let changeColor: Color = change >= 0
                     ? InstitutionalTheme.Colors.aurora
                     : InstitutionalTheme.Colors.crimson
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("₺\(String(format: "%.2f", q.currentPrice))")
-                        .font(.system(size: 14, weight: .black, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 14, weight: .black, design: .monospaced))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     Text(String(format: "%+.2f%%", change))
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 10, weight: .bold, design: .monospaced))
                         .foregroundColor(changeColor)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
@@ -194,7 +195,7 @@ struct BistMarketView: View {
 
             Button(action: { buyStock(symbol: symbol) }) {
                 Image(systemName: "plus.circle.fill")
-                    .font(.system(size: 22, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 22, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.Motors.aether)
             }
             .buttonStyle(.plain)
@@ -202,7 +203,7 @@ struct BistMarketView: View {
         }
         .padding(.vertical, 8)
         .onAppear {
-            Task { await viewModel.ensureOrionAnalysis(for: symbol) }
+            Task { await signalState.ensureOrionAnalysis(for: symbol) }
         }
     }
     
@@ -216,17 +217,17 @@ struct BistMarketView: View {
     
     func deleteFromWatchlist(at offsets: IndexSet) {
         let symbolsToRemove = offsets.map { bistWatchlist[$0] }
-        viewModel.watchlist.removeAll { symbolsToRemove.contains($0) }
+        market.watchlist.removeAll { symbolsToRemove.contains($0) }
     }
     
     // Buy using PortfolioEngine
     private func buyStock(symbol: String) {
         // Add to watchlist if not present
-        if !viewModel.watchlist.contains(symbol) {
-            viewModel.watchlist.append(symbol)
+        if !market.watchlist.contains(symbol) {
+            market.watchlist.append(symbol)
         }
         
-        guard let quote = viewModel.quotes[symbol] else {
+        guard let quote = market.quotes[symbol] else {
             print("Quote not available for \(symbol)")
             return
         }
