@@ -143,7 +143,7 @@ struct CalibrationSummaryCard: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Image(systemName: "chart.bar.xaxis")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.primary)
                 Text("Guven Kalibrasyon Ozeti")
                     .font(InstitutionalTheme.Typography.bodyStrong)

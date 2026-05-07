@@ -75,14 +75,14 @@ struct FeedbackSheet: View {
 
                 TextEditor(text: $feedbackText)
                     .font(.subheadline)
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                     .scrollContentBackground(.hidden)
                     .padding(8)
                     .accessibilityLabel("Geri bildirim mesajı")
                     .accessibilityHint("Bildirmek istediğiniz konuyu buraya yazın, maksimum 1000 karakter")
             }
             .frame(minHeight: 150)
-            .background(Color.white.opacity(0.03))
+            .background(DesignTokens.Colors.Overlay.l03)
             .cornerRadius(InstitutionalTheme.Radius.md)
             .overlay(
                 RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md)
@@ -137,8 +137,8 @@ struct FeedbackSheet: View {
             } label: {
                 HStack(spacing: 12) {
                     Image(systemName: "camera.fill")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
+                        .font(DesignTokens.Fonts.custom(size: 16, weight: .semibold))
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                         .frame(width: 36, height: 36)
                         .background(
                             LinearGradient(
@@ -153,7 +153,7 @@ struct FeedbackSheet: View {
                         Text("Instagram'dan DM at")
                             .font(.subheadline)
                             .fontWeight(.medium)
-                            .foregroundColor(.white)
+                            .foregroundColor(DesignTokens.Colors.textPrimary)
                         Text("@sigarayib1rak")
                             .font(.caption)
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
@@ -166,11 +166,11 @@ struct FeedbackSheet: View {
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
                 .padding(12)
-                .background(Color.white.opacity(0.05))
+                .background(DesignTokens.Colors.Overlay.l05)
                 .cornerRadius(InstitutionalTheme.Radius.md)
                 .overlay(
                     RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.md)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        .stroke(DesignTokens.Colors.Overlay.l08, lineWidth: 1)
                 )
             }
 
@@ -219,7 +219,7 @@ struct FeedbackSheet: View {
     /// 2026-05-05 H-67: caps tracking 0.5 → sentence sade.
     private func sectionHeader(_ title: String) -> some View {
         Text(title.capitalized)
-            .font(.system(size: 13, weight: .medium))
+            .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
     }
 }

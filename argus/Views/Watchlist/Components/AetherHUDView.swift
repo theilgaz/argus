@@ -20,17 +20,17 @@ struct AetherHUDView: View {
                             .frame(width: 44, height: 44)
                             .rotationEffect(.degrees(-90))
                         Text("\(Int(r.numericScore))")
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .font(DesignTokens.Fonts.custom(size: 14, weight: .bold, design: .rounded))
                             .foregroundColor(scoreColor(r.numericScore))
                     }
                     
                     // 2026-04-30 H-58 — sade. MotorLogo + caps "AETHER" gitti.
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Makro")
-                            .font(.system(size: 12, weight: .medium))
+                            .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         Text(r.regime.rawValue)
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Fonts.custom(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     }
                     
@@ -91,9 +91,9 @@ struct MiniPill: View {
     var body: some View {
         HStack(spacing: 2) {
             Text(emoji)
-                .font(.system(size: 8))
+                .font(DesignTokens.Fonts.custom(size: 8))
             Text("\(Int(score))")
-                .font(.system(size: 9, weight: .bold))
+                .font(DesignTokens.Fonts.custom(size: 9, weight: .bold))
                 .foregroundColor(scoreColor)
         }
         .padding(.horizontal, 4)

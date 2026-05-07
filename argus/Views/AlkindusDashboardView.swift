@@ -126,17 +126,17 @@ struct AlkindusDashboardView: View {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Text("Bu sembol için okuma")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     Spacer()
                     Text(sym)
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
 
                 if let insight = symbolInsight {
                     Text(insight.message)
-                        .font(.system(size: 14))
+                        .font(DesignTokens.Fonts.custom(size: 14))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
                         .lineSpacing(2)
@@ -156,7 +156,7 @@ struct AlkindusDashboardView: View {
                                    color: InstitutionalTheme.Colors.textPrimary)
                 } else {
                     Text("Bu sembol için en az 5 karar gerekli. Veriler biriktikçe burası dolacak.")
-                        .font(.system(size: 13))
+                        .font(DesignTokens.Fonts.custom(size: 13))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
             }
@@ -174,11 +174,11 @@ struct AlkindusDashboardView: View {
     private func insightStatRow(label: String, value: String, color: Color) -> some View {
         HStack {
             Text(label)
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Spacer()
             Text(value)
-                .font(.system(size: 13, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                 .foregroundColor(color)
                 .monospacedDigit()
         }
@@ -193,7 +193,7 @@ struct AlkindusDashboardView: View {
 
         return VStack(alignment: .leading, spacing: 12) {
             Text("Özet")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
             LazyVGrid(columns: [
@@ -234,15 +234,15 @@ struct AlkindusDashboardView: View {
     private func kpiTile(label: String, value: String, sub: String?, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(label)
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Text(value)
-                .font(.system(size: 22, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 22, weight: .medium))
                 .foregroundColor(color)
                 .monospacedDigit()
             if let sub = sub {
                 Text(sub)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             } else {
                 Color.clear.frame(height: 13)
@@ -271,19 +271,19 @@ struct AlkindusDashboardView: View {
         return VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("Modül performansı")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Spacer()
                 if !modules.isEmpty {
                     Text("\(modules.count) modül")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
             }
 
             if modules.isEmpty {
                 Text("Henüz veri yok. Kararlar olgunlaştıkça burada modüllerin doğruluk oranı görünür.")
-                    .font(.system(size: 13))
+                    .font(DesignTokens.Fonts.custom(size: 13))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .padding(.vertical, 6)
             } else {
@@ -309,20 +309,20 @@ struct AlkindusDashboardView: View {
     private func moduleRow(name: String, hitRate: Double, attempts: Double) -> some View {
         HStack(spacing: 10) {
             Text(displayName(for: name))
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .frame(width: 88, alignment: .leading)
 
             ArgusBar(value: hitRate, color: scoreColor(hitRate), height: 4)
 
             Text("%\(Int(hitRate * 100))")
-                .font(.system(size: 13, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                 .foregroundColor(scoreColor(hitRate))
                 .monospacedDigit()
                 .frame(width: 44, alignment: .trailing)
 
             Text("\(Int(attempts))")
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 .monospacedDigit()
                 .frame(width: 32, alignment: .trailing)
@@ -349,19 +349,19 @@ struct AlkindusDashboardView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("Son değerlendirilen kararlar")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Spacer()
                 if !verdicts.isEmpty {
                     Text("son \(min(8, verdicts.count))")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
             }
 
             if verdicts.isEmpty {
                 Text("Henüz olgunlaşmış karar yok. Her karar 7 ve 15 gün sonra otomatik değerlendirilir.")
-                    .font(.system(size: 13))
+                    .font(DesignTokens.Fonts.custom(size: 13))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .padding(.vertical, 6)
             } else {
@@ -391,7 +391,7 @@ struct AlkindusDashboardView: View {
     private func verdictRow(_ verdict: AlkindusVerdict) -> some View {
         HStack(spacing: 10) {
             Image(systemName: verdict.wasCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
-                .font(.system(size: 14))
+                .font(DesignTokens.Fonts.custom(size: 14))
                 .foregroundColor(verdict.wasCorrect
                                  ? InstitutionalTheme.Colors.aurora
                                  : InstitutionalTheme.Colors.crimson)
@@ -399,24 +399,24 @@ struct AlkindusDashboardView: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text(verdict.symbol)
-                        .font(.system(size: 13, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     Text(verdict.action == "BUY" ? "al" : "sat")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     Text("· T+\(verdict.horizon)g")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
                 Text("Değerlendirildi · \(timeAgo(verdict.evaluationDate))")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
 
             Spacer()
 
             Text(String(format: "%+.1f%%", verdict.priceChange))
-                .font(.system(size: 13, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                 .foregroundColor(verdict.priceChange >= 0
                                  ? InstitutionalTheme.Colors.aurora
                                  : InstitutionalTheme.Colors.crimson)
@@ -438,12 +438,12 @@ struct AlkindusDashboardView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("Aksiyon")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Spacer()
                 if let flash = actionFlash {
                     Text(flash)
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.aurora)
                         .transition(.opacity)
                 }
@@ -521,15 +521,15 @@ struct AlkindusDashboardView: View {
                         .frame(width: 16, height: 16)
                 } else {
                     Image(systemName: icon)
-                        .font(.system(size: 13))
+                        .font(DesignTokens.Fonts.custom(size: 13))
                         .frame(width: 16)
                 }
                 Text(title)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                 Spacer()
                 if let trailing {
                     Text(trailing)
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         .monospacedDigit()
                 }
@@ -550,10 +550,10 @@ struct AlkindusDashboardView: View {
     private var howItWorksCard: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Nasıl çalışıyor")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Text("Her al/sat kararı kuyruğa girer. 7 ve 15 gün sonra fiyat değişimi gerçekle karşılaştırılır. Doğruysa modül +1, yanlışsa -1. Zamanla modüllerin gerçek doğruluk oranı çıkar.")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
                 .lineSpacing(2)
@@ -576,13 +576,13 @@ struct AlkindusDashboardView: View {
     private var emptyState: some View {
         VStack(spacing: 12) {
             Image(systemName: "brain.head.profile")
-                .font(.system(size: 28))
+                .font(DesignTokens.Fonts.custom(size: 28))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Text("Henüz veri yok")
-                .font(.system(size: 14, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Text("Kararlar verildikçe ve olgunlaştıkça istatistikler burada görünecek.")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)

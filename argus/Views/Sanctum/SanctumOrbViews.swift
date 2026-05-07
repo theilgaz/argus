@@ -49,7 +49,7 @@ struct OrbView: View {
 
             // Caption — motor adı + state-aware değer
             Text(captionText)
-                .font(.system(size: 10, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 10, weight: .medium))
                 .foregroundStyle(InstitutionalTheme.Colors.textSecondary.opacity(orbState.captionOpacity))
                 .lineLimit(1)
         }
@@ -253,7 +253,7 @@ struct BistOrbView: View {
             }
 
             Text(module.rawValue.capitalized)
-                .font(.system(size: 10, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 10, weight: .medium))
                 .foregroundStyle(InstitutionalTheme.Colors.textSecondary)
                 .lineLimit(1)
         }

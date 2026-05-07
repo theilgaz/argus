@@ -53,7 +53,7 @@ struct EntrySetupCard: View {
                 Spacer()
                 if let price = currentPrice, setup.isPriceInZone(price) {
                     Label("ZONDA", systemImage: "bolt.fill")
-                        .font(.system(size: 10, weight: .heavy))
+                        .font(DesignTokens.Fonts.custom(size: 10, weight: .heavy))
                         .foregroundColor(Sanctum2Theme.neonGreen)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
@@ -120,13 +120,13 @@ struct EntrySetupCard: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("Bekle")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                     .foregroundColor(accent)
                 Spacer()
             }
 
             Text(setup.waitMessage ?? "Setup uygulanabilir değil.")
-                .font(.system(size: 13, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -150,9 +150,9 @@ struct EntrySetupCard: View {
         fmt.timeStyle = .short
         return HStack(spacing: 4) {
             Image(systemName: "clock")
-                .font(.system(size: 9))
+                .font(DesignTokens.Fonts.custom(size: 9))
             Text("Geçerlilik: \(fmt.string(from: setup.validUntil))")
-                .font(.system(size: 10))
+                .font(DesignTokens.Fonts.custom(size: 10))
         }
         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         .padding(.top, 2)
@@ -160,7 +160,7 @@ struct EntrySetupCard: View {
 
     private func confluenceChip(_ factor: ConfluenceFactor) -> some View {
         Text(factor.userDescription)
-            .font(.system(size: 10, weight: .semibold))
+            .font(DesignTokens.Fonts.custom(size: 10, weight: .semibold))
             .foregroundColor(accent)
             .padding(.horizontal, 7)
             .padding(.vertical, 3)
@@ -177,10 +177,10 @@ private struct GradeBadge: View {
     var body: some View {
         HStack(spacing: 6) {
             Text("Not")
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Text(grade.label)
-                .font(.system(size: 15, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 15, weight: .medium))
                 .foregroundColor(color)
                 .monospacedDigit()
         }
@@ -196,15 +196,15 @@ private struct SetupRow: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: icon)
-                .font(.system(size: 11, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 11, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .frame(width: 16)
             Text(label)
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Spacer()
             Text(value)
-                .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .semibold, design: .monospaced))
                 .foregroundColor(valueColor)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)

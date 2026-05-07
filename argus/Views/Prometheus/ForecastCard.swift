@@ -66,11 +66,11 @@ struct ForecastCard: View {
     private var header: some View {
         HStack {
             Text("Tahmin")
-                .font(.system(size: 14, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Spacer()
             Text("\(forecast?.horizonDays ?? 5) günlük")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
     }
@@ -79,10 +79,10 @@ struct ForecastCard: View {
         HStack(spacing: 14) {
             VStack(alignment: .leading, spacing: 3) {
                 Text("Şimdi")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Text(formatPrice(f.currentPrice))
-                    .font(.system(size: 17, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 17, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .monospacedDigit()
             }
@@ -90,17 +90,17 @@ struct ForecastCard: View {
             Spacer()
 
             Image(systemName: f.trend.icon)
-                .font(.system(size: 14, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                 .foregroundColor(trendColor(f.trend))
 
             Spacer()
 
             VStack(alignment: .trailing, spacing: 3) {
                 Text("+\(f.horizonDays) gün")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Text(formatPrice(f.predictedPrice))
-                    .font(.system(size: 17, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 17, weight: .medium))
                     .foregroundColor(trendColor(f.trend))
                     .monospacedDigit()
             }
@@ -110,13 +110,13 @@ struct ForecastCard: View {
     private func trendLine(_ f: PrometheusForecast) -> some View {
         HStack(spacing: 6) {
             Text(f.formattedChange)
-                .font(.system(size: 13, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                 .foregroundColor(trendColor(f.trend))
                 .monospacedDigit()
             Text("·")
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Text(trendLabel(f.trend))
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
     }
@@ -124,7 +124,7 @@ struct ForecastCard: View {
     private func confidenceRow(_ f: PrometheusForecast) -> some View {
         HStack(spacing: 10) {
             Text("Güven")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 .frame(width: 50, alignment: .leading)
 
@@ -133,13 +133,13 @@ struct ForecastCard: View {
                      height: 4)
 
             Text("%\(Int(f.confidence))")
-                .font(.system(size: 12, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 12, design: .monospaced))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .monospacedDigit()
                 .frame(width: 36, alignment: .trailing)
 
             Text(confidenceLabel(f.confidence))
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(confidenceColor(f.confidence))
                 .frame(width: 56, alignment: .trailing)
         }
@@ -147,7 +147,7 @@ struct ForecastCard: View {
 
     private func insightLine(_ f: PrometheusForecast) -> some View {
         Text(generateInsight(trend: f.trend, confidence: f.confidence))
-            .font(.system(size: 12))
+            .font(DesignTokens.Fonts.custom(size: 12))
             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             .lineSpacing(2)
             .fixedSize(horizontal: false, vertical: true)
@@ -155,7 +155,7 @@ struct ForecastCard: View {
 
     private var footerLine: some View {
         Text("Holt-Winters üstel düzleştirme")
-            .font(.system(size: 11))
+            .font(DesignTokens.Fonts.custom(size: 11))
             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             .frame(maxWidth: .infinity, alignment: .trailing)
     }
@@ -164,7 +164,7 @@ struct ForecastCard: View {
         HStack(spacing: 10) {
             ProgressView().scaleEffect(0.7)
             Text("Tahmin hesaplanıyor…")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Spacer()
         }
@@ -174,10 +174,10 @@ struct ForecastCard: View {
     private var insufficientBlock: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Yeterli veri yok")
-                .font(.system(size: 13, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Text("En az 30 günlük fiyat geçmişi gerekiyor.")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

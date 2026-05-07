@@ -16,16 +16,16 @@ struct TransactionDetailView: View {
                             .foregroundColor(transaction.type == .buy ? InstitutionalTheme.Colors.aurora : InstitutionalTheme.Colors.crimson)
                         
                         Text(transaction.symbol)
-                            .font(.system(size: 32, weight: .heavy, design: .monospaced))
-                            .foregroundColor(.white)
+                            .font(DesignTokens.Fonts.custom(size: 32, weight: .heavy, design: .monospaced))
+                            .foregroundColor(DesignTokens.Colors.textPrimary)
                         
                         Text(transaction.date.formatted(date: .abbreviated, time: .standard))
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                     }
                     .padding(.top)
                     
-                    Divider().background(Color.white.opacity(0.1))
+                    Divider().background(DesignTokens.Colors.Overlay.l10)
                     
                     // 2. Decision Rationale (The "Why")
                     // Handle MANUAL logic explicitly
@@ -37,12 +37,12 @@ struct TransactionDetailView: View {
                                  Text("Manuel İşlem (Kullanıcı Kararı)")
                                      .font(.headline)
                                      .bold()
-                                     .foregroundColor(.white)
+                                     .foregroundColor(DesignTokens.Colors.textPrimary)
                              }
                              
                              Text("Bu işlem kullanıcı tarafından manuel olarak girilmiştir. Sistem sinyallerinden bağımsızdır.")
                                  .font(.body)
-                                 .foregroundColor(.gray)
+                                 .foregroundColor(DesignTokens.Colors.textTertiary)
                                  .padding()
                                  .background(InstitutionalTheme.Colors.surface1)
                                  .cornerRadius(8)
@@ -69,7 +69,7 @@ struct TransactionDetailView: View {
                                 Text("Karar Mekanizması (Argus/Agora)")
                                     .font(.headline)
                                     .bold()
-                                    .foregroundColor(.white)
+                                    .foregroundColor(DesignTokens.Colors.textPrimary)
                             }
                             
                             AgoraDetailPanel(
@@ -84,19 +84,19 @@ struct TransactionDetailView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Karar Notları")
                                 .font(.headline)
-                                .foregroundColor(.white)
+                                .foregroundColor(DesignTokens.Colors.textPrimary)
                             
                             if let reason = transaction.reasonCode {
                                 Text(TransactionDetailView.humanizedReason(reason))
                                     .font(.body)
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(DesignTokens.Colors.textTertiary)
                                     .padding()
                                     .background(InstitutionalTheme.Colors.surface1)
                                     .cornerRadius(8)
                             } else {
                                 Text("Bu işlem için detaylı karar kaydı bulunamadı.")
                                     .italic()
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(DesignTokens.Colors.textTertiary)
                             }
                         }
                         .padding(.horizontal)
@@ -111,7 +111,7 @@ struct TransactionDetailView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("İşlem Detayları")
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundColor(DesignTokens.Colors.textPrimary)
                         
                         VStack(spacing: 0) {
                             let currencySymbol = transaction.symbol.hasSuffix(".IS") ? "₺" : "$"
@@ -126,7 +126,7 @@ struct TransactionDetailView: View {
                                 Spacer()
                                 let currencySymbol = transaction.symbol.hasSuffix(".IS") ? "₺" : "$"
                                 Text("\(currencySymbol)\(String(format: "%.2f", transaction.amount))")
-                                    .font(.system(size: 20, weight: .heavy, design: .monospaced))
+                                    .font(DesignTokens.Fonts.custom(size: 20, weight: .heavy, design: .monospaced))
                                     .foregroundColor(InstitutionalTheme.Colors.holo)
                             }
                             .padding()

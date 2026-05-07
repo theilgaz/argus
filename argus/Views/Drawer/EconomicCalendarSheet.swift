@@ -36,11 +36,11 @@ struct EconomicCalendarSheet: View {
     private var introSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Makro takvim")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
             Text("Önemli ekonomik olaylar piyasaları doğrudan etkiler. Bu olayların öncesinde ve sonrasında volatilite artar.")
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .lineSpacing(2)
         }
@@ -56,16 +56,16 @@ struct EconomicCalendarSheet: View {
                 HStack(spacing: 10) {
                     ProgressView()
                     Text("Takvim yükleniyor")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
             } else if let errorMessage {
                 Text(errorMessage)
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.crimson)
             } else if events.isEmpty {
                 Text("Seçilen aralıkta kayıtlı olay yok.")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             } else {
                 VStack(spacing: 8) {
@@ -87,7 +87,7 @@ struct EconomicCalendarSheet: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(event.title)
                     .font(.caption)
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
 
                 if let country = event.country, !country.isEmpty {
                     Text(country)
@@ -101,7 +101,7 @@ struct EconomicCalendarSheet: View {
             impactBadge(impactFromString(event.impact))
         }
         .padding(10)
-        .background(Color.white.opacity(0.02))
+        .background(DesignTokens.Colors.Overlay.l02)
         .cornerRadius(InstitutionalTheme.Radius.sm)
     }
 
@@ -156,7 +156,7 @@ struct EconomicCalendarSheet: View {
                 Text("Yuksek etkili olaylar oncesinde:")
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
 
                 VStack(alignment: .leading, spacing: 4) {
                     guideItem("Pozisyon boyutunu kucult")
@@ -187,7 +187,7 @@ struct EconomicCalendarSheet: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 Text("TCMB Para Politikası Kurulu (PPK) her ay toplanır ve politika faizini belirler.")
-                    .font(.system(size: 13))
+                    .font(DesignTokens.Fonts.custom(size: 13))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .lineSpacing(2)
 
@@ -197,7 +197,7 @@ struct EconomicCalendarSheet: View {
                 }
 
                 Text("Ancak beklentiler önemli: beklenen faiz artışı zaten fiyatlanmış olabilir.")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .padding(.top, 4)
             }
@@ -213,7 +213,7 @@ struct EconomicCalendarSheet: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("ABD Merkez Bankasi (FED) kararlari global piyasalari etkiler. FOMC toplantilari yaklasik 6 haftada bir yapilir.")
                     .font(.caption)
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
 
                 HStack(spacing: 20) {
                     impactScenario("Sikilastirma", "Gelisen piyasalardan cikis", InstitutionalTheme.Colors.crimson)
@@ -247,7 +247,7 @@ struct EconomicCalendarSheet: View {
 
             Text(text)
                 .font(.caption)
-                .foregroundColor(.white)
+                .foregroundColor(DesignTokens.Colors.textPrimary)
         }
         .padding(12)
         .background(InstitutionalTheme.Colors.holo.opacity(0.1))
@@ -256,7 +256,7 @@ struct EconomicCalendarSheet: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(.system(size: 12, weight: .medium))
+            .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
     }
 

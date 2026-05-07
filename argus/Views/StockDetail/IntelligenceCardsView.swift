@@ -16,7 +16,7 @@ struct IntelligenceCardsView: View {
                         .foregroundColor(.purple)
                     Text("Piyasa İstihbaratı")
                         .font(.headline)
-                        .foregroundColor(.primary)
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                     Spacer()
                 }
                 
@@ -37,7 +37,7 @@ struct IntelligenceCardsView: View {
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    .stroke(DesignTokens.Colors.Overlay.l10, lineWidth: 1)
             )
         }
     }
@@ -52,7 +52,7 @@ struct IntelligenceCardsView: View {
             HStack {
                 Text("Analist Hedefi (Ort.)")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(DesignTokens.Colors.textSecondary)
                 Spacer()
                 Text("\(target, specifier: "%.2f")")
                     .font(.subheadline)
@@ -69,7 +69,7 @@ struct IntelligenceCardsView: View {
                     Rectangle()
                         .frame(width: geo.size.width, height: 6)
                         .opacity(0.2)
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                         .cornerRadius(3)
                     
                     // Indicator (Clamped)
@@ -99,7 +99,7 @@ struct IntelligenceCardsView: View {
             VStack(alignment: .leading) {
                 Text("İçeriden Öğrenenler (90 Gün)")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(DesignTokens.Colors.textSecondary)
                 
                 if netSentiment > 0 {
                     HStack {
@@ -112,18 +112,18 @@ struct IntelligenceCardsView: View {
                 } else if netSentiment < 0 {
                     HStack {
                         Image(systemName: "arrow.down.circle")
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                         Text("Yönetim Satışta / Nötr")
                             .font(.callout)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(DesignTokens.Colors.textSecondary)
                     }
                 } else {
                     HStack {
                         Image(systemName: "minus.circle")
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                         Text("İşlem Yok")
                             .font(.callout)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(DesignTokens.Colors.textSecondary)
                     }
                 }
             }

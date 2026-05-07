@@ -47,13 +47,13 @@ struct FinanceWisdomSheet: View {
 
                 TextField("Söz ara...", text: $pendingSearchText)
                     .textFieldStyle(PlainTextFieldStyle())
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
 
                 Button("Bul") {
                     applyFilter()
                 }
                 .font(.caption)
-                .foregroundColor(.white)
+                .foregroundColor(DesignTokens.Colors.textPrimary)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
                 .background(RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm).fill(InstitutionalTheme.Colors.holo))
@@ -116,8 +116,8 @@ struct FinanceWisdomSheet: View {
     private func quoteRow(_ quote: WisdomQuote) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(quote.quote)
-                .font(.system(size: 14, weight: .medium, design: .serif))
-                .foregroundColor(.white)
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .medium, design: .serif))
+                .foregroundColor(DesignTokens.Colors.textPrimary)
                 .italic()
 
             HStack(spacing: 8) {

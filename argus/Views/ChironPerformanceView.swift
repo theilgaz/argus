@@ -41,7 +41,7 @@ struct ChironPerformanceView: View {
         HStack(spacing: 8) {
             Button(action: { dismiss() }) {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 18, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .frame(width: 36, height: 36)
                     .contentShape(Rectangle())
@@ -50,7 +50,7 @@ struct ChironPerformanceView: View {
             .accessibilityLabel("Geri")
 
             Text("Performans")
-                .font(.system(size: 17, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 17, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .accessibilityAddTraits(.isHeader)
 
@@ -72,17 +72,17 @@ struct ChironPerformanceView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("Öğrenme günlüğü")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Spacer()
                 Text("\(learningEvents.count)")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     .monospacedDigit()
             }
 
             Text("Modül ağırlıklarındaki son değişimler.")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
             Rectangle()
@@ -91,7 +91,7 @@ struct ChironPerformanceView: View {
 
             if learningEvents.isEmpty {
                 Text("Henüz kaydedilmiş ağırlık değişimi yok.")
-                    .font(.system(size: 13))
+                    .font(DesignTokens.Fonts.custom(size: 13))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     .padding(.vertical, 6)
             } else {
@@ -116,19 +116,19 @@ struct ChironPerformanceView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("İşlem geçmişi")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Spacer()
                 if !tradeHistory.isEmpty {
                     Text("\(tradeHistory.count)")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         .monospacedDigit()
                 }
             }
 
             Text("Argus Ledger · kapanmış pozisyonlar.")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
             Rectangle()
@@ -139,14 +139,14 @@ struct ChironPerformanceView: View {
                 HStack(spacing: 10) {
                     ProgressView().scaleEffect(0.7)
                     Text("Yükleniyor…")
-                        .font(.system(size: 13))
+                        .font(DesignTokens.Fonts.custom(size: 13))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     Spacer()
                 }
                 .padding(.vertical, 6)
             } else if tradeHistory.isEmpty {
                 Text("Henüz kapanmış işlem kaydı yok.")
-                    .font(.system(size: 13))
+                    .font(DesignTokens.Fonts.custom(size: 13))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     .padding(.vertical, 6)
             } else {
@@ -185,11 +185,11 @@ struct PerformanceLearningCard: View {
                 Text(event.reason)
                     .font(.caption)
                     .bold()
-                    .foregroundColor(.white)
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                 Spacer()
                 Text(event.timestamp, style: .date)
                     .font(.caption2)
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
             }
             
             Text(event.summaryText)

@@ -36,7 +36,7 @@ struct ArgusAnalysisSheet: View {
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Text("Argus analizi")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(DesignTokens.Fonts.custom(size: 14, weight: .semibold))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -52,10 +52,10 @@ struct ArgusAnalysisSheet: View {
     private var headerBlock: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(symbol)
-                .font(.system(size: 22, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 22, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Text("Konsey detaylı analizi")
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
     }
@@ -69,25 +69,25 @@ struct ArgusAnalysisSheet: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Sonuç")
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Fonts.custom(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         Text(actionText(d.finalActionCore))
-                            .font(.system(size: 22, weight: .semibold))
+                            .font(DesignTokens.Fonts.custom(size: 22, weight: .semibold))
                             .foregroundColor(actionColor(d.finalActionCore))
                     }
                     Spacer()
                     VStack(alignment: .trailing, spacing: 2) {
                         Text("Güven")
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Fonts.custom(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         Text("%\(Int(d.finalScoreCore.rounded()))")
-                            .font(.system(size: 22, weight: .semibold, design: .monospaced))
+                            .font(DesignTokens.Fonts.custom(size: 22, weight: .semibold, design: .monospaced))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     }
                 }
                 Divider().background(InstitutionalTheme.Colors.border)
                 Text(summarySentence(d))
-                    .font(.system(size: 13))
+                    .font(DesignTokens.Fonts.custom(size: 13))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .lineLimit(nil)
                     .fixedSize(horizontal: false, vertical: true)
@@ -124,7 +124,7 @@ struct ArgusAnalysisSheet: View {
         if let d = decision, !d.motorReasonings.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Motor oyları")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 ForEach(d.motorReasonings, id: \.motor) { r in
                     motorRow(r)
@@ -137,34 +137,34 @@ struct ArgusAnalysisSheet: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text(r.motor.displayName)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Spacer()
                 // Chiron gibi sayısal olmayan motorlar için valueText doğrudan gösterilir.
                 if let value = r.valueText {
                     Text(value)
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(stanceColor(r.stance))
                 } else if r.score <= 0 {
                     Text("Bekleniyor")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 } else {
                     Text("\(r.stance.arrowGlyph) \(r.stance.rawValue) · \(Int(r.score))")
-                        .font(.system(size: 12, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 12, design: .monospaced))
                         .foregroundColor(stanceColor(r.stance))
                 }
             }
             if !r.summary.isEmpty {
                 Text(r.summary)
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .lineLimit(nil)
                     .fixedSize(horizontal: false, vertical: true)
             }
             if let w = r.weight {
                 Text("Konsey ağırlığı %\(Int((w * 100).rounded()))")
-                    .font(.system(size: 11, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 11, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
         }
@@ -185,10 +185,10 @@ struct ArgusAnalysisSheet: View {
         if let d = decision, !d.motorReasonings.isEmpty {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Çelişki haritası")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Text(d.conflictMapText)
-                    .font(.system(size: 13))
+                    .font(DesignTokens.Fonts.custom(size: 13))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .lineLimit(nil)
                     .fixedSize(horizontal: false, vertical: true)
@@ -206,14 +206,14 @@ struct ArgusAnalysisSheet: View {
 
     private var closingNote: some View {
         Text("Bu sayfa motor verilerinden üretilen yapısal analizi gösterir. Daha derin (LLM destekli) yorum için ileride bu sayfaya ek bir bölüm gelecek.")
-            .font(.system(size: 11))
+            .font(DesignTokens.Fonts.custom(size: 11))
             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             .padding(.top, 8)
     }
 
     private func placeholderBlock(text: String) -> some View {
         Text(text)
-            .font(.system(size: 13))
+            .font(DesignTokens.Fonts.custom(size: 13))
             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)

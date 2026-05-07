@@ -105,7 +105,7 @@ struct HorizonBadge: View {
                 .foregroundColor(isPrimary ? InstitutionalTheme.Colors.textPrimary : InstitutionalTheme.Colors.textTertiary)
             
             Text(action.rawValue.prefix(1))
-                .font(.system(size: 14, weight: .bold))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .bold))
                 .foregroundColor(isPrimary ? actionColor : InstitutionalTheme.Colors.textSecondary)
             
             Text("%\(Int(confidence * 100))")

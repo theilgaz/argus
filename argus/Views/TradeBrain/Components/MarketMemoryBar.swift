@@ -29,7 +29,7 @@ struct MarketMemoryBar: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "brain.head.profile")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.primary)
                 Text("Pazar Hafizasi")
                     .font(InstitutionalTheme.Typography.bodyStrong)
@@ -65,7 +65,7 @@ struct MarketMemoryBar: View {
                     ForEach(eventContext.warnings.prefix(2), id: \.self) { warning in
                         HStack(spacing: 6) {
                             Image(systemName: "exclamationmark.circle")
-                                .font(.system(size: 10))
+                                .font(DesignTokens.Fonts.custom(size: 10))
                                 .foregroundColor(InstitutionalTheme.Colors.warning)
                             Text(warning)
                                 .font(InstitutionalTheme.Typography.micro)
@@ -95,7 +95,7 @@ struct RegimeBadge: View {
         VStack(spacing: 4) {
             HStack(spacing: 4) {
                 Image(systemName: context.regime == "Risk On" ? "figure.run" : (context.regime == "Risk Off" ? "shield.fill" : "equal.circle.fill"))
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                 Text(context.regime)
                     .font(InstitutionalTheme.Typography.caption)
             }
@@ -143,7 +143,7 @@ struct EventBadge: View {
         VStack(spacing: 4) {
             HStack(spacing: 4) {
                 Image(systemName: context.eventCount > 0 ? "calendar.badge.clock" : "calendar.badge.checkmark")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                 Text(context.eventCount > 0 ? "\(context.eventCount) Olay" : "Temiz")
                     .font(InstitutionalTheme.Typography.caption)
             }
@@ -180,7 +180,7 @@ struct MemoryInsightCard: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: icon)
-                .font(.system(size: 16, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 16, weight: .semibold))
                 .foregroundColor(color)
                 .frame(width: 24)
             

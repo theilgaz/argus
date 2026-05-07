@@ -111,7 +111,7 @@ struct ArgusAcademyHubSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
                 Text(String(format: "%02d", order))
-                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .bold, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.primary)
                     .frame(width: 26, alignment: .leading)
                 Text(lesson.title)
@@ -119,7 +119,7 @@ struct ArgusAcademyHubSheet: View {
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Spacer()
                 Image(systemName: "arrow.up.right")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
 
@@ -128,7 +128,7 @@ struct ArgusAcademyHubSheet: View {
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
             Text("Hedef: \(lesson.purpose) · Tahmini süre: \(lesson.durationMinutes) dk")
-                .font(.system(size: 11, weight: .regular))
+                .font(DesignTokens.Fonts.custom(size: 11, weight: .regular))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
         .padding(.vertical, 6)
@@ -151,7 +151,7 @@ struct ArgusAcademyHubSheet: View {
     private func protocolRow(index: String, text: String) -> some View {
         HStack(alignment: .top, spacing: 10) {
             Text(index)
-                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 11, weight: .bold, design: .monospaced))
                 .foregroundColor(InstitutionalTheme.Colors.primary)
                 .frame(width: 12, alignment: .leading)
             Text(text)
@@ -182,7 +182,7 @@ struct ArgusAcademyHubSheet: View {
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     Spacer()
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(DesignTokens.Fonts.custom(size: 11, weight: .semibold))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
             }
@@ -194,7 +194,7 @@ struct ArgusAcademyHubSheet: View {
     private func resourceRow(_ resource: AcademyResource) -> some View {
         HStack(spacing: 10) {
             Image(systemName: "book.closed")
-                .font(.system(size: 13, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.primary)
                 .frame(width: 16)
 
@@ -208,7 +208,7 @@ struct ArgusAcademyHubSheet: View {
             }
             Spacer()
             Image(systemName: "chevron.right")
-                .font(.system(size: 11, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 11, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
         .padding(.vertical, 4)
@@ -217,7 +217,7 @@ struct ArgusAcademyHubSheet: View {
     /// 2026-05-05 H-67: caps mono tracking 0.8 → sentence sade.
     private func sectionTitle(_ text: String) -> some View {
         Text(text.capitalized)
-            .font(.system(size: 13, weight: .medium))
+            .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
     }
 

@@ -137,6 +137,15 @@ struct APIKeyCenterView: View {
                 testMode: .unsupported
             ),
             KeyEntry(
+                id: "finnhub",
+                title: "Finnhub",
+                subtitle: "Yedek piyasa verisi (60 istek/dk)",
+                placeholder: "Finnhub API Key",
+                category: .market,
+                source: .provider(.finnhub),
+                testMode: .unsupported
+            ),
+            KeyEntry(
                 id: "massive",
                 title: "Massive",
                 subtitle: "Opsiyon ve zincir verisi",
@@ -284,23 +293,23 @@ struct APIKeyCenterView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Label("Merkezi Yonetim", systemImage: "key.horizontal.fill")
-                    .font(.system(size: 14, weight: .bold, design: .monospaced))
-                    .foregroundColor(.white)
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .bold, design: .monospaced))
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                 Spacer()
                 Text("\(configuredCount)/\(entries.count) TANIMLI")
-                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .semibold, design: .monospaced))
                     .foregroundColor(configuredCount == entries.count ? .green : .orange)
             }
 
             Text("Tum API anahtarlari tek ekranda yonetilir. Daginik ayar bloklari kaldirildi.")
-                .font(.system(size: 11, design: .monospaced))
-                .foregroundColor(.gray)
+                .font(DesignTokens.Fonts.custom(size: 11, design: .monospaced))
+                .foregroundColor(DesignTokens.Colors.textTertiary)
         }
         .padding(12)
-        .background(Color.white.opacity(0.06))
+        .background(DesignTokens.Colors.Overlay.l06)
         .overlay(
             RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(DesignTokens.Colors.Overlay.l08, lineWidth: 1)
         )
         .cornerRadius(10)
     }
@@ -309,15 +318,15 @@ struct APIKeyCenterView: View {
         VStack(spacing: 10) {
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass")
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                 TextField("Saglayici ara", text: $searchText)
                     .autocapitalization(.none)
                     .disableAutocorrection(true)
-                    .font(.system(size: 13, design: .monospaced))
-                    .foregroundColor(.white)
+                    .font(DesignTokens.Fonts.custom(size: 13, design: .monospaced))
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
             }
             .padding(10)
-            .background(Color.white.opacity(0.06))
+            .background(DesignTokens.Colors.Overlay.l06)
             .cornerRadius(8)
 
             Picker("Filtre", selection: $filter) {
@@ -349,11 +358,11 @@ struct APIKeyCenterView: View {
     private func categoryChip(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 11, weight: .semibold, design: .monospaced))
                 .foregroundColor(isSelected ? .black : .gray)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(isSelected ? Color.cyan : Color.white.opacity(0.08))
+                .background(isSelected ? Color.cyan : DesignTokens.Colors.Overlay.l08)
                 .cornerRadius(8)
         }
     }
@@ -363,18 +372,18 @@ struct APIKeyCenterView: View {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(entry.title)
-                        .font(.system(size: 13, weight: .bold, design: .monospaced))
-                        .foregroundColor(.white)
+                        .font(DesignTokens.Fonts.custom(size: 13, weight: .bold, design: .monospaced))
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                     Text(entry.subtitle)
-                        .font(.system(size: 10, design: .monospaced))
-                        .foregroundColor(.gray)
+                        .font(DesignTokens.Fonts.custom(size: 10, design: .monospaced))
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 }
 
                 Spacer()
 
                 let configured = !drafts[entry.id, default: ""].trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 Text(configured ? "TANIMLI" : "EKSIK")
-                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 9, weight: .bold, design: .monospaced))
                     .foregroundColor(configured ? .green : .red)
                     .padding(.horizontal, 7)
                     .padding(.vertical, 4)
@@ -404,24 +413,24 @@ struct APIKeyCenterView: View {
                 }
                 .autocapitalization(.none)
                 .disableAutocorrection(true)
-                .font(.system(size: 12, design: .monospaced))
-                .foregroundColor(.white)
+                .font(DesignTokens.Fonts.custom(size: 12, design: .monospaced))
+                .foregroundColor(DesignTokens.Colors.textPrimary)
 
                 Button(action: { toggleVisibility(for: entry.id) }) {
                     Image(systemName: revealed.contains(entry.id) ? "eye.slash.fill" : "eye.fill")
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 }
                 .buttonStyle(.plain)
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
-            .background(Color.white.opacity(0.05))
+            .background(DesignTokens.Colors.Overlay.l05)
             .cornerRadius(8)
 
             HStack(spacing: 8) {
                 Button(action: { save(entry) }) {
                     Label("Kaydet", systemImage: "tray.and.arrow.down.fill")
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 10, weight: .bold, design: .monospaced))
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(isDirty(entry.id) ? .cyan : .gray)
@@ -429,7 +438,7 @@ struct APIKeyCenterView: View {
 
                 Button(action: { clear(entry) }) {
                     Label("Temizle", systemImage: "trash")
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 10, weight: .bold, design: .monospaced))
                 }
                 .buttonStyle(.bordered)
                 .tint(.red)
@@ -441,7 +450,7 @@ struct APIKeyCenterView: View {
                             .frame(width: 14, height: 14)
                     } else {
                         Label("Test", systemImage: "network")
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .font(DesignTokens.Fonts.custom(size: 10, weight: .bold, design: .monospaced))
                     }
                 }
                 .buttonStyle(.bordered)
@@ -451,7 +460,7 @@ struct APIKeyCenterView: View {
 
             if let testState = testStates[entry.id] {
                 Text(testState.message)
-                    .font(.system(size: 10, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 10, design: .monospaced))
                     .foregroundColor(testState.success ? .green : .orange)
                     .padding(.top, 2)
             }

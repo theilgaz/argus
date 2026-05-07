@@ -52,7 +52,7 @@ struct InteractiveCandleChart: View {
                     } else {
                         Text(isInspectionMode ? "Parmağınızı sürükleyerek inceleyin" : "Grafiği kaydırabilir ve büyütebilirsiniz")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(DesignTokens.Colors.textSecondary)
                     }
                 
                 Spacer()
@@ -389,11 +389,11 @@ struct InfoBadge: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            Text(title).font(.system(size: 8)).foregroundColor(.gray)
+            Text(title).font(DesignTokens.Fonts.custom(size: 8)).foregroundColor(DesignTokens.Colors.textTertiary)
             Text(value).font(.caption2).bold().foregroundColor(color)
         }
         .padding(4)
-        .background(Color.black.opacity(0.1))
+        .background(DesignTokens.Colors.Scrim.s10)
         .cornerRadius(4)
     }
 }

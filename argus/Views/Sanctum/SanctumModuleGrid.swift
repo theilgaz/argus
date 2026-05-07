@@ -19,7 +19,6 @@ import SwiftUI
 
 struct SanctumModuleGrid: View {
     let symbol: String
-    @ObservedObject var viewModel: TradingViewModel
     let decision: ArgusGrandDecision?
     let bistModules: [SanctumBistModuleType]
     @Binding var showDecision: Bool

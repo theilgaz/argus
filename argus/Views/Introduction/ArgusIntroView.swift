@@ -77,7 +77,7 @@ struct ArgusIntroView: View {
 
                     // Core Eye (Argus)
                     Image(systemName: "eye.circle.fill")
-                        .font(.system(size: 50))
+                        .font(DesignTokens.Fonts.custom(size: 50))
                         .foregroundColor(InstitutionalTheme.Colors.holo)
                         .shadow(color: InstitutionalTheme.Colors.textPrimary,
                                 radius: glitchEffect ? 20 : 5)
@@ -91,7 +91,7 @@ struct ArgusIntroView: View {
                 // 4. Glitch Text Title
                 if showText {
                     Text("ARGUS TERMINAL")
-                        .font(.system(size: 24, weight: .heavy, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 24, weight: .heavy, design: .monospaced))
                         .tracking(8)
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         .shadow(color: InstitutionalTheme.Colors.holo.opacity(0.75), radius: 10)
@@ -110,7 +110,7 @@ struct ArgusIntroView: View {
                             Text(log)
                                 .foregroundColor(InstitutionalTheme.Colors.aurora)
                         }
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 10, weight: .bold, design: .monospaced))
                         .transition(.opacity)
                     }
                 }

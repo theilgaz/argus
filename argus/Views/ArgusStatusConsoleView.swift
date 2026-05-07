@@ -73,7 +73,7 @@ struct ArgusStatusConsoleView: View {
             // Ana toggle
             HStack(spacing: 12) {
                 Image(systemName: autoPilotStore.isAutoPilotEnabled ? "bolt.fill" : "bolt.slash.fill")
-                    .font(.system(size: 14))
+                    .font(DesignTokens.Fonts.custom(size: 14))
                     .foregroundColor(autoPilotStore.isAutoPilotEnabled ? InstitutionalTheme.Colors.positive : InstitutionalTheme.Colors.negative)
                     .frame(width: 20)
                 VStack(alignment: .leading, spacing: 2) {
@@ -130,13 +130,13 @@ struct ArgusStatusConsoleView: View {
                 Divider().background(InstitutionalTheme.Colors.borderSubtle)
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Neden trade etmiyor")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .padding(.top, 6)
                     ForEach(tradeBlockReasons, id: \.self) { reason in
                         HStack(spacing: 8) {
                             Image(systemName: "exclamationmark.circle.fill")
-                                .font(.system(size: 10))
+                                .font(DesignTokens.Fonts.custom(size: 10))
                                 .foregroundColor(.orange)
                             Text(reason)
                                 .font(InstitutionalTheme.Typography.caption)
@@ -167,7 +167,7 @@ struct ArgusStatusConsoleView: View {
         return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
                 Image(systemName: modeIcon)
-                    .font(.system(size: 14))
+                    .font(DesignTokens.Fonts.custom(size: 14))
                     .foregroundColor(modeColor)
                     .frame(width: 20)
                 VStack(alignment: .leading, spacing: 2) {
@@ -217,7 +217,7 @@ struct ArgusStatusConsoleView: View {
                 // Otopilot loop henüz bir tur tamamlamamış — ilk iterasyon bekleniyor
                 HStack(spacing: 10) {
                     Image(systemName: "hourglass")
-                        .font(.system(size: 14))
+                        .font(DesignTokens.Fonts.custom(size: 14))
                         .foregroundColor(.orange)
                         .frame(width: 20)
                     VStack(alignment: .leading, spacing: 2) {
@@ -236,7 +236,7 @@ struct ArgusStatusConsoleView: View {
                 // Tarama özeti
                 HStack(spacing: 10) {
                     Image(systemName: summary.signalCount > 0 ? "bolt.horizontal.fill" : "bolt.horizontal")
-                        .font(.system(size: 14))
+                        .font(DesignTokens.Fonts.custom(size: 14))
                         .foregroundColor(summary.signalCount > 0 ? InstitutionalTheme.Colors.positive : InstitutionalTheme.Colors.textSecondary)
                         .frame(width: 20)
                     VStack(alignment: .leading, spacing: 2) {
@@ -290,7 +290,7 @@ struct ArgusStatusConsoleView: View {
                     Divider().background(InstitutionalTheme.Colors.borderSubtle)
                     HStack(spacing: 8) {
                         Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(.orange)
                         Text("Tarama çalıştı ama ne sinyal üretildi ne atlama kaydedildi — Council eşikleri veya veri akışı kontrol edilmeli.")
                             .font(InstitutionalTheme.Typography.caption)
@@ -351,7 +351,7 @@ struct ArgusStatusConsoleView: View {
             // Canlı skor
             HStack(spacing: 12) {
                 Image(systemName: signalSymbol)
-                    .font(.system(size: 14))
+                    .font(DesignTokens.Fonts.custom(size: 14))
                     .foregroundColor(signalColor)
                     .frame(width: 20)
                 VStack(alignment: .leading, spacing: 2) {
@@ -369,7 +369,7 @@ struct ArgusStatusConsoleView: View {
             if let cross = aetherCrossingMsg {
                 HStack {
                     Image(systemName: "arrow.up.forward.circle.fill")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.positive)
                     Text(cross)
                         .font(InstitutionalTheme.Typography.caption)
@@ -384,12 +384,12 @@ struct ArgusStatusConsoleView: View {
             // Nabız
             HStack(spacing: 10) {
                 Image(systemName: pulseIcon)
-                    .font(.system(size: 14))
+                    .font(DesignTokens.Fonts.custom(size: 14))
                     .foregroundColor(pulseColor)
                     .frame(width: 20)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Nabız")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     Text(pulseSummary)
                         .font(InstitutionalTheme.Typography.caption)
@@ -431,7 +431,7 @@ struct ArgusStatusConsoleView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
                 Image(systemName: icon)
-                    .font(.system(size: 18, weight: .bold))
+                    .font(DesignTokens.Fonts.custom(size: 18, weight: .bold))
                     .foregroundColor(color)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)

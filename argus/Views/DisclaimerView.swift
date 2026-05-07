@@ -23,7 +23,7 @@ struct DisclaimerView: View {
                                     .stroke(InstitutionalTheme.Colors.titan.opacity(0.45), lineWidth: 1)
                             )
                         Image(systemName: "exclamationmark.shield.fill")
-                            .font(.system(size: 40, weight: .semibold))
+                            .font(DesignTokens.Fonts.custom(size: 40, weight: .semibold))
                             .foregroundColor(InstitutionalTheme.Colors.titan)
                     }
                     .shadow(color: InstitutionalTheme.Colors.titan.opacity(0.25), radius: 18)
@@ -31,7 +31,7 @@ struct DisclaimerView: View {
                     VStack(spacing: 4) {
                         ArgusSectionCaption("ARGUS · YASAL")
                         Text("YASAL UYARI")
-                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .font(DesignTokens.Fonts.custom(size: 24, weight: .bold, design: .rounded))
                             .tracking(3)
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     }
@@ -66,7 +66,7 @@ struct DisclaimerView: View {
                         HStack(spacing: 8) {
                             ArgusDot(color: InstitutionalTheme.Colors.textTertiary, size: 4)
                             Text("SON GÜNCELLEME · 26.12.2025")
-                                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                .font(DesignTokens.Fonts.custom(size: 10, weight: .bold, design: .monospaced))
                                 .tracking(1.2)
                                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         }
@@ -94,9 +94,9 @@ struct DisclaimerView: View {
                 } label: {
                     HStack(spacing: 10) {
                         Image(systemName: canAccept ? "checkmark.seal.fill" : "hourglass")
-                            .font(.system(size: 14, weight: .bold))
+                            .font(DesignTokens.Fonts.custom(size: 14, weight: .bold))
                         Text(canAccept ? "OKUDUM · KABUL EDİYORUM" : "LÜTFEN METNİ OKUYUN")
-                            .font(.system(size: 13, weight: .bold, design: .monospaced))
+                            .font(DesignTokens.Fonts.custom(size: 13, weight: .bold, design: .monospaced))
                             .tracking(1.4)
                     }
                     .foregroundColor(canAccept
@@ -139,7 +139,7 @@ struct DisclaimerView: View {
             HStack(spacing: 8) {
                 ArgusDot(color: InstitutionalTheme.Colors.titan, size: 6)
                 Text(title)
-                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .bold, design: .monospaced))
                     .tracking(1.0)
                     .foregroundColor(InstitutionalTheme.Colors.titan)
             }

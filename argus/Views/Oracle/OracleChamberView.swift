@@ -54,11 +54,11 @@ struct OracleChamberView: View {
     private var headerView: some View {
         VStack(spacing: 4) {
             Text("Makro mercek")
-                .font(.system(size: 13, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
             Text("Makro veri → sektör etkisi")
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
     }
@@ -103,16 +103,16 @@ struct OracleChamberView: View {
             // Center Content
             VStack(spacing: 4) {
                 Text(viewModel.economyStatus.rawValue)
-                    .font(.system(size: 12, weight: .bold, design: .monospaced))
-                    .foregroundColor(.white)
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .bold, design: .monospaced))
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                 
                 Text(viewModel.economyScore)
-                    .font(.system(size: 28, weight: .heavy, design: .rounded))
+                    .font(DesignTokens.Fonts.custom(size: 28, weight: .heavy, design: .rounded))
                     .foregroundColor(viewModel.coreColor)
                 
                 Text("Ekonomi skoru")
-                    .font(.system(size: 10))
-                    .foregroundColor(.gray)
+                    .font(DesignTokens.Fonts.custom(size: 10))
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
             }
         }
         .onAppear {
@@ -125,7 +125,7 @@ struct OracleChamberView: View {
     private var sectorGridView: some View {
         VStack(spacing: 12) {
             Text("Sektör etkileri")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             
             LazyVGrid(columns: [
@@ -142,7 +142,7 @@ struct OracleChamberView: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.03))
+                .fill(DesignTokens.Colors.Overlay.l03)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
                         .stroke(Color.cyan.opacity(0.1), lineWidth: 1)
@@ -158,7 +158,7 @@ struct OracleChamberView: View {
                 Image(systemName: "bolt.fill")
                     .foregroundColor(.orange)
                 Text("Zincir reaksiyon")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Spacer()
             }
@@ -166,7 +166,7 @@ struct OracleChamberView: View {
             if viewModel.chainReactions.isEmpty {
                 Text("Henüz aktif sinyal yok")
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                     .frame(maxWidth: .infinity)
                     .padding()
             } else {
@@ -178,7 +178,7 @@ struct OracleChamberView: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.03))
+                .fill(DesignTokens.Colors.Overlay.l03)
         )
     }
     
@@ -188,12 +188,12 @@ struct OracleChamberView: View {
         VStack(spacing: 16) {
             HStack {
                 Text("Simülasyon modu")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Spacer()
                 Button(action: { withAnimation { showSimulator = false } }) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 }
             }
             
@@ -227,9 +227,9 @@ struct OracleChamberView: View {
             }) {
                 HStack {
                     Image(systemName: "play.fill")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                     Text("Etkiyi hesapla")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                 }
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .frame(maxWidth: .infinity)
@@ -241,7 +241,7 @@ struct OracleChamberView: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color.black.opacity(0.95))
+                .fill(DesignTokens.Colors.Scrim.s95)
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
                         .stroke(Color.cyan.opacity(0.3), lineWidth: 1)
@@ -255,14 +255,14 @@ struct OracleChamberView: View {
             HStack {
                 Image(systemName: showSimulator ? "chevron.down" : "slider.horizontal.3")
                 Text(showSimulator ? "KAPAT" : "SİMÜLASYON")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .bold, design: .monospaced))
             }
             .foregroundColor(.cyan)
             .padding(.horizontal, 20)
             .padding(.vertical, 10)
             .background(
                 Capsule()
-                    .fill(Color.black.opacity(0.8))
+                    .fill(DesignTokens.Colors.Scrim.s80)
                     .overlay(Capsule().stroke(Color.cyan.opacity(0.5), lineWidth: 1))
             )
         }
@@ -303,17 +303,17 @@ struct SectorNodeView: View {
                     )
                 
                 Image(systemName: node.icon)
-                    .font(.system(size: 18))
+                    .font(DesignTokens.Fonts.custom(size: 18))
                     .foregroundColor(node.impactColor)
             }
             
             Text(node.name)
-                .font(.system(size: 9, weight: .medium, design: .monospaced))
-                .foregroundColor(.white)
+                .font(DesignTokens.Fonts.custom(size: 9, weight: .medium, design: .monospaced))
+                .foregroundColor(DesignTokens.Colors.textPrimary)
                 .lineLimit(1)
             
             Text(node.impactText)
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 10, weight: .bold, design: .monospaced))
                 .foregroundColor(node.impactColor)
         }
     }
@@ -327,11 +327,11 @@ struct ChainReactionCard: View {
             // Stock Symbol
             VStack(alignment: .leading, spacing: 2) {
                 Text(reaction.symbol)
-                    .font(.system(size: 14, weight: .bold, design: .monospaced))
-                    .foregroundColor(.white)
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .bold, design: .monospaced))
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                 Text(reaction.sectorName)
-                    .font(.system(size: 10))
-                    .foregroundColor(.gray)
+                    .font(DesignTokens.Fonts.custom(size: 10))
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
             }
             
             Spacer()
@@ -339,11 +339,11 @@ struct ChainReactionCard: View {
             // Impact
             VStack(alignment: .trailing, spacing: 2) {
                 Text(reaction.impactText)
-                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .bold, design: .monospaced))
                     .foregroundColor(reaction.impact > 0 ? .green : .red)
                 Text(reaction.reason)
-                    .font(.system(size: 9))
-                    .foregroundColor(.gray)
+                    .font(DesignTokens.Fonts.custom(size: 9))
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                     .lineLimit(1)
             }
             
@@ -364,7 +364,7 @@ struct ChainReactionCard: View {
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 10)
-                .fill(Color.white.opacity(0.03))
+                .fill(DesignTokens.Colors.Overlay.l03)
         )
     }
 }
@@ -379,12 +379,12 @@ struct SimulatorSlider: View {
         VStack(spacing: 4) {
             HStack {
                 Text(title)
-                    .font(.system(size: 10, weight: .medium, design: .monospaced))
-                    .foregroundColor(.gray)
+                    .font(DesignTokens.Fonts.custom(size: 10, weight: .medium, design: .monospaced))
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                 Spacer()
                 Text("\(String(format: "%.1f", value))\(unit)")
-                    .font(.system(size: 12, weight: .bold, design: .monospaced))
-                    .foregroundColor(.white)
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .bold, design: .monospaced))
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
             }
             
             Slider(value: $value, in: range)
@@ -625,11 +625,11 @@ struct OracleChamberEmbeddedView: View {
             // Header
             VStack(spacing: 4) {
                 Text("Makro mercek")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
                 Text("Makro veri → sektör etkisi")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
 
@@ -648,16 +648,16 @@ struct OracleChamberEmbeddedView: View {
 
                 VStack(spacing: 2) {
                     Text(viewModel.economyStatus.rawValue)
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .foregroundColor(.white)
+                        .font(DesignTokens.Fonts.custom(size: 10, weight: .bold, design: .monospaced))
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
 
                     Text(viewModel.economyScore)
-                        .font(.system(size: 24, weight: .heavy, design: .rounded))
+                        .font(DesignTokens.Fonts.custom(size: 24, weight: .heavy, design: .rounded))
                         .foregroundColor(viewModel.coreColor)
 
                     Text("Ekonomi skoru")
-                        .font(.system(size: 9))
-                        .foregroundColor(.gray)
+                        .font(DesignTokens.Fonts.custom(size: 9))
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 }
             }
 
@@ -671,15 +671,15 @@ struct OracleChamberEmbeddedView: View {
                 ForEach(viewModel.sectorNodes) { node in
                     VStack(spacing: 4) {
                         Image(systemName: node.icon)
-                            .font(.system(size: 16))
+                            .font(DesignTokens.Fonts.custom(size: 16))
                             .foregroundColor(node.impactColor)
 
                         Text(node.name)
-                            .font(.system(size: 8, weight: .medium))
-                            .foregroundColor(.white)
+                            .font(DesignTokens.Fonts.custom(size: 8, weight: .medium))
+                            .foregroundColor(DesignTokens.Colors.textPrimary)
 
                         Text(node.impactText)
-                            .font(.system(size: 10, weight: .bold))
+                            .font(DesignTokens.Fonts.custom(size: 10, weight: .bold))
                             .foregroundColor(node.impactColor)
                     }
                     .padding(8)
@@ -697,41 +697,41 @@ struct OracleChamberEmbeddedView: View {
                         Image(systemName: "bolt.fill")
                             .foregroundColor(.orange)
                         Text("ZİNCİR REAKSİYON")
-                            .font(.system(size: 9, weight: .bold, design: .monospaced))
-                            .foregroundColor(.gray)
+                            .font(DesignTokens.Fonts.custom(size: 9, weight: .bold, design: .monospaced))
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                     }
 
                     ForEach(viewModel.chainReactions.prefix(4)) { reaction in
                         HStack {
                             Text(reaction.symbol)
-                                .font(.system(size: 12, weight: .bold, design: .monospaced))
-                                .foregroundColor(.white)
+                                .font(DesignTokens.Fonts.custom(size: 12, weight: .bold, design: .monospaced))
+                                .foregroundColor(DesignTokens.Colors.textPrimary)
 
                             Spacer()
 
                             Text(reaction.impactText)
-                                .font(.system(size: 12, weight: .bold))
+                                .font(DesignTokens.Fonts.custom(size: 12, weight: .bold))
                                 .foregroundColor(reaction.impact > 0 ? .green : .red)
                         }
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Color.white.opacity(0.03))
+                        .background(DesignTokens.Colors.Overlay.l03)
                         .cornerRadius(6)
                     }
                 }
             } else {
                 Text(viewModel.dataCoverageText)
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                     .padding()
             }
 
             // Veri Kaynağı Notu
             HStack {
                 Image(systemName: "info.circle")
-                    .font(.system(size: 10))
+                    .font(DesignTokens.Fonts.custom(size: 10))
                 Text("TCMB EVDS + BIST Sektör Verileri")
-                    .font(.system(size: 9))
+                    .font(DesignTokens.Fonts.custom(size: 9))
             }
             .foregroundColor(.gray.opacity(0.6))
         }

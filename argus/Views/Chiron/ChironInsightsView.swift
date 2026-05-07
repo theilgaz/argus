@@ -78,7 +78,7 @@ struct ChironInsightsView: View {
         HStack(spacing: 8) {
             Button(action: { dismiss() }) {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 18, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .frame(width: 36, height: 36)
                     .contentShape(Rectangle())
@@ -87,7 +87,7 @@ struct ChironInsightsView: View {
             .accessibilityLabel("Geri")
 
             Text("Rejim öğrenme")
-                .font(.system(size: 17, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 17, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .accessibilityAddTraits(.isHeader)
 
@@ -109,7 +109,7 @@ struct ChironInsightsView: View {
     // kaldırıldı; sadece bağlam altyazısı kalıyor (sembol / tüm portföy).
     private var headerSection: some View {
         Text(symbol != nil ? "Sembol: \(symbol!)" : "Tüm portföy")
-            .font(.system(size: 13))
+            .font(DesignTokens.Fonts.custom(size: 13))
             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.bottom, 4)
@@ -121,25 +121,25 @@ struct ChironInsightsView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("Öğrenme durumu")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
                 Spacer()
 
                 if status.hasLearning {
                     Text("%\(Int(status.confidence * 100))")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                         .foregroundColor(confidenceColor(status.confidence))
                         .monospacedDigit()
                 } else {
                     Text("Bekliyor")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
             }
 
             Text(status.note)
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
             if status.hasLearning {
@@ -174,7 +174,7 @@ struct ChironInsightsView: View {
     private func learnedWeightsCard(_ weights: OrionWeightSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Öğrenilmiş ağırlıklar")
-                .font(.system(size: 13, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
             VStack(spacing: 10) {
@@ -198,7 +198,7 @@ struct ChironInsightsView: View {
     private func weightBar(name: String, value: Double) -> some View {
         HStack(spacing: 10) {
             Text(name)
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .frame(width: 88, alignment: .leading)
 
@@ -218,7 +218,7 @@ struct ChironInsightsView: View {
             .frame(height: 4)
 
             Text("%\(Int(value * 100))")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .monospacedDigit()
                 .frame(width: 44, alignment: .trailing)
@@ -231,7 +231,7 @@ struct ChironInsightsView: View {
         VStack(spacing: 0) {
             HStack {
                 Text("Bileşen performansı")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Spacer()
             }
@@ -270,26 +270,26 @@ struct ChironInsightsView: View {
                 .frame(width: 6, height: 6)
 
             Text(componentLabel(stat.component))
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
             Spacer()
 
             VStack(alignment: .trailing, spacing: 2) {
                 Text("Kazanma %\(Int(stat.winRate))")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(stat.winRate > 50
                                      ? InstitutionalTheme.Colors.aurora
                                      : InstitutionalTheme.Colors.crimson)
                     .monospacedDigit()
                 Text("\(stat.signalCount) sinyal")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     .monospacedDigit()
             }
 
             Text(reliabilityLabel(stat.reliability))
-                .font(.system(size: 11, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 11, weight: .medium))
                 .foregroundColor(reliabilityColor(stat.reliability))
                 .frame(width: 64, alignment: .trailing)
         }
@@ -324,17 +324,17 @@ struct ChironInsightsView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("Aksiyon")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Spacer()
                 if let flash = actionFlash {
                     Text(flash)
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.aurora)
                         .transition(.opacity)
                 } else if let last = lastLearningAt {
                     Text("son · \(timeAgo(last))")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
             }
@@ -347,14 +347,14 @@ struct ChironInsightsView: View {
                             .frame(width: 16, height: 16)
                     } else {
                         Image(systemName: "brain.head.profile")
-                            .font(.system(size: 13))
+                            .font(DesignTokens.Fonts.custom(size: 13))
                             .frame(width: 16)
                     }
                     Text(learningButtonTitle)
-                        .font(.system(size: 13, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                     Spacer()
                     Text(symbol != nil ? "Sembol" : "Tüm portföy")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
@@ -368,7 +368,7 @@ struct ChironInsightsView: View {
             .disabled(isLearning)
 
             Text(learningHint)
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 .fixedSize(horizontal: false, vertical: true)
         }

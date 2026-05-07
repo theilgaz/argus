@@ -26,7 +26,7 @@ struct TradeHistoryView: View {
             // Header Stats
             TradeStatsHeader(trades: trades)
                 .padding()
-                .background(Color.black.opacity(0.3))
+                .background(DesignTokens.Colors.Scrim.s30)
             
             // Filter Picker
             Picker("Filtre", selection: $selectedFilter) {
@@ -42,16 +42,16 @@ struct TradeHistoryView: View {
             if isLoading {
                 Spacer()
                 ProgressView("Trade geçmişi yükleniyor...")
-                    .foregroundColor(.gray)
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                 Spacer()
             } else if filteredTrades.isEmpty {
                 Spacer()
                 VStack(spacing: 12) {
                     Image(systemName: "chart.line.downtrend.xyaxis")
-                        .font(.system(size: 48))
+                        .font(DesignTokens.Fonts.custom(size: 48))
                         .foregroundColor(.gray.opacity(0.5))
                     Text("Henüz trade kaydı yok")
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                     Text("Forward test verileri burada görünecek")
                         .font(.caption)
                         .foregroundColor(.gray.opacity(0.7))
@@ -128,10 +128,10 @@ struct TradeStatBox: View {
     var body: some View {
         VStack(spacing: 4) {
             Text(title)
-                .font(.system(size: 10, weight: .medium, design: .monospaced))
-                .foregroundColor(.gray)
+                .font(DesignTokens.Fonts.custom(size: 10, weight: .medium, design: .monospaced))
+                .foregroundColor(DesignTokens.Colors.textTertiary)
             Text(value)
-                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .bold, design: .monospaced))
                 .foregroundColor(color)
         }
         .frame(maxWidth: .infinity)
@@ -154,10 +154,10 @@ struct TradeRowView: View {
             // Symbol & Engine
             VStack(alignment: .leading, spacing: 2) {
                 Text(trade.symbol)
-                    .font(.system(size: 14, weight: .semibold, design: .monospaced))
-                    .foregroundColor(.white)
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .semibold, design: .monospaced))
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                 Text(trade.engine.rawValue.uppercased())
-                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 10, weight: .medium, design: .monospaced))
                     .foregroundColor(.cyan.opacity(0.7))
             }
             
@@ -166,16 +166,16 @@ struct TradeRowView: View {
             // Entry -> Exit
             VStack(alignment: .trailing, spacing: 2) {
                 Text("\(String(format: "%.2f", trade.entryPrice)) → \(String(format: "%.2f", trade.exitPrice))")
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundColor(.gray)
+                    .font(DesignTokens.Fonts.custom(size: 11, design: .monospaced))
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
                 Text(formatDate(trade.exitDate))
-                    .font(.system(size: 10, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 10, design: .monospaced))
                     .foregroundColor(.gray.opacity(0.6))
             }
             
             // PnL
             Text("\(isWin ? "+" : "")\(String(format: "%.1f", trade.pnlPercent))%")
-                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .bold, design: .monospaced))
                 .foregroundColor(isWin ? .green : .red)
                 .frame(width: 60, alignment: .trailing)
         }
@@ -183,7 +183,7 @@ struct TradeRowView: View {
         .padding(.horizontal, 12)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .fill(Color.white.opacity(0.05))
+                .fill(DesignTokens.Colors.Overlay.l05)
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(isWin ? Color.green.opacity(0.2) : Color.red.opacity(0.2), lineWidth: 1)

@@ -48,7 +48,7 @@ struct ArgusAetherDetailView: View {
         HStack(spacing: 8) {
             Button(action: { dismiss() }) {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 18, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .frame(width: 36, height: 36)
                     .contentShape(Rectangle())
@@ -57,7 +57,7 @@ struct ArgusAetherDetailView: View {
             .accessibilityLabel("Geri")
 
             Text("Makro")
-                .font(.system(size: 17, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 17, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .accessibilityAddTraits(.isHeader)
 
@@ -79,7 +79,7 @@ struct ArgusAetherDetailView: View {
     /// Rejim + en belirgin katman üzerinden plain Türkçe cümle kuruluyor.
     private var statusParagraph: some View {
         Text(statusSentence)
-            .font(.system(size: 14))
+            .font(DesignTokens.Fonts.custom(size: 14))
             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             .lineSpacing(3)
             .fixedSize(horizontal: false, vertical: true)
@@ -142,7 +142,7 @@ struct ArgusAetherDetailView: View {
     private var todayList: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Bugün")
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 .padding(.leading, 2)
 
@@ -150,11 +150,11 @@ struct ArgusAetherDetailView: View {
                 ForEach(Array(todayMovers.enumerated()), id: \.offset) { idx, mover in
                     HStack(spacing: 0) {
                         Text(mover.label)
-                            .font(.system(size: 14))
+                            .font(DesignTokens.Fonts.custom(size: 14))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         Spacer()
                         Text(String(format: "%@%.1f%%", mover.change >= 0 ? "+" : "", mover.change))
-                            .font(.system(size: 14, design: .monospaced))
+                            .font(DesignTokens.Fonts.custom(size: 14, design: .monospaced))
                             .foregroundColor(changeColor(mover.change))
                             .monospacedDigit()
                     }
@@ -215,16 +215,16 @@ struct ArgusAetherDetailView: View {
     private func hubRow(title: String, trailing: String?) -> some View {
         HStack(spacing: 10) {
             Text(title)
-                .font(.system(size: 15))
+                .font(DesignTokens.Fonts.custom(size: 15))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Spacer()
             if let trailing {
                 Text(trailing)
-                    .font(.system(size: 14))
+                    .font(DesignTokens.Fonts.custom(size: 14))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
         .padding(.horizontal, 14)
@@ -247,7 +247,7 @@ struct ArgusAetherDetailView: View {
 
     private var footerNote: some View {
         Text("Skor 30 günlük öncü, eşzamanlı ve gecikmeli göstergelerin ağırlıklı ortalamasından üretilir.")
-            .font(.system(size: 12))
+            .font(DesignTokens.Fonts.custom(size: 12))
             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             .lineSpacing(2)
             .fixedSize(horizontal: false, vertical: true)
@@ -293,14 +293,14 @@ struct MakroIndicatorsListView: View {
         HStack(spacing: 8) {
             Button(action: { dismiss() }) {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 18, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .frame(width: 36, height: 36)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             Text("Tüm göstergeler")
-                .font(.system(size: 17, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 17, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Spacer()
         }
@@ -317,7 +317,7 @@ struct MakroIndicatorsListView: View {
     private var layerGroup: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Katmanlar")
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 .padding(.leading, 2)
 
@@ -354,19 +354,19 @@ struct MakroIndicatorsListView: View {
             HStack(spacing: 10) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(layer.title)
-                        .font(.system(size: 15))
+                        .font(DesignTokens.Fonts.custom(size: 15))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     Text(layer.subtitle)
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
                 Spacer()
                 Text("\(Int(score(for: layer)))")
-                    .font(.system(size: 16, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 16, weight: .medium))
                     .foregroundColor(scoreColor(score(for: layer)))
                     .monospacedDigit()
                 Image(systemName: expanded.contains(layer) ? "chevron.down" : "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             .padding(.horizontal, 14)
@@ -386,23 +386,23 @@ struct MakroIndicatorsListView: View {
                 HStack(spacing: 10) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(metric.title)
-                            .font(.system(size: 13))
+                            .font(DesignTokens.Fonts.custom(size: 13))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         Text(metric.detail)
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Fonts.custom(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     }
                     Spacer()
                     if let change = metric.change {
                         Text(String(format: "%@%.1f%%", change >= 0 ? "+" : "", change))
-                            .font(.system(size: 12, design: .monospaced))
+                            .font(DesignTokens.Fonts.custom(size: 12, design: .monospaced))
                             .foregroundColor(metric.inverse
                                              ? (change <= 0 ? InstitutionalTheme.Colors.aurora : InstitutionalTheme.Colors.crimson)
                                              : (change >= 0 ? InstitutionalTheme.Colors.aurora : InstitutionalTheme.Colors.crimson))
                             .monospacedDigit()
                     }
                     Text("\(Int(metric.score ?? 50))")
-                        .font(.system(size: 13))
+                        .font(DesignTokens.Fonts.custom(size: 13))
                         .foregroundColor(scoreColor(metric.score ?? 50))
                         .monospacedDigit()
                         .frame(width: 32, alignment: .trailing)
@@ -418,16 +418,16 @@ struct MakroIndicatorsListView: View {
     private var formulaGroup: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Skor formülü")
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 .padding(.leading, 2)
 
             VStack(alignment: .leading, spacing: 8) {
                 Text("(Öncü × 1.5 + Eşzamanlı × 1.0 + Gecikmeli × 0.8) / 3.3")
-                    .font(.system(size: 13, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 13, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text("Öncü göstergeler erken sinyal verdiği için en yüksek ağırlığı taşır. Gecikmeli göstergeler onay rolündedir.")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     .lineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)
@@ -546,14 +546,14 @@ struct MyPredictionsView: View {
         HStack(spacing: 8) {
             Button(action: { dismiss() }) {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 18, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .frame(width: 36, height: 36)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             Text("Tahminlerim")
-                .font(.system(size: 17, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 17, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Spacer()
         }
@@ -572,16 +572,16 @@ struct MyPredictionsView: View {
             if let summary = store.getOverallAccuracy(lastN: 20) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Son \(summary.total) tahminin \(summary.correct) tanesi tutmuş.")
-                        .font(.system(size: 14))
+                        .font(DesignTokens.Fonts.custom(size: 14))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     Text("Sapma her gösterge için ayrı eşikle değerlendirilir.")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
                 .padding(.bottom, 22)
             } else {
                 Text("Henüz olgunlaşmış tahmin yok. Veri açıklandıkça burada görünecek.")
-                    .font(.system(size: 14))
+                    .font(DesignTokens.Fonts.custom(size: 14))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .lineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)
@@ -599,7 +599,7 @@ struct MyPredictionsView: View {
             if !rows.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Göstergeye göre")
-                        .font(.system(size: 13))
+                        .font(DesignTokens.Fonts.custom(size: 13))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         .padding(.leading, 2)
 
@@ -607,15 +607,15 @@ struct MyPredictionsView: View {
                         ForEach(Array(rows.enumerated()), id: \.offset) { idx, row in
                             HStack {
                                 Text(row.0.shortName)
-                                    .font(.system(size: 14))
+                                    .font(DesignTokens.Fonts.custom(size: 14))
                                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                 Spacer()
                                 Text("\(row.1.correct) / \(row.1.total)")
-                                    .font(.system(size: 12))
+                                    .font(DesignTokens.Fonts.custom(size: 12))
                                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                                     .monospacedDigit()
                                 Text(String(format: "%%%.0f", row.1.accuracy))
-                                    .font(.system(size: 14, design: .monospaced))
+                                    .font(DesignTokens.Fonts.custom(size: 14, design: .monospaced))
                                     .foregroundColor(accuracyColor(row.1.accuracy))
                                     .monospacedDigit()
                                     .frame(width: 56, alignment: .trailing)
@@ -644,7 +644,7 @@ struct MyPredictionsView: View {
             if !history.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Geçmiş tahminler")
-                        .font(.system(size: 13))
+                        .font(DesignTokens.Fonts.custom(size: 13))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         .padding(.leading, 2)
 
@@ -672,21 +672,21 @@ struct MyPredictionsView: View {
         return HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.indicator.shortName)
-                    .font(.system(size: 14))
+                    .font(DesignTokens.Fonts.custom(size: 14))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text(historySubtitle(entry, isCorrect: isCorrect))
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             Spacer()
             if let actual = entry.actualValue {
                 Text(String(format: "%.1f / %.1f", actual, entry.expectedValue))
-                    .font(.system(size: 11, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 11, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     .monospacedDigit()
             }
             Text(String(format: "%@%.2f%@", surprise >= 0 ? "+" : "", surprise, entry.indicator.unit))
-                .font(.system(size: 13, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 13, design: .monospaced))
                 .foregroundColor(isCorrect ? InstitutionalTheme.Colors.aurora : InstitutionalTheme.Colors.crimson)
                 .monospacedDigit()
                 .frame(width: 64, alignment: .trailing)

@@ -25,12 +25,12 @@ struct BISTSentimentPulseCard: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(result?.isGeneralMarketSentiment == true ? "Piyasa Nabzı (Genel)" : "Piyasa Nabzı")
                                 .font(.headline)
-                                .foregroundColor(.white)
+                                .foregroundColor(DesignTokens.Colors.textPrimary)
                             
                             if let r = result, r.newsVolume > 0 {
                                 Text("\(r.relevantNewsCount) ilgili haber")
                                     .font(.caption2)
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(DesignTokens.Colors.textTertiary)
                             }
                         }
                     }
@@ -57,12 +57,12 @@ struct BISTSentimentPulseCard: View {
                     } else {
                         Text("Veri Yok")
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                     }
                     
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 }
             }
             .buttonStyle(PlainButtonStyle())
@@ -108,11 +108,11 @@ struct BISTSentimentPulseCard: View {
                         // Center Value
                         VStack(spacing: 2) {
                             Text("\(Int(result.overallScore))")
-                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .font(DesignTokens.Fonts.custom(size: 28, weight: .bold, design: .rounded))
                                 .foregroundColor(sentimentColor(result.overallScore))
                             Text("Sentiment")
                                 .font(.caption2)
-                                .foregroundColor(.gray)
+                                .foregroundColor(DesignTokens.Colors.textTertiary)
                         }
                     }
                     .frame(height: 80)
@@ -124,7 +124,7 @@ struct BISTSentimentPulseCard: View {
                             .foregroundColor(trendColor(result.mentionTrend))
                         Text("Haber Akışı: \(result.mentionTrend.rawValue)")
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                     }
                 }
                 
@@ -150,13 +150,13 @@ struct BISTSentimentPulseCard: View {
                 // MARK: - Expanded Content
                 if isExpanded && !result.keyHeadlines.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
-                        Divider().background(Color.white.opacity(0.2))
+                        Divider().background(DesignTokens.Colors.Overlay.l20)
                         
                         // Key Headlines
                         Text("Öne Çıkan Başlıklar")
                             .font(.caption)
                             .bold()
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                         
                         let headlinesToShow = showAllHeadlines ? result.keyHeadlines : Array(result.keyHeadlines.prefix(3))
                         
@@ -200,7 +200,7 @@ struct BISTSentimentPulseCard: View {
                         .foregroundColor(.gray.opacity(0.5))
                     Text("Bu hisse için güncel haber bulunamadı")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity)
@@ -286,7 +286,7 @@ private struct SentimentMiniCard: View {
         VStack(spacing: 4) {
             Text(title)
                 .font(.caption2)
-                .foregroundColor(.gray)
+                .foregroundColor(DesignTokens.Colors.textTertiary)
             Text("\(Int(percent))%")
                 .font(.headline.bold())
                 .foregroundColor(color)

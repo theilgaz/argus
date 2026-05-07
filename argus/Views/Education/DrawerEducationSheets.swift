@@ -77,7 +77,7 @@ struct AlkindusEducationSheet: View {
     private var safetySection: some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "shield.lefthalf.filled")
-                .font(.system(size: 13, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.warning)
                 .padding(.top, 2)
             Text("Asistan hızlı cevap verir ama kesinlik vadetmez. Kesin karar için her zaman rejim + motor + fiyat davranışı üçlüsünü birlikte değerlendir.")
@@ -97,7 +97,7 @@ struct AlkindusEducationSheet: View {
     private func promptRow(_ label: String, _ text: String) -> some View {
         HStack(alignment: .top, spacing: 10) {
             Text(label)
-                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 11, weight: .bold, design: .monospaced))
                 .foregroundColor(InstitutionalTheme.Colors.primary)
                 .frame(width: 56, alignment: .leading)
             Text(text)
@@ -110,7 +110,7 @@ struct AlkindusEducationSheet: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
                 Text(index)
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .bold, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.primary)
                     .frame(width: 14, alignment: .leading)
                 Text(text)

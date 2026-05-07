@@ -12,7 +12,6 @@ import SwiftUI
 
 struct ArgusAnalystReportView: View {
     let symbol: String
-    @ObservedObject var viewModel: TradingViewModel
 
     @State private var displayedText: String = ""
     @State private var fullReportText: String = ""
@@ -49,15 +48,15 @@ struct ArgusAnalystReportView: View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Konsey raporu")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text(symbol.uppercased())
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             }
             Spacer()
             Text(isLoading ? "Hazırlanıyor" : "Hazır")
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(isLoading
                                  ? InstitutionalTheme.Colors.textTertiary
                                  : InstitutionalTheme.Colors.aurora)
@@ -70,7 +69,7 @@ struct ArgusAnalystReportView: View {
         VStack(spacing: 10) {
             ProgressView()
             Text("\(symbol.uppercased()) analiz ediliyor")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
         .frame(maxWidth: .infinity, minHeight: 160)
@@ -79,7 +78,7 @@ struct ArgusAnalystReportView: View {
     private var reportBody: some View {
         ScrollView {
             Text(displayedText)
-                .font(.system(size: 14))
+                .font(DesignTokens.Fonts.custom(size: 14))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .lineSpacing(3)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -102,7 +101,6 @@ struct ArgusAnalystReportView: View {
         Task {
             let aiReport = await ArgusNarrativeEngine.generateAIReport(
                 symbol: symbol,
-                viewModel: viewModel,
                 type: .comprehensive
             )
 

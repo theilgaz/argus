@@ -54,19 +54,19 @@ struct PhoenixDetailView: View {
         return HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Güven skoru")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text("\(Int(conf))")
-                        .font(.system(size: 32, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 32, weight: .medium))
                         .foregroundColor(scoreColor(conf))
                         .monospacedDigit()
                     Text("/ 100")
-                        .font(.system(size: 13))
+                        .font(DesignTokens.Fonts.custom(size: 13))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
                 Text(symbol.uppercased())
-                    .font(.system(size: 13))
+                    .font(DesignTokens.Fonts.custom(size: 13))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .padding(.top, 2)
             }
@@ -75,10 +75,10 @@ struct PhoenixDetailView: View {
 
             VStack(alignment: .trailing, spacing: 4) {
                 Text(statusText)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                     .foregroundColor(scoreColor(conf))
                 Text("Ufuk · \(advice.timeframe.localizedName)")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
         }
@@ -97,7 +97,7 @@ struct PhoenixDetailView: View {
     private var chartCard: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Regresyon kanalı")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
             ZStack {
@@ -107,10 +107,10 @@ struct PhoenixDetailView: View {
                 } else {
                     VStack(spacing: 8) {
                         Image(systemName: "chart.line.uptrend.xyaxis")
-                            .font(.system(size: 18))
+                            .font(DesignTokens.Fonts.custom(size: 18))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         Text("Grafik için yetersiz veri (en az 20 mum gerekli)")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     }
                     .frame(height: 160)
@@ -133,10 +133,10 @@ struct PhoenixDetailView: View {
     private var analysisCard: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Analiz")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Text(advice.reasonShort)
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
                 .lineSpacing(2)
@@ -156,7 +156,7 @@ struct PhoenixDetailView: View {
     private var statsGridCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("İstatistik")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
             LazyVGrid(
@@ -191,10 +191,10 @@ struct PhoenixDetailView: View {
     private func statBox(label: String, value: String, color: Color? = nil) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label)
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Text(value)
-                .font(.system(size: 14, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                 .foregroundColor(color ?? InstitutionalTheme.Colors.textPrimary)
                 .monospacedDigit()
         }
@@ -221,7 +221,7 @@ struct PhoenixDetailView: View {
     private var checklistCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Sinyal kontrol listesi")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
             VStack(alignment: .leading, spacing: 8) {
@@ -244,17 +244,17 @@ struct PhoenixDetailView: View {
     private func checkRow(_ title: String, _ isActive: Bool) -> some View {
         HStack(spacing: 10) {
             Image(systemName: isActive ? "checkmark.circle.fill" : "circle")
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(isActive
                                  ? InstitutionalTheme.Colors.aurora
                                  : InstitutionalTheme.Colors.textTertiary)
                 .frame(width: 18)
             Text(title)
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Spacer()
             Text(isActive ? "evet" : "bekliyor")
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(isActive
                                  ? InstitutionalTheme.Colors.aurora
                                  : InstitutionalTheme.Colors.textTertiary)
@@ -267,7 +267,7 @@ struct PhoenixDetailView: View {
     private var bistSessionCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("BIST seans tetikleri")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             BistSessionTriggers(advice: advice)
         }
@@ -292,12 +292,12 @@ struct PhoenixDetailView: View {
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "clock.arrow.circlepath")
-                    .font(.system(size: 13))
+                    .font(DesignTokens.Fonts.custom(size: 13))
                 Text("Geçmiş test")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             .padding(.horizontal, 14)
@@ -318,10 +318,10 @@ struct PhoenixDetailView: View {
     private var pedagogyFooter: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Bu nedir?")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Text("Risk fırsatı bir dip dedektörüdür. Fiyat regresyon kanalının dibine değdiğinde, RSI toparlandığında ve hacim dönüş mumu geldiğinde güven skoru yükselir. Sadece teknik sinyal — temel analiz bilanço motorunun işidir.")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
                 .lineSpacing(2)
@@ -420,7 +420,7 @@ struct BistSessionTriggers: View {
     private func sessionList(items: [SessionItem], caption: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(caption)
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
 
             ForEach(items) { item in
@@ -433,10 +433,10 @@ struct BistSessionTriggers: View {
                         .padding(.top, 6)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(item.condition)
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         Text(item.action)
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Fonts.custom(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     }
                     Spacer()

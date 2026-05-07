@@ -67,11 +67,11 @@ struct SentimentPulseCard: View {
     private var header: some View {
         HStack {
             Text("Duygu nabzı")
-                .font(.system(size: 14, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Spacer()
             Text(sourceBadgeText())
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
     }
@@ -84,7 +84,7 @@ struct SentimentPulseCard: View {
             VStack(alignment: .leading, spacing: 10) {
                 if let mom = momentumText(for: s.score) {
                     Text(mom.text)
-                        .font(.system(size: 12, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                         .foregroundColor(mom.color)
                 }
                 sentimentRow(label: "Boğa",
@@ -113,11 +113,11 @@ struct SentimentPulseCard: View {
 
             VStack(spacing: 2) {
                 Text("\(Int(score))")
-                    .font(.system(size: 22, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 22, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .monospacedDigit()
                 Text(interpretation.lowercased())
-                    .font(.system(size: 10))
+                    .font(DesignTokens.Fonts.custom(size: 10))
                     .foregroundColor(color)
                     .lineLimit(1)
             }
@@ -131,11 +131,11 @@ struct SentimentPulseCard: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(label)
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Spacer()
                 Text("%\(Int(value))")
-                    .font(.system(size: 12, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 12, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .monospacedDigit()
             }
@@ -145,7 +145,7 @@ struct SentimentPulseCard: View {
 
     private var commentaryLine: some View {
         Text(commentary)
-            .font(.system(size: 12))
+            .font(DesignTokens.Fonts.custom(size: 12))
             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             .lineSpacing(2)
             .fixedSize(horizontal: false, vertical: true)
@@ -154,7 +154,7 @@ struct SentimentPulseCard: View {
     private var recentList: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Son analizler")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
 
             VStack(spacing: 0) {
@@ -165,7 +165,7 @@ struct SentimentPulseCard: View {
                             .frame(width: 5, height: 5)
                             .padding(.top, 6)
                         Text(item.summaryTR)
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                             .lineLimit(2)
                             .fixedSize(horizontal: false, vertical: true)
@@ -184,7 +184,7 @@ struct SentimentPulseCard: View {
 
     private var fallbackNote: some View {
         Text("Varsayılan skor — haber analizi yok.")
-            .font(.system(size: 11))
+            .font(DesignTokens.Fonts.custom(size: 11))
             .foregroundColor(InstitutionalTheme.Colors.titan)
     }
 
@@ -192,7 +192,7 @@ struct SentimentPulseCard: View {
         HStack(spacing: 10) {
             ProgressView().scaleEffect(0.7)
             Text("Haber taranıyor…")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Spacer()
         }
@@ -202,10 +202,10 @@ struct SentimentPulseCard: View {
     private var emptyBlock: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Haber taraması bekleniyor")
-                .font(.system(size: 13, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Text("Haber modülünden \"Haberleri tara\" deyince burada görünür.")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

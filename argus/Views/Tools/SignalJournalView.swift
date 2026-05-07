@@ -7,8 +7,8 @@ struct SignalJournalView: View {
     var body: some View {
         VStack(spacing: 20) {
             Image(systemName: "archivebox")
-                .font(.system(size: 60))
-                .foregroundColor(.gray)
+                .font(DesignTokens.Fonts.custom(size: 60))
+                .foregroundColor(DesignTokens.Colors.textTertiary)
             
             Text("Sinyal Günlüğü Taşındı")
                 .font(.title2)
@@ -17,11 +17,11 @@ struct SignalJournalView: View {
             Text("Argus 3.0 ile birlikte Sinyal Günlüğü, 'Argus Ledger' altyapısına taşınmıştır. Eski manuel günlük sistemi devre dışı bırakılmıştır.")
                 .multilineTextAlignment(.center)
                 .padding()
-                .foregroundColor(.secondary)
+                .foregroundColor(DesignTokens.Colors.textSecondary)
             
             Text("Verileriniz güvende: Tüm sinyaller artık otomatik olarak Argus Veritabanına (SQLite) kaydedilmektedir.")
                 .font(.caption)
-                .foregroundColor(.gray)
+                .foregroundColor(DesignTokens.Colors.textTertiary)
         }
         .navigationTitle("Sinyal Karnesi")
     }

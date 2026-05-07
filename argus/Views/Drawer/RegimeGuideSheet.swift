@@ -103,7 +103,7 @@ struct RegimeGuideSheet: View {
                 .font(InstitutionalTheme.Typography.caption)
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Text("İpucu: \(clue)")
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Rectangle()
                 .fill(InstitutionalTheme.Colors.borderSubtle)
@@ -115,7 +115,7 @@ struct RegimeGuideSheet: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
                 Text(index)
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .bold, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.primary)
                     .frame(width: 14, alignment: .leading)
                 Text(title)
@@ -123,7 +123,7 @@ struct RegimeGuideSheet: View {
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             }
             Text(detail)
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .padding(.leading, 22)
             Rectangle()
@@ -157,7 +157,7 @@ struct RegimeGuideSheet: View {
     /// 2026-05-05 H-67: caps mono tracking 0.8 → sentence sade.
     private func sectionTitle(_ text: String) -> some View {
         Text(text.capitalized)
-            .font(.system(size: 13, weight: .medium))
+            .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
     }
 }

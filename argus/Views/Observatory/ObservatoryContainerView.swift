@@ -54,9 +54,9 @@ struct ObservatoryContainerView: View {
                     VStack(spacing: 6) {
                         HStack(spacing: 5) {
                             Image(systemName: tab.icon)
-                                .font(.system(size: 11, weight: .semibold))
+                                .font(DesignTokens.Fonts.custom(size: 11, weight: .semibold))
                             Text(tab.title)
-                                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                .font(DesignTokens.Fonts.custom(size: 10, weight: .bold, design: .monospaced))
                                 .tracking(0.7)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
@@ -134,11 +134,11 @@ struct ObservatoryTimelineContentView: View {
                 Spacer()
                 VStack(spacing: 12) {
                     Image(systemName: "clock.arrow.circlepath")
-                        .font(.system(size: 50))
-                        .foregroundStyle(.secondary)
+                        .font(DesignTokens.Fonts.custom(size: 50))
+                        .foregroundStyle(DesignTokens.Colors.textSecondary)
                     Text("Henüz karar yok")
                         .font(.headline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(DesignTokens.Colors.textSecondary)
                 }
                 Spacer()
             } else {
@@ -191,11 +191,11 @@ struct ObservatoryLearningContentView: View {
             Spacer()
             VStack(spacing: 12) {
                 Image(systemName: "brain.head.profile")
-                    .font(.system(size: 50))
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Fonts.custom(size: 50))
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
                 Text("Henüz öğrenme kaydı yok")
                     .font(.headline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
             }
             Spacer()
         } else {
@@ -316,13 +316,13 @@ struct DecisionCardView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(decision.symbol)
-                    .font(.system(size: 14, weight: .bold, design: .monospaced))
-                    .foregroundColor(.white)
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .bold, design: .monospaced))
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                 
                 Spacer()
                 
                 Text(decision.action)
-                    .font(.system(size: 11, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .medium))
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(decision.actionColor.opacity(0.2))
@@ -335,7 +335,7 @@ struct DecisionCardView: View {
                 HStack(spacing: 6) {
                     ForEach(decision.topFactors.prefix(3), id: \.name) { factor in
                         Text("\(factor.name): \(Int(factor.value))")
-                            .font(.system(size: 10, design: .monospaced))
+                            .font(DesignTokens.Fonts.custom(size: 10, design: .monospaced))
                             .foregroundColor(factor.value >= 50 ? .green : .red)
                     }
                 }
@@ -343,14 +343,14 @@ struct DecisionCardView: View {
             
             HStack {
                 Label(decision.market, systemImage: "globe")
-                    .font(.system(size: 10))
+                    .font(DesignTokens.Fonts.custom(size: 10))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 
                 Spacer()
                 
                 if let pnl = decision.actualPnl {
                     Text(String(format: "%.2f%%", pnl))
-                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .semibold, design: .monospaced))
                         .foregroundColor(pnl >= 0 ? .green : .red)
                 }
             }
@@ -373,24 +373,24 @@ struct LearningEventCardView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text("Öğrenme")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
                 Spacer()
 
                 Text(event.timestamp, style: .date)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             
             Text(event.reason)
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .lineLimit(3)
             
             // Weight değişimlerini göster
             Text(event.summaryText)
-                .font(.system(size: 11, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 11, design: .monospaced))
                 .foregroundColor(InstitutionalTheme.Colors.holo)
         }
         .padding()
@@ -413,15 +413,15 @@ struct MetricCardView: View {
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: icon)
-                .font(.system(size: 20))
+                .font(DesignTokens.Fonts.custom(size: 20))
                 .foregroundColor(color)
             
             Text(value)
-                .font(.system(size: 18, weight: .bold, design: .monospaced))
-                .foregroundColor(.white)
+                .font(DesignTokens.Fonts.custom(size: 18, weight: .bold, design: .monospaced))
+                .foregroundColor(DesignTokens.Colors.textPrimary)
             
             Text(title)
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
         .frame(maxWidth: .infinity)

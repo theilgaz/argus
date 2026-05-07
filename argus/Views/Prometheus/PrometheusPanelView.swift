@@ -38,10 +38,10 @@ struct PrometheusPanelView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text("Tahmin")
-                .font(.system(size: 17, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 17, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Text("Kısa vadeli fiyat projeksiyonu")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -59,26 +59,26 @@ struct PrometheusPanelView: View {
                     // Üst satır: tavsiye + ufuk
                     HStack(spacing: 10) {
                         Text(recommendationLabel(f.recommendation))
-                            .font(.system(size: 14, weight: .medium))
+                            .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                             .foregroundColor(recommendationColor(f.recommendation))
                         Spacer()
                         Text("\(f.horizonDays) gün")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     }
 
                     // Tahmin fiyatı
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Tahmin")
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Fonts.custom(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
                             Text(formatPrice(f.predictedPrice))
-                                .font(.system(size: 28, weight: .medium))
+                                .font(DesignTokens.Fonts.custom(size: 28, weight: .medium))
                                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                 .monospacedDigit()
                             Text(f.formattedChange)
-                                .font(.system(size: 13, weight: .medium))
+                                .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                                 .foregroundColor(recommendationColor(f.recommendation))
                                 .monospacedDigit()
                         }
@@ -121,10 +121,10 @@ struct PrometheusPanelView: View {
     private func sadeMetric(_ title: String, value: String, color: Color? = nil) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(title)
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Text(value)
-                .font(.system(size: 13, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                 .foregroundColor(color ?? InstitutionalTheme.Colors.textPrimary)
                 .monospacedDigit()
         }
@@ -160,12 +160,12 @@ struct PrometheusPanelView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("Fiyat devam grafiği")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Spacer()
                 if let f = forecast, f.isValid {
                     Text("\(historicalTail.count) + \(f.predictions.count)")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         .monospacedDigit()
                 }
@@ -217,7 +217,7 @@ struct PrometheusPanelView: View {
                         .fill(InstitutionalTheme.Colors.textTertiary)
                         .frame(width: 4, height: 4)
                     Text("Grafik için tahmin verisi yok.")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
             }
@@ -236,7 +236,7 @@ struct PrometheusPanelView: View {
         HStack(spacing: 5) {
             Circle().fill(color).frame(width: 6, height: 6)
             Text(label)
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
     }
@@ -246,7 +246,7 @@ struct PrometheusPanelView: View {
     private var rationaleCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Neden bu karar")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
             if let f = forecast, !f.rationale.isEmpty {
@@ -254,12 +254,12 @@ struct PrometheusPanelView: View {
                     ForEach(Array(f.rationale.enumerated()), id: \.offset) { idx, line in
                         HStack(alignment: .top, spacing: 10) {
                             Text("\(idx + 1).")
-                                .font(.system(size: 12))
+                                .font(DesignTokens.Fonts.custom(size: 12))
                                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                                 .monospacedDigit()
                                 .frame(width: 18, alignment: .leading)
                             Text(line)
-                                .font(.system(size: 13))
+                                .font(DesignTokens.Fonts.custom(size: 13))
                                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                 .fixedSize(horizontal: false, vertical: true)
                                 .lineSpacing(2)
@@ -272,7 +272,7 @@ struct PrometheusPanelView: View {
                         .fill(InstitutionalTheme.Colors.textTertiary)
                         .frame(width: 4, height: 4)
                     Text("Açıklama verisi hazır değil.")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
             }
@@ -293,7 +293,7 @@ struct PrometheusPanelView: View {
         VStack(spacing: 10) {
             ProgressView()
             Text("Tahmin hesaplanıyor")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
         .frame(maxWidth: .infinity, minHeight: 96)
@@ -302,10 +302,10 @@ struct PrometheusPanelView: View {
     private var missingDataBlock: some View {
         VStack(spacing: 8) {
             Image(systemName: "chart.xyaxis.line")
-                .font(.system(size: 18))
+                .font(DesignTokens.Fonts.custom(size: 18))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Text("Tahmin için yeterli veri yok")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
         .frame(maxWidth: .infinity, minHeight: 96)

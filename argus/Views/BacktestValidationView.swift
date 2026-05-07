@@ -47,7 +47,7 @@ struct BacktestValidationView: View {
             Button(action: { runner.run() }) {
                 HStack(spacing: 8) {
                     Image(systemName: runner.isRunning ? "stop.circle" : "play.circle.fill")
-                        .font(.system(size: 15, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 15, weight: .medium))
                     Text(runner.isRunning ? "Çalışıyor…" : "Validasyonu Başlat")
                         .font(InstitutionalTheme.Typography.body)
                 }
@@ -319,7 +319,7 @@ struct BacktestValidationView: View {
     private var emptyStateSection: some View {
         VStack(spacing: 12) {
             Image(systemName: "chart.bar.xaxis.ascending")
-                .font(.system(size: 32))
+                .font(DesignTokens.Fonts.custom(size: 32))
                 .foregroundStyle(InstitutionalTheme.Colors.textTertiary)
             Text("10 sembol, son 6 ay, V2 motorlar")
                 .font(InstitutionalTheme.Typography.caption)

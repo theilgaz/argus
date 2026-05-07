@@ -35,7 +35,7 @@ struct ObservatoryHealthView: View {
     private var performanceHUD: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("SYSTEM_PERFORMANCE", systemImage: "chart.line.uptrend.xyaxis")
-                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .bold, design: .monospaced))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
@@ -74,7 +74,7 @@ struct ObservatoryHealthView: View {
     private var driftEnergyBar: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("PREDICTION_DRIFT", systemImage: "chart.pie")
-                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .bold, design: .monospaced))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             
             VStack(spacing: 0) {
@@ -108,7 +108,7 @@ struct ObservatoryHealthView: View {
                     Text("SELL \(Int(distribution.sellPercent))%")
                         .foregroundColor(InstitutionalTheme.Colors.crimson)
                 }
-                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 9, weight: .bold, design: .monospaced))
                 .padding(.top, 6)
             }
             .padding(12)
@@ -116,17 +116,17 @@ struct ObservatoryHealthView: View {
             .cornerRadius(8)
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    .stroke(DesignTokens.Colors.Overlay.l10, lineWidth: 1)
             )
             
             // Drift Warning
             if distribution.isDrifting {
                 HStack {
                     Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundStyle(InstitutionalTheme.Colors.titan)
                     Text("Sapma algılandı: \(distribution.driftReason)")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundStyle(InstitutionalTheme.Colors.titan)
                 }
                 .padding(8)
@@ -140,7 +140,7 @@ struct ObservatoryHealthView: View {
     private var systemLogConsole: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Sistem günlüğü", systemImage: "exclamationmark.shield")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             
             if alerts.isEmpty {
@@ -148,7 +148,7 @@ struct ObservatoryHealthView: View {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(InstitutionalTheme.Colors.aurora)
                     Text("ALL SYSTEMS NOMINAL")
-                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .medium, design: .monospaced))
                         .foregroundStyle(InstitutionalTheme.Colors.textSecondary)
                 }
                 .padding()
@@ -159,22 +159,22 @@ struct ObservatoryHealthView: View {
                 ForEach(alerts) { alert in
                     HStack(alignment: .top, spacing: 12) {
                         Image(systemName: alert.icon)
-                            .font(.system(size: 14))
+                            .font(DesignTokens.Fonts.custom(size: 14))
                             .foregroundStyle(alert.color)
                         
                         VStack(alignment: .leading, spacing: 4) {
                             Text(alert.title)
-                                .font(.system(size: 12, weight: .bold, design: .monospaced))
-                                .foregroundColor(.white)
+                                .font(DesignTokens.Fonts.custom(size: 12, weight: .bold, design: .monospaced))
+                                .foregroundColor(DesignTokens.Colors.textPrimary)
                             Text(alert.message)
-                                .font(.system(size: 10, design: .monospaced))
+                                .font(DesignTokens.Fonts.custom(size: 10, design: .monospaced))
                                 .foregroundStyle(InstitutionalTheme.Colors.textSecondary)
                         }
                         
                         Spacer()
                         
                         Text(alert.formattedTime)
-                            .font(.system(size: 9, design: .monospaced))
+                            .font(DesignTokens.Fonts.custom(size: 9, design: .monospaced))
                             .foregroundStyle(InstitutionalTheme.Colors.textSecondary.opacity(0.5))
                     }
                     .padding(12)
@@ -271,16 +271,16 @@ struct HoloMetricCard: View {
             HStack {
                 Image(systemName: icon)
                     .foregroundStyle(color)
-                    .font(.system(size: 14))
+                    .font(DesignTokens.Fonts.custom(size: 14))
                 Spacer()
             }
             
             Text(value)
-                .font(.system(size: 20, weight: .black, design: .monospaced))
-                .foregroundStyle(.white)
+                .font(DesignTokens.Fonts.custom(size: 20, weight: .black, design: .monospaced))
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
             
             Text(title)
-                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 9, weight: .bold, design: .monospaced))
                 .foregroundStyle(InstitutionalTheme.Colors.textSecondary)
         }
         .padding()

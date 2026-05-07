@@ -23,7 +23,7 @@ struct SelfQuestionAlertCard: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Image(systemName: severityIcon)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .semibold))
                     .foregroundColor(severityColor)
                 
                 Text("Modul Celiskisi")
@@ -51,7 +51,7 @@ struct SelfQuestionAlertCard: View {
                 if let outcome = analysis.historicalOutcome {
                     HStack {
                         Image(systemName: "clock.arrow.circlepath")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         Text(outcome.summary)
                             .font(InstitutionalTheme.Typography.caption)
@@ -84,7 +84,7 @@ struct SelfQuestionAlertCard: View {
             } else {
                 HStack {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.positive)
                     Text(analysis.recommendation)
                         .font(InstitutionalTheme.Typography.caption)

@@ -16,12 +16,12 @@ struct PoseidonView: View {
                     // 1. Whale Score Gauge (Big Number)
                     VStack {
                         Text("\(Int(score.totalScore))")
-                            .font(.system(size: 48, weight: .bold, design: .rounded))
+                            .font(DesignTokens.Fonts.custom(size: 48, weight: .bold, design: .rounded))
                             .foregroundColor(score.sentimentColor)
 
                         Text("Balina Skoru")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(DesignTokens.Colors.textSecondary)
 
                         Text(score.summary)
                             .font(.footnote)
@@ -77,7 +77,7 @@ struct PoseidonMetricCard: View {
         VStack(alignment: .leading) {
             Text(title)
                 .font(.caption2)
-                .foregroundColor(.secondary)
+                .foregroundColor(DesignTokens.Colors.textSecondary)
             Text(value)
                 .font(.headline)
         }

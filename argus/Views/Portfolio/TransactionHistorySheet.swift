@@ -1,13 +1,12 @@
 import SwiftUI
 struct TransactionHistorySheet: View {
-    @ObservedObject var viewModel: TradingViewModel
-    var marketMode: TradeMarket // Global or BIST
+    @ObservedObject private var portfolioVM = PortfolioViewModel.shared
+    var marketMode: TradeMarket
     @Environment(\.presentationMode) var presentationMode
-    @State private var selectedTxn: Transaction? // State for tapping
-    
-    // Filtered Transactions
+    @State private var selectedTxn: Transaction?
+
     var filteredTransactions: [Transaction] {
-        viewModel.transactionHistory.filter { txn in
+        portfolioVM.transactionHistory.filter { txn in
             if marketMode == .bist {
                 return txn.currency == .TRY
             } else {
@@ -24,7 +23,7 @@ struct TransactionHistorySheet: View {
                 if filteredTransactions.isEmpty {
                     VStack(spacing: 16) {
                         Image(systemName: "terminal")
-                            .font(.system(size: 48))
+                            .font(DesignTokens.Fonts.custom(size: 48))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary.opacity(0.3))
                         Text(marketMode == .bist ? "BIST Geçmişi Boş" : "Global Geçmiş Boş")
                             .font(.headline)
@@ -59,7 +58,7 @@ struct TransactionHistorySheet: View {
             }
             .sheet(item: $selectedTxn) { txn in
                 // Look up full snapshot if available
-                let snapshot = viewModel.agoraSnapshots.first(where: { $0.id.uuidString == txn.decisionId })
+                let snapshot = AppStateCoordinator.shared.agoraSnapshots.first(where: { $0.id.uuidString == txn.decisionId })
                 TransactionDetailView(transaction: txn, snapshot: snapshot)
             }
         }

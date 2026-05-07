@@ -27,7 +27,7 @@ struct AgoraTraceCard: View {
                 Image(systemName: approved ? "checkmark.seal.fill" : "xmark.octagon.fill")
                     .foregroundColor(approved ? InstitutionalTheme.Colors.aurora : InstitutionalTheme.Colors.crimson)
                 Text(approved ? "Argus onayladı" : "Argus reddetti")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 15, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Spacer()
                 Text(action.rawValue.uppercased())
@@ -44,10 +44,10 @@ struct AgoraTraceCard: View {
             if !approved, !t.riskEvaluation.reason.isEmpty {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(.orange)
                     Text(t.riskEvaluation.reason)
-                        .font(.system(size: 13))
+                        .font(DesignTokens.Fonts.custom(size: 13))
                         .foregroundColor(.orange)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -83,7 +83,7 @@ struct RiskSummaryCard: View {
                 Image(systemName: isVeto ? "hand.raised.fill" : "shield.lefthalf.filled")
                     .foregroundColor(isVeto ? InstitutionalTheme.Colors.crimson : InstitutionalTheme.Colors.holo)
                 Text(isVeto ? report.replacingOccurrences(of: "VETO: ", with: "") : report)
-                    .font(.system(size: 13))
+                    .font(DesignTokens.Fonts.custom(size: 13))
                     .foregroundColor(isVeto ? InstitutionalTheme.Colors.crimson : InstitutionalTheme.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -114,7 +114,7 @@ struct PhoenixChannelCard: View {
                     Image(systemName: "arrow.up.and.down.circle")
                         .foregroundColor(InstitutionalTheme.Colors.holo)
                     Text("Kanal Analizi")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(DesignTokens.Fonts.custom(size: 15, weight: .semibold))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     Spacer()
                     if let run = onRunBacktest {
@@ -127,7 +127,7 @@ struct PhoenixChannelCard: View {
                 HStack(spacing: 20) {
                     VStack(spacing: 4) {
                         Text(String(format: "%.2f", advice.channelUpper ?? 0))
-                            .font(.system(size: 15, weight: .bold))
+                            .font(DesignTokens.Fonts.custom(size: 15, weight: .bold))
                             .foregroundColor(InstitutionalTheme.Colors.crimson.opacity(0.9))
                         Text("Direnç")
                             .font(.caption2)
@@ -140,7 +140,7 @@ struct PhoenixChannelCard: View {
                             .frame(width: 4, height: 30)
 
                         Text(String(format: "%.2f", advice.channelLower ?? 0))
-                            .font(.system(size: 15, weight: .bold))
+                            .font(DesignTokens.Fonts.custom(size: 15, weight: .bold))
                             .foregroundColor(InstitutionalTheme.Colors.aurora.opacity(0.9))
                         Text("Destek")
                             .font(.caption2)
@@ -150,20 +150,20 @@ struct PhoenixChannelCard: View {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Text("Konum:")
-                                .font(.system(size: 13))
+                                .font(DesignTokens.Fonts.custom(size: 13))
                                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                             Text(advice.triggers.touchLowerBand ? "Destek bölgesi" : "Kanal içi")
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(DesignTokens.Fonts.custom(size: 13, weight: .semibold))
                                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         }
                         if advice.triggers.rsiReversal || advice.triggers.bullishDivergence {
                             Text(advice.triggers.rsiReversal ? "RSI dönüş sinyali var" : "Yükseliş ayrışması")
-                                .font(.system(size: 13))
+                                .font(DesignTokens.Fonts.custom(size: 13))
                                 .foregroundColor(InstitutionalTheme.Colors.holo)
                         }
                         if !advice.reasonShort.isEmpty {
                             Text(advice.reasonShort)
-                                .font(.system(size: 12))
+                                .font(DesignTokens.Fonts.custom(size: 12))
                                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                                 .italic()
                         }
@@ -189,7 +189,7 @@ struct TransactionHistoryCard: View {
                     Image(systemName: "clock.arrow.circlepath")
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     Text("Bu Hissedeki İşlemler")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(DesignTokens.Fonts.custom(size: 15, weight: .semibold))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 }
                 ForEach(transactions.prefix(5)) { tx in

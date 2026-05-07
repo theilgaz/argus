@@ -30,18 +30,18 @@ struct CrystalWatchlistRow: View {
             // formuna gerek bırakmıyor).
             VStack(alignment: .leading, spacing: 2) {
                 Text(displayName)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .lineLimit(1)
 
                 if let sig = signal, !sig.reason.isEmpty {
                     Text(sig.reason)
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(reasonColor(sig))
                         .lineLimit(1)
                 } else {
                     Text(symbolDisplay)
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 11, weight: .medium, design: .monospaced))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         .lineLimit(1)
                 }
@@ -105,7 +105,7 @@ struct CrystalWatchlistRow: View {
         let label = localizedAction(sig)
         let tone = pillTone(for: sig)
         return Text(label)
-            .font(.system(size: 11, weight: .semibold))
+            .font(DesignTokens.Fonts.custom(size: 11, weight: .semibold))
             .foregroundColor(tone)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
@@ -161,11 +161,11 @@ struct CrystalWatchlistRow: View {
 
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(String(format: "\(currency)%.2f", q.currentPrice))
-                        .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 14, weight: .semibold, design: .monospaced))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
                     Text(String(format: "%+.2f%%", q.percentChange))
-                        .font(.system(size: 11, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 11, design: .monospaced))
                         .foregroundColor(changeColor)
 
                     PrometheusBadge(forecast: forecast)

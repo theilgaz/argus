@@ -118,7 +118,7 @@ struct CenterCoreView: View {
         if let d = decision {
             let label = "Konsey \(d.action.rawValue.lowercased())"
             Text(label.prefix(1).uppercased() + label.dropFirst())
-                .font(.system(size: 10, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 10, weight: .semibold))
                 .foregroundStyle(actionColor(for: d.action))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 2)
@@ -128,7 +128,7 @@ struct CenterCoreView: View {
                 )
         } else {
             Text("Bekleniyor")
-                .font(.system(size: 10, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 10, weight: .medium))
                 .foregroundStyle(InstitutionalTheme.Colors.textTertiary)
         }
     }
@@ -137,7 +137,7 @@ struct CenterCoreView: View {
     private var confidenceText: some View {
         if let d = decision {
             Text("Güven %\(Int(d.confidence * 100))")
-                .font(.system(size: 10, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 10, design: .monospaced))
                 .foregroundStyle(InstitutionalTheme.Colors.textSecondary)
         } else {
             EmptyView()

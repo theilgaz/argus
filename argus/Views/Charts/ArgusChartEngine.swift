@@ -299,17 +299,17 @@ struct ArgusChartEngine: View {
         
         return HStack(spacing: 12) {
             if let p = point {
-                Text("O").foregroundColor(.gray) + Text(String(format: "%.2f", p.open)).foregroundColor(.white)
-                Text("H").foregroundColor(.gray) + Text(String(format: "%.2f", p.high)).foregroundColor(.green)
-                Text("L").foregroundColor(.gray) + Text(String(format: "%.2f", p.low)).foregroundColor(.red)
-                Text("C").foregroundColor(.gray) + Text(String(format: "%.2f", p.close)).foregroundColor(p.isBullish ? .green : .red)
-                Text("V").foregroundColor(.gray) + Text(formatVolume(p.volume)).foregroundColor(.white)
+                Text("O").foregroundColor(DesignTokens.Colors.textTertiary) + Text(String(format: "%.2f", p.open)).foregroundColor(DesignTokens.Colors.textPrimary)
+                Text("H").foregroundColor(DesignTokens.Colors.textTertiary) + Text(String(format: "%.2f", p.high)).foregroundColor(.green)
+                Text("L").foregroundColor(DesignTokens.Colors.textTertiary) + Text(String(format: "%.2f", p.low)).foregroundColor(.red)
+                Text("C").foregroundColor(DesignTokens.Colors.textTertiary) + Text(String(format: "%.2f", p.close)).foregroundColor(p.isBullish ? .green : .red)
+                Text("V").foregroundColor(DesignTokens.Colors.textTertiary) + Text(formatVolume(p.volume)).foregroundColor(DesignTokens.Colors.textPrimary)
             }
         }
-        .font(.system(size: 11, weight: .medium, design: .monospaced))
+        .font(DesignTokens.Fonts.custom(size: 11, weight: .medium, design: .monospaced))
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .background(Color.black.opacity(0.6))
+        .background(DesignTokens.Colors.Scrim.s60)
         .cornerRadius(6)
     }
     
@@ -351,7 +351,7 @@ struct ArgusChartEngine: View {
         for i in 0...ySteps {
             let y = chartRect.minY + chartRect.height * CGFloat(i) / CGFloat(ySteps)
             let price = data.maxPrice - (priceRange * Double(i) / Double(ySteps))
-            context.draw(Text(String(format: "%.2f", price)).font(.system(size: 10)).foregroundColor(.gray), at: CGPoint(x: chartRect.maxX + 8, y: y), anchor: .leading)
+            context.draw(Text(String(format: "%.2f", price)).font(DesignTokens.Fonts.custom(size: 10)).foregroundColor(DesignTokens.Colors.textTertiary), at: CGPoint(x: chartRect.maxX + 8, y: y), anchor: .leading)
         }
     }
     
@@ -405,7 +405,7 @@ struct ArgusChartEngine: View {
     
     private func drawCrosshair(context: GraphicsContext, location: CGPoint, chartRect: CGRect) {
         // 1. Draw Lines
-        let color = Color.white.opacity(0.4)
+        let color = DesignTokens.Colors.Overlay.l40
         var v = Path(); v.move(to: CGPoint(x: location.x, y: chartRect.minY)); v.addLine(to: CGPoint(x: location.x, y: chartRect.maxY))
         context.stroke(v, with: .color(color), style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
         
@@ -420,7 +420,7 @@ struct ArgusChartEngine: View {
         
         let pricePath = Path(roundedRect: priceBgRect, cornerRadius: 4)
         context.fill(pricePath, with: .color(Color.blue))
-        context.draw(Text(priceText).font(.caption2).bold().foregroundColor(.white), at: CGPoint(x: chartRect.maxX + 4, y: location.y), anchor: .leading)
+        context.draw(Text(priceText).font(.caption2).bold().foregroundColor(DesignTokens.Colors.textPrimary), at: CGPoint(x: chartRect.maxX + 4, y: location.y), anchor: .leading)
         
         // 3. X-Axis Label (Date)
         // Calculate index logic matches drawCandles
@@ -438,7 +438,7 @@ struct ArgusChartEngine: View {
             let dateText = formatter.string(from: date)
             
             // Draw Label
-            let textLayout = context.resolve(Text(dateText).font(.caption2).bold().foregroundColor(.white))
+            let textLayout = context.resolve(Text(dateText).font(.caption2).bold().foregroundColor(DesignTokens.Colors.textPrimary))
             let textSize = textLayout.measure(in: CGSize(width: 200, height: 20))
             let textRect = CGRect(
                 x: location.x - (textSize.width / 2) - 4,

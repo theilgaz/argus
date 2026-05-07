@@ -31,13 +31,13 @@ struct SanctumContributionCard: View {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Text("Konsey katkı dağılımı")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
                     Spacer()
 
                     Text(String(format: "Net %+.1f", netImpact))
-                        .font(.system(size: 12, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                         .foregroundColor(netColor)
                         .monospacedDigit()
                 }
@@ -199,15 +199,15 @@ private struct ContributionImpactRow: View {
             
             HStack(spacing: 6) {
                 Text("Guven %\(Int(row.confidence * 100))")
-                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 10, weight: .medium, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 
                 Text("|")
-                    .font(.system(size: 8, weight: .medium, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 8, weight: .medium, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 
                 Text(row.reasoning)
-                    .font(.system(size: 10, weight: .regular, design: .default))
+                    .font(DesignTokens.Fonts.custom(size: 10, weight: .regular, design: .default))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     .lineLimit(1)
             }

@@ -30,22 +30,22 @@ struct SanctumHeader: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(String(format: "\(currency)%.2f", quote.currentPrice))
-                    .font(.system(size: 32, weight: .semibold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 32, weight: .semibold, design: .monospaced))
                     .monospacedDigit()
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
                 HStack(spacing: 8) {
                     Text(String(format: "%@%.2f", change >= 0 ? "+" : "", quote.change))
-                        .font(.system(size: 13, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 13, design: .monospaced))
                         .monospacedDigit()
                         .foregroundColor(priceColor)
                     Text(String(format: "%@%.2f%%", change >= 0 ? "+" : "", change))
-                        .font(.system(size: 13, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 13, design: .monospaced))
                         .monospacedDigit()
                         .foregroundColor(priceColor)
                     Spacer()
                     Text("Son · \(formattedTime)")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
             }
@@ -60,7 +60,7 @@ struct SanctumHeader: View {
         } else {
             VStack(alignment: .leading, spacing: 4) {
                 Text("—")
-                    .font(.system(size: 32, weight: .semibold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 32, weight: .semibold, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             .padding(.horizontal, 16)

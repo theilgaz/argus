@@ -85,12 +85,12 @@ struct HermesInfoRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: icon)
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(SanctumTheme.hermesColor.opacity(0.8))
                 .frame(width: 16)
             
             Text(text)
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
     }
@@ -126,7 +126,7 @@ struct OrionMotherboardErrorView: View {
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: iconName)
-                .font(.system(size: 48))
+                .font(DesignTokens.Fonts.custom(size: 48))
                 .foregroundColor(SanctumTheme.titanGold)
 
             Text(title)
@@ -134,7 +134,7 @@ struct OrionMotherboardErrorView: View {
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
             Text(symbol)
-                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .semibold, design: .monospaced))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
@@ -164,10 +164,10 @@ struct OrionMotherboardErrorView: View {
                                 .tint(SanctumTheme.titanGold)
                         } else {
                             Image(systemName: "arrow.clockwise")
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(DesignTokens.Fonts.custom(size: 12, weight: .semibold))
                         }
                         Text(isRetrying ? "Yenileniyor..." : "Tekrar Dene")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(DesignTokens.Fonts.custom(size: 13, weight: .semibold))
                     }
                     .foregroundColor(SanctumTheme.titanGold)
                     .padding(.horizontal, 16)

@@ -32,7 +32,7 @@ struct FinanceDictionarySheet: View {
 
             TextField("Terim ara...", text: $repository.searchQuery)
                 .textFieldStyle(PlainTextFieldStyle())
-                .foregroundColor(.white)
+                .foregroundColor(DesignTokens.Colors.textPrimary)
 
             if !repository.searchQuery.isEmpty {
                 Button {
@@ -78,7 +78,7 @@ struct FinanceDictionarySheet: View {
                 .padding(.vertical, 6)
                 .background(
                     RoundedRectangle(cornerRadius: InstitutionalTheme.Radius.sm)
-                        .fill(isSelected ? InstitutionalTheme.Colors.holo : Color.white.opacity(0.1))
+                        .fill(isSelected ? InstitutionalTheme.Colors.holo : DesignTokens.Colors.Overlay.l10)
                 )
         }
     }
@@ -111,7 +111,7 @@ struct FinanceDictionarySheet: View {
                         Text(term.term)
                             .font(.subheadline)
                             .fontWeight(.medium)
-                            .foregroundColor(.white)
+                            .foregroundColor(DesignTokens.Colors.textPrimary)
 
                         if let fullName = term.fullName {
                             Text("(\(fullName))")
@@ -163,7 +163,7 @@ struct TermDetailSheet: View {
                         Text(term.term)
                             .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundColor(.white)
+                            .foregroundColor(DesignTokens.Colors.textPrimary)
 
                         if let fullName = term.fullName {
                             Text(fullName)
@@ -195,11 +195,11 @@ struct TermDetailSheet: View {
                     if let argusUsage = term.argusUsage {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Argus'ta kullanımı")
-                                .font(.system(size: 12, weight: .medium))
+                                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
                             Text(argusUsage)
-                                .font(.system(size: 13))
+                                .font(DesignTokens.Fonts.custom(size: 13))
                                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                 .padding(12)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -212,17 +212,17 @@ struct TermDetailSheet: View {
                     if !term.relatedTerms.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("İlgili terimler")
-                                .font(.system(size: 12, weight: .medium))
+                                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
                             FlowLayout(spacing: 8) {
                                 ForEach(term.relatedTerms, id: \.self) { related in
                                     Text(related)
                                         .font(.caption)
-                                        .foregroundColor(.white)
+                                        .foregroundColor(DesignTokens.Colors.textPrimary)
                                         .padding(.horizontal, 10)
                                         .padding(.vertical, 5)
-                                        .background(Color.white.opacity(0.1))
+                                        .background(DesignTokens.Colors.Overlay.l10)
                                         .cornerRadius(InstitutionalTheme.Radius.sm)
                                 }
                             }
@@ -249,7 +249,7 @@ struct TermDetailSheet: View {
                 .foregroundColor(isCode ? InstitutionalTheme.Colors.holo : .white)
                 .padding(isCode ? 12 : 0)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(isCode ? Color.white.opacity(0.05) : Color.clear)
+                .background(isCode ? DesignTokens.Colors.Overlay.l05 : Color.clear)
                 .cornerRadius(isCode ? InstitutionalTheme.Radius.sm : 0)
         }
     }

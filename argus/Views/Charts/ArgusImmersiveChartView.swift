@@ -42,13 +42,13 @@ struct ArgusImmersiveChartView: View {
                             Text(symbol)
                                 .font(.headline)
                                 .bold()
-                                .foregroundColor(.white)
+                                .foregroundColor(DesignTokens.Colors.textPrimary)
                             
                             if let lastPrice = chartData.points.last?.close {
                                 HStack(spacing: 4) {
                                     Text(String(format: "%.2f", lastPrice))
                                         .font(.subheadline)
-                                        .foregroundColor(.white)
+                                        .foregroundColor(DesignTokens.Colors.textPrimary)
                                     
                                     if let firstPrice = chartData.points.first?.close, firstPrice > 0 {
                                         let change = ((lastPrice - firstPrice) / firstPrice) * 100
@@ -97,23 +97,23 @@ struct ArgusImmersiveChartView: View {
                         Button(action: { dismiss() }) {
                             Image(systemName: "xmark.circle.fill")
                                 .font(.title2)
-                                .foregroundColor(.gray)
+                                .foregroundColor(DesignTokens.Colors.textTertiary)
                         }
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 10)
-                    .background(Color.black.opacity(0.5))
+                    .background(DesignTokens.Colors.Scrim.s50)
                     
                     // The Chart Engine (Connected)
                     if isLoading {
                         Spacer()
                         ProgressView("Veri yükleniyor...")
-                            .foregroundColor(.white)
+                            .foregroundColor(DesignTokens.Colors.textPrimary)
                         Spacer()
                     } else if chartData.points.isEmpty {
                         Spacer()
                         Text("Bu periyot için veri bulunamadı.")
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                         Spacer()
                     } else {
 
@@ -132,7 +132,7 @@ struct ArgusImmersiveChartView: View {
                                                 .padding(8)
                                                 .background(Color.blue.opacity(0.8))
                                                 .cornerRadius(8)
-                                                .foregroundColor(.white)
+                                                .foregroundColor(DesignTokens.Colors.textPrimary)
                                                 .font(.caption)
                                                 .padding(.top, 10)
                                                 Spacer()
@@ -144,10 +144,10 @@ struct ArgusImmersiveChartView: View {
                             // X-Axis Time Labels
                             xAxisTimeLabels
                                 .frame(height: 30)
-                                .background(Color.black.opacity(0.3))
+                                .background(DesignTokens.Colors.Scrim.s30)
                         } else {
                             Text("Mum verisi işlenemedi.")
-                                .foregroundColor(.gray)
+                                .foregroundColor(DesignTokens.Colors.textTertiary)
                         }
                     }
                 }
@@ -196,7 +196,7 @@ struct ArgusImmersiveChartView: View {
                             }
                             .padding(.vertical, 12)
                             .padding(.horizontal, 10)
-                            .background(Color.black.opacity(0.8))
+                            .background(DesignTokens.Colors.Scrim.s80)
                             .cornerRadius(10)
                             .padding(.trailing, 12)
                         }
@@ -214,19 +214,19 @@ struct ArgusImmersiveChartView: View {
                             VStack(spacing: 20) {
                                 Image(systemName: "iphone.landscape")
                                     .font(DesignTokens.Fonts.custom(size: 80))
-                                    .foregroundColor(.white)
+                                    .foregroundColor(DesignTokens.Colors.textPrimary)
                                     .rotationEffect(.degrees(90))
                                     .symbolEffect(.bounce, options: .repeating)
                                 
                                 Text("Lütfen Ekranı Çevirin")
                                     .font(.title2)
                                     .bold()
-                                    .foregroundColor(.white)
+                                    .foregroundColor(DesignTokens.Colors.textPrimary)
                                 
                                 Text("Argus Gelişmiş Grafik Motoru en iyi\nyatay modda çalışır.")
                                     .multilineTextAlignment(.center)
                                     .font(.caption)
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(DesignTokens.Colors.textTertiary)
                                 
                                 Button("Kapat") { dismiss() }
                                     .padding(.top, 40)
@@ -255,7 +255,7 @@ struct ArgusImmersiveChartView: View {
                     if index < chartData.points.count {
                         Text(formatDate(chartData.points[index].timestamp))
                             .font(DesignTokens.Fonts.custom(size: 9, design: .monospaced))
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                     }
                     if index < chartData.points.count - step { Spacer() }
                 }

@@ -2,11 +2,11 @@ import SwiftUI
 
 struct SanctumTradeSheet: View {
     let symbol: String
-    let viewModel: TradingViewModel
     let action: ArgusSanctumView.TradeAction
 
     @Environment(\.presentationMode) var presentationMode
     @ObservedObject private var execution = ExecutionStateViewModel.shared
+    @ObservedObject private var market = MarketViewModel.shared
     @State private var quantity: Double = 0
     @State private var price: Double = 0
     @State private var quantityString = ""
@@ -51,7 +51,7 @@ struct SanctumTradeSheet: View {
                     HStack {
                         Text("Mevcut fiyat")
                         Spacer()
-                        if let quote = viewModel.quotes[symbol] {
+                        if let quote = market.quotes[symbol] {
                             Text(String(format: "%.2f", quote.currentPrice))
                         } else {
                             Text("Veri yok")
@@ -138,7 +138,7 @@ struct SanctumTradeSheet: View {
             .navigationBarItems(trailing: Button("Iptal") { presentationMode.wrappedValue.dismiss() })
         }
         .onAppear {
-            if let quote = viewModel.quotes[symbol] {
+            if let quote = market.quotes[symbol] {
                 price = quote.currentPrice
                 priceString = String(format: "%.2f", price)
             }
@@ -153,9 +153,9 @@ struct SanctumTradeSheet: View {
         execution.lastTradeError = nil
 
         if action == .buy {
-            viewModel.buy(symbol: symbol, quantity: quantity)
+            execution.buy(symbol: symbol, quantity: quantity)
         } else {
-            viewModel.sell(symbol: symbol, quantity: quantity)
+            execution.sell(symbol: symbol, quantity: quantity)
         }
 
         // executeBuy/Sell is async via Task — check result after brief delay

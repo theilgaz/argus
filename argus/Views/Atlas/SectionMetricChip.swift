@@ -8,7 +8,7 @@ struct SectionMetricChip: View {
     var body: some View {
         HStack(spacing: 6) {
             Text(label.uppercased())
-                .font(.system(size: 8, weight: .bold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 8, weight: .bold, design: .monospaced))
                 .foregroundColor(color)
             Divider()
                 .frame(height: 12)

@@ -132,7 +132,7 @@ extension SettingsView {
     fileprivate var topNav: some View {
         HStack(spacing: 8) {
             Text("Ayarlar")
-                .font(.system(size: 17, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 17, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .accessibilityAddTraits(.isHeader)
 
@@ -144,7 +144,7 @@ extension SettingsView {
                 }
             }) {
                 Image(systemName: "line.3.horizontal")
-                    .font(.system(size: 18, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 18, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .frame(width: 36, height: 36)
                     .contentShape(Rectangle())
@@ -242,7 +242,7 @@ extension SettingsView {
     fileprivate func settingsGroup<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 .padding(.leading, 6)
             VStack(spacing: 0) {
@@ -256,7 +256,7 @@ extension SettingsView {
     fileprivate func settingsToggleRow(title: String, isOn: Binding<Bool>, last: Bool = false) -> some View {
         HStack {
             Text(title)
-                .font(.system(size: 14))
+                .font(DesignTokens.Fonts.custom(size: 14))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Spacer()
             Toggle("", isOn: isOn)
@@ -287,16 +287,16 @@ extension SettingsView {
         NavigationLink(destination: destination()) {
             HStack(spacing: 6) {
                 Text(title)
-                    .font(.system(size: 14))
+                    .font(DesignTokens.Fonts.custom(size: 14))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Spacer()
                 if let value, !value.isEmpty {
                     Text(value)
-                        .font(.system(size: 13))
+                        .font(DesignTokens.Fonts.custom(size: 13))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             .padding(.horizontal, 14)
@@ -319,16 +319,16 @@ extension SettingsView {
         Button(action: action) {
             HStack(spacing: 6) {
                 Text(title)
-                    .font(.system(size: 14))
+                    .font(DesignTokens.Fonts.custom(size: 14))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Spacer()
                 if let value, !value.isEmpty {
                     Text(value)
-                        .font(.system(size: 13))
+                        .font(DesignTokens.Fonts.custom(size: 13))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             .padding(.horizontal, 14)
@@ -350,11 +350,11 @@ extension SettingsView {
     fileprivate func settingsValueRow(title: String, value: String, last: Bool = false) -> some View {
         HStack {
             Text(title)
-                .font(.system(size: 14))
+                .font(DesignTokens.Fonts.custom(size: 14))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Spacer()
             Text(value)
-                .font(.system(size: 13, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 13, design: .monospaced))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
         .padding(.horizontal, 14)
@@ -502,7 +502,7 @@ struct SettingsSubPage<Content: View>: View {
                 HStack(spacing: 8) {
                     Button(action: { dismiss() }) {
                         Image(systemName: "chevron.left")
-                            .font(.system(size: 18, weight: .medium))
+                            .font(DesignTokens.Fonts.custom(size: 18, weight: .medium))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                             .frame(width: 36, height: 36)
                             .contentShape(Rectangle())
@@ -511,7 +511,7 @@ struct SettingsSubPage<Content: View>: View {
                     .accessibilityLabel("Geri")
 
                     Text(title)
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(DesignTokens.Fonts.custom(size: 17, weight: .semibold))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         .accessibilityAddTraits(.isHeader)
 
@@ -886,7 +886,7 @@ struct TerminalSection<Content: View>: View {
                     MotorLogo(motor, size: 14)
                 } else if let systemImage {
                     Image(systemName: systemImage)
-                        .font(.system(size: 11, weight: .bold))
+                        .font(DesignTokens.Fonts.custom(size: 11, weight: .bold))
                         .foregroundStyle(accentColor)
                         .frame(width: 14, height: 14)
                 }

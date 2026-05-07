@@ -45,7 +45,7 @@ struct FundListView: View {
             // Yerine minimal bir detay sheet'i — kod + ad gösterir.
             VStack(alignment: .leading, spacing: 12) {
                 Text(fund.name).font(.title3).bold()
-                Text(fund.code).font(.caption).foregroundColor(.secondary)
+                Text(fund.code).font(.caption).foregroundColor(DesignTokens.Colors.textSecondary)
                 Spacer()
             }
             .padding()
@@ -60,7 +60,7 @@ struct FundListView: View {
     private var controlSection: some View {
         HStack(spacing: 10) {
             Text("\(filteredFunds.count) fon")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .monospacedDigit()
 
@@ -75,10 +75,10 @@ struct FundListView: View {
             } label: {
                 HStack(spacing: 4) {
                     Text(sortOption.rawValue)
-                        .font(.system(size: 12, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     Image(systemName: "chevron.down")
-                        .font(.system(size: 9))
+                        .font(DesignTokens.Fonts.custom(size: 9))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
                 .padding(.horizontal, 4)
@@ -142,7 +142,7 @@ struct FundListView: View {
                 }
                 if filteredFunds.isEmpty {
                     Text("Kriterlere uygun fon bulunamadı")
-                        .font(.system(size: 13))
+                        .font(DesignTokens.Fonts.custom(size: 13))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .padding(.top, 32)
                 }
@@ -199,9 +199,9 @@ struct CategoryChip: View {
         Button(action: action) {
             HStack(spacing: 5) {
                 Image(systemName: icon)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                 Text(title)
-                    .font(.system(size: 12, weight: isSelected ? .medium : .regular))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: isSelected ? .medium : .regular))
                     .lineLimit(1)
             }
             .padding(.horizontal, 11)
@@ -239,15 +239,15 @@ struct FundRowView: View {
             // Üst satır
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text(fund.code)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 15, weight: .semibold))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text(fund.category.rawValue)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Spacer(minLength: 6)
                 if let priceData, let return1W = priceData.return1Week {
                     Text(String(format: "%+.1f%%", return1W))
-                        .font(.system(size: 14, weight: .medium, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 14, weight: .medium, design: .monospaced))
                         .foregroundColor(return1W >= 0
                                          ? InstitutionalTheme.Colors.aurora
                                          : InstitutionalTheme.Colors.crimson)
@@ -260,20 +260,20 @@ struct FundRowView: View {
             // Alt satır
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text(fund.shortName)
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .lineLimit(1)
                 Text("·")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Text(fund.founder.rawValue)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     .lineLimit(1)
                 Spacer(minLength: 6)
                 if let priceData {
                     Text(String(format: "₺%.2f", priceData.currentPrice))
-                        .font(.system(size: 11, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 11, design: .monospaced))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .monospacedDigit()
                 }

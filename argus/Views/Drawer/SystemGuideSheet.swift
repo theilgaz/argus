@@ -100,7 +100,7 @@ struct SystemGuideSheet: View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 8) {
                 Text(index)
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .bold, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.primary)
                     .frame(width: 16, alignment: .leading)
                 Text(title)
@@ -108,7 +108,7 @@ struct SystemGuideSheet: View {
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             }
             Text(text)
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .padding(.leading, 24)
             Rectangle()
@@ -120,7 +120,7 @@ struct SystemGuideSheet: View {
     /// 2026-05-05 H-67: caps mono tracking 0.8 → sentence sade.
     private func sectionTitle(_ text: String) -> some View {
         Text(text.capitalized)
-            .font(.system(size: 13, weight: .medium))
+            .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
     }
 }

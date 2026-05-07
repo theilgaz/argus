@@ -18,7 +18,7 @@ struct ServiceHealthView: View {
                                 Spacer()
                                 Text(status.status.rawValue)
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(DesignTokens.Colors.textSecondary)
                             }
                             
                             if let remaining = status.remainingQuota {
@@ -40,7 +40,7 @@ struct ServiceHealthView: View {
                             } else {
                                 Text("Kota bilgisi alınamıyor veya limitsiz.")
                                     .font(.caption2)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(DesignTokens.Colors.textSecondary)
                             }
                             
                             if let error = status.lastError {
@@ -62,8 +62,8 @@ struct ServiceHealthView: View {
             Section(header: Text("İşlem Günlüğü (Son 50)")) {
                 ForEach(monitor.requestLog.reversed(), id: \.self) { log in
                     Text(log)
-                        .font(.system(size: 10, design: .monospaced))
-                        .foregroundColor(.secondary)
+                        .font(DesignTokens.Fonts.custom(size: 10, design: .monospaced))
+                        .foregroundColor(DesignTokens.Colors.textSecondary)
                 }
             }
         }

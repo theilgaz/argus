@@ -9,7 +9,7 @@ struct BistTrendIndicator: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: trendIcon)
-                .font(.system(size: 16, weight: .bold))
+                .font(DesignTokens.Fonts.custom(size: 16, weight: .bold))
                 .foregroundColor(trendColor)
                 .frame(width: 28, height: 28)
                 .background(
@@ -19,10 +19,10 @@ struct BistTrendIndicator: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
                     Text("BIST trend")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     Text(trendState.rawValue)
-                        .font(.system(size: 11, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 11, weight: .medium))
                         .foregroundColor(trendTone.foreground)
                 }
                 HStack(spacing: 10) {
@@ -47,10 +47,10 @@ struct BistTrendIndicator: View {
     private func miniStat(_ title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(title)
-                .font(.system(size: 10))
+                .font(DesignTokens.Fonts.custom(size: 10))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Text(value)
-                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 11, weight: .medium, design: .monospaced))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .monospacedDigit()
         }
@@ -153,7 +153,7 @@ struct OrionDetailView: View {
                         // MARK: 3. VERBAL SUMMARY (sade kart)
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Piyasa durumu")
-                                .font(.system(size: 12, weight: .medium))
+                                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                             Text(generateVerbalSummary(orion: orion))
                                 .font(.subheadline)
@@ -296,7 +296,7 @@ struct OrionDetailView: View {
                             ) {
                                 VStack(spacing: 10) {
                                     Text(patternContext.title)
-                                        .font(.system(size: 14, weight: .semibold))
+                                        .font(DesignTokens.Fonts.custom(size: 14, weight: .semibold))
                                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                         .lineLimit(1)
@@ -384,10 +384,10 @@ struct OrionDetailView: View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(symbol)
-                    .font(.system(size: 18, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 18, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text("Teknik analiz")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             }
 
@@ -395,11 +395,11 @@ struct OrionDetailView: View {
 
             VStack(alignment: .trailing, spacing: 2) {
                 Text("\(Int(orion.score))")
-                    .font(.system(size: 28, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 28, weight: .medium))
                     .foregroundColor(scoreColor(orion.score))
                     .monospacedDigit()
                 Text(getVerdictSummary(score: orion.score))
-                    .font(.system(size: 12, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                     .foregroundColor(scoreColor(orion.score))
             }
         }
@@ -591,12 +591,12 @@ struct OrionCommandCard<Content: View>: View {
                     .font(.caption2)
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Text(title)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Spacer()
                 if let status {
                     Text(status)
-                        .font(.system(size: 11, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 11, weight: .medium))
                         .foregroundColor(statusColor ?? InstitutionalTheme.Colors.textSecondary)
                 }
             }
@@ -647,7 +647,7 @@ struct SegmentStrip: View {
         HStack(spacing: 6) {
             ForEach(Array(labels.enumerated()), id: \.offset) { index, label in
                 Text(label)
-                    .font(.system(size: 9, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 9, weight: .semibold))
                     .foregroundColor(index == activeIndex ? activeColor : InstitutionalTheme.Colors.textSecondary)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
@@ -669,11 +669,11 @@ struct MiniDataPill: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label.uppercased())
-                .font(.system(size: 8, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 8, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 .lineLimit(1)
             Text(value)
-                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 11, weight: .bold, design: .monospaced))
                 .foregroundColor(color)
                 .lineLimit(1)
                 .monospacedDigit()
@@ -744,9 +744,9 @@ struct StructureLinearMap: View {
             .frame(height: 10)
             
             HStack {
-                Text("S").font(.system(size: 8, weight: .black)).foregroundColor(InstitutionalTheme.Colors.positive)
+                Text("S").font(DesignTokens.Fonts.custom(size: 8, weight: .black)).foregroundColor(InstitutionalTheme.Colors.positive)
                 Spacer()
-                Text("R").font(.system(size: 8, weight: .black)).foregroundColor(InstitutionalTheme.Colors.negative)
+                Text("R").font(DesignTokens.Fonts.custom(size: 8, weight: .black)).foregroundColor(InstitutionalTheme.Colors.negative)
             }
         }
     }

@@ -24,7 +24,7 @@ struct ArgusPerformanceDashboard: View {
                 if isLoading {
                     ProgressView("Analiz ediliyor...")
                         .padding(60)
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 } else if let d = data {
                     if d.isEmpty {
                         emptyState
@@ -73,7 +73,7 @@ struct ArgusPerformanceDashboard: View {
                     withAnimation(.easeInOut(duration: 0.15)) { selectedPeriod = p }
                 } label: {
                     Text(p.rawValue)
-                        .font(.system(size: 12, weight: selectedPeriod == p ? .bold : .regular, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: selectedPeriod == p ? .bold : .regular, design: .monospaced))
                         .foregroundColor(selectedPeriod == p ? .black : .gray)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 7)
@@ -81,9 +81,9 @@ struct ArgusPerformanceDashboard: View {
                 }
             }
         }
-        .background(Color.white.opacity(0.07))
+        .background(DesignTokens.Colors.Overlay.l07)
         .cornerRadius(8)
-        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(DesignTokens.Colors.Overlay.l10, lineWidth: 1))
     }
 
     // MARK: - Summary Row
@@ -115,9 +115,9 @@ struct ArgusPerformanceDashboard: View {
                 color: d.tradeWinRate >= 0.5 ? .green : .red
             )
         }
-        .background(Color.white.opacity(0.04))
+        .background(DesignTokens.Colors.Overlay.l04)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(DesignTokens.Colors.Overlay.l08, lineWidth: 1))
     }
 
     // MARK: - Module Performance Card
@@ -144,21 +144,21 @@ struct ArgusPerformanceDashboard: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(ms.module.uppercased())
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .bold, design: .monospaced))
                     .foregroundColor(.white.opacity(0.85))
                 Spacer()
                 Text(ms.hitRateText)
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .bold, design: .monospaced))
                     .foregroundColor(ms.barColor)
                 Text("(\(ms.attempts) veri)")
-                    .font(.system(size: 10, design: .monospaced))
-                    .foregroundColor(.gray)
+                    .font(DesignTokens.Fonts.custom(size: 10, design: .monospaced))
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
             }
 
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 3)
-                        .fill(Color.white.opacity(0.07))
+                        .fill(DesignTokens.Colors.Overlay.l07)
                         .frame(height: 6)
                     RoundedRectangle(cornerRadius: 3)
                         .fill(ms.barColor)
@@ -181,21 +181,21 @@ struct ArgusPerformanceDashboard: View {
                     ForEach(d.regimeStats, id: \.regime) { rs in
                         HStack {
                             Text(rs.regimeLabel)
-                                .font(.system(size: 13))
+                                .font(DesignTokens.Fonts.custom(size: 13))
                                 .foregroundColor(.white.opacity(0.85))
                             Spacer()
                             Text("\(rs.correct)/\(rs.total)")
-                                .font(.system(size: 12, design: .monospaced))
-                                .foregroundColor(.gray)
+                                .font(DesignTokens.Fonts.custom(size: 12, design: .monospaced))
+                                .foregroundColor(DesignTokens.Colors.textTertiary)
                             Text(rs.hitRateText)
-                                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                                .font(DesignTokens.Fonts.custom(size: 13, weight: .bold, design: .monospaced))
                                 .foregroundColor(rs.hitRate >= 0.55 ? .green : rs.hitRate >= 0.45 ? .orange : .red)
                                 .frame(width: 45, alignment: .trailing)
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 10)
                         if rs.regime != d.regimeStats.last?.regime {
-                            Divider().background(Color.white.opacity(0.06)).padding(.horizontal, 16)
+                            Divider().background(DesignTokens.Colors.Overlay.l06).padding(.horizontal, 16)
                         }
                     }
                 }
@@ -215,12 +215,12 @@ struct ArgusPerformanceDashboard: View {
                 VStack(spacing: 0) {
                     HStack {
                         Text("Güven Aralığı")
-                            .font(.system(size: 10, design: .monospaced))
-                            .foregroundColor(.gray)
+                            .font(DesignTokens.Fonts.custom(size: 10, design: .monospaced))
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                         Spacer()
                         Text("Gerçek Doğruluk")
-                            .font(.system(size: 10, design: .monospaced))
-                            .foregroundColor(.gray)
+                            .font(DesignTokens.Fonts.custom(size: 10, design: .monospaced))
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 4)
@@ -229,21 +229,21 @@ struct ArgusPerformanceDashboard: View {
                     ForEach(d.confidenceBuckets, id: \.bracket) { cb in
                         HStack(spacing: 10) {
                             Text(cb.bracket)
-                                .font(.system(size: 12, design: .monospaced))
+                                .font(DesignTokens.Fonts.custom(size: 12, design: .monospaced))
                                 .foregroundColor(.white.opacity(0.7))
                                 .frame(width: 60, alignment: .leading)
 
                             GeometryReader { geo in
                                 ZStack(alignment: .leading) {
                                     RoundedRectangle(cornerRadius: 3)
-                                        .fill(Color.white.opacity(0.07))
+                                        .fill(DesignTokens.Colors.Overlay.l07)
                                         .frame(height: 6)
                                     RoundedRectangle(cornerRadius: 3)
                                         .fill(cb.hitRate > cb.expectedRate ? Color.green : Color.orange)
                                         .frame(width: geo.size.width * min(cb.hitRate, 1.0), height: 6)
                                     // Expected marker
                                     Rectangle()
-                                        .fill(Color.white.opacity(0.4))
+                                        .fill(DesignTokens.Colors.Overlay.l40)
                                         .frame(width: 1.5, height: 10)
                                         .offset(x: geo.size.width * cb.expectedRate - 0.75)
                                 }
@@ -251,13 +251,13 @@ struct ArgusPerformanceDashboard: View {
                             .frame(height: 10)
 
                             Text(String(format: "%.0f%%", cb.hitRate * 100))
-                                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                                .font(DesignTokens.Fonts.custom(size: 12, weight: .bold, design: .monospaced))
                                 .foregroundColor(cb.hitRate > cb.expectedRate ? .green : .orange)
                                 .frame(width: 38, alignment: .trailing)
 
                             Text("n=\(cb.n)")
-                                .font(.system(size: 10, design: .monospaced))
-                                .foregroundColor(.gray)
+                                .font(DesignTokens.Fonts.custom(size: 10, design: .monospaced))
+                                .foregroundColor(DesignTokens.Colors.textTertiary)
                                 .frame(width: 36, alignment: .trailing)
                         }
                         .padding(.horizontal, 16)
@@ -265,8 +265,8 @@ struct ArgusPerformanceDashboard: View {
                     }
 
                     Text("Beyaz çizgi = beklenen (declare ettiğin güven). Yeşil = iyi kalibre. Turuncu = güvenin yanlış ayarlı.")
-                        .font(.system(size: 10))
-                        .foregroundColor(.gray)
+                        .font(DesignTokens.Fonts.custom(size: 10))
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
                 }
@@ -292,8 +292,8 @@ struct ArgusPerformanceDashboard: View {
                                         .fill(v.wasCorrect ? Color.green : Color.red)
                                         .frame(width: 10, height: 10)
                                     Text(v.symbol.prefix(4))
-                                        .font(.system(size: 7, design: .monospaced))
-                                        .foregroundColor(.gray)
+                                        .font(DesignTokens.Fonts.custom(size: 7, design: .monospaced))
+                                        .foregroundColor(DesignTokens.Colors.textTertiary)
                                 }
                             }
                         }
@@ -301,33 +301,33 @@ struct ArgusPerformanceDashboard: View {
                         .padding(.vertical, 12)
                     }
 
-                    Divider().background(Color.white.opacity(0.06))
+                    Divider().background(DesignTokens.Colors.Overlay.l06)
 
                     // Last 5 verdicts
                     ForEach(d.filteredVerdicts.suffix(5).reversed(), id: \.id) { v in
                         HStack(spacing: 10) {
                             Image(systemName: v.wasCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
                                 .foregroundColor(v.wasCorrect ? .green : .red)
-                                .font(.system(size: 14))
+                                .font(DesignTokens.Fonts.custom(size: 14))
 
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("\(v.symbol) · \(v.action) · T+\(v.horizon)")
-                                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                                    .foregroundColor(.white)
+                                    .font(DesignTokens.Fonts.custom(size: 12, weight: .medium, design: .monospaced))
+                                    .foregroundColor(DesignTokens.Colors.textPrimary)
                                 Text(v.evaluationDate.formatted(date: .abbreviated, time: .omitted))
-                                    .font(.system(size: 10, design: .monospaced))
-                                    .foregroundColor(.gray)
+                                    .font(DesignTokens.Fonts.custom(size: 10, design: .monospaced))
+                                    .foregroundColor(DesignTokens.Colors.textTertiary)
                             }
 
                             Spacer()
 
                             Text(String(format: "%+.1f%%", v.priceChange))
-                                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                                .font(DesignTokens.Fonts.custom(size: 13, weight: .bold, design: .monospaced))
                                 .foregroundColor(v.priceChange >= 0 ? .green : .red)
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 9)
-                        Divider().background(Color.white.opacity(0.06)).padding(.horizontal, 16)
+                        Divider().background(DesignTokens.Colors.Overlay.l06).padding(.horizontal, 16)
                     }
                 }
             }
@@ -345,12 +345,12 @@ struct ArgusPerformanceDashboard: View {
                         .fill(cs.isHealthy ? Color.green : Color.orange)
                         .frame(width: 7, height: 7)
                     Text(cs.isHealthy ? "Karar motoruna bağlı ve etkili" : "Yeterli deneyim bekliyor")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(cs.isHealthy ? .green : .orange)
                     Spacer()
                     Text("Sağlık: \(Int(cs.healthScore))/100")
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundColor(.gray)
+                        .font(DesignTokens.Fonts.custom(size: 11, design: .monospaced))
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 4)
@@ -368,18 +368,18 @@ struct ArgusPerformanceDashboard: View {
                 ForEach(bars, id: \.0) { name, value in
                     HStack(spacing: 10) {
                         Text(name)
-                            .font(.system(size: 11, design: .monospaced))
+                            .font(DesignTokens.Fonts.custom(size: 11, design: .monospaced))
                             .foregroundColor(.white.opacity(0.7))
                             .frame(width: 88, alignment: .leading)
                         GeometryReader { geo in
                             ZStack(alignment: .leading) {
-                                RoundedRectangle(cornerRadius: 3).fill(Color.white.opacity(0.07)).frame(height: 5)
+                                RoundedRectangle(cornerRadius: 3).fill(DesignTokens.Colors.Overlay.l07).frame(height: 5)
                                 RoundedRectangle(cornerRadius: 3).fill(Color.mint.opacity(0.8)).frame(width: geo.size.width * value, height: 5)
                             }
                         }
                         .frame(height: 5)
                         Text(String(format: "%.0f%%", value * 100))
-                            .font(.system(size: 10, design: .monospaced))
+                            .font(DesignTokens.Fonts.custom(size: 10, design: .monospaced))
                             .foregroundColor(.mint)
                             .frame(width: 32, alignment: .trailing)
                     }
@@ -398,10 +398,10 @@ struct ArgusPerformanceDashboard: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 6) {
                 Image(systemName: icon)
-                    .font(.system(size: 11, weight: .bold))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .bold))
                     .foregroundColor(color)
                 Text(title)
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .bold, design: .monospaced))
                     .foregroundColor(color)
                     .tracking(1)
                 Spacer()
@@ -411,7 +411,7 @@ struct ArgusPerformanceDashboard: View {
             .padding(.bottom, 10)
             content()
         }
-        .background(Color.white.opacity(0.03))
+        .background(DesignTokens.Colors.Overlay.l03)
         .cornerRadius(14)
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(color.opacity(0.15), lineWidth: 1))
     }
@@ -420,27 +420,27 @@ struct ArgusPerformanceDashboard: View {
     private func summaryCell(value: String, label: String, color: Color) -> some View {
         VStack(spacing: 4) {
             Text(value)
-                .font(.system(size: 20, weight: .bold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 20, weight: .bold, design: .monospaced))
                 .foregroundColor(color)
                 .minimumScaleFactor(0.7)
                 .lineLimit(1)
             Text(label)
-                .font(.system(size: 10))
-                .foregroundColor(.gray)
+                .font(DesignTokens.Fonts.custom(size: 10))
+                .foregroundColor(DesignTokens.Colors.textTertiary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
     }
 
     @ViewBuilder private func divider() -> some View {
-        Divider().frame(height: 40).background(Color.white.opacity(0.1))
+        Divider().frame(height: 40).background(DesignTokens.Colors.Overlay.l10)
     }
 
     @ViewBuilder
     private func emptyCardState(_ text: String) -> some View {
         Text(text)
-            .font(.system(size: 12))
-            .foregroundColor(.gray)
+            .font(DesignTokens.Fonts.custom(size: 12))
+            .foregroundColor(DesignTokens.Colors.textTertiary)
             .italic()
             .padding(.horizontal, 16)
             .padding(.bottom, 14)
@@ -451,10 +451,10 @@ struct ArgusPerformanceDashboard: View {
             AlkindusAvatarView(size: 60, isThinking: true)
             Text("Henüz yeterli veri yok")
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundColor(DesignTokens.Colors.textPrimary)
             Text("Argus kararlar verdikçe ve pozisyonlar kapandıkça\nperformans verileri burada görünecek.")
-                .font(.system(size: 13))
-                .foregroundColor(.gray)
+                .font(DesignTokens.Fonts.custom(size: 13))
+                .foregroundColor(DesignTokens.Colors.textTertiary)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)

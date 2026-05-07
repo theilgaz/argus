@@ -111,10 +111,10 @@ struct PremiumTabBarButton: View {
         Button(action: action) {
             VStack(spacing: 4) {
                 Image(systemName: tab.icon)
-                    .font(.system(size: 18, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 18, weight: .medium))
 
                 Text(tab.rawValue)
-                    .font(.system(size: 11, weight: isSelected ? .semibold : .regular))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: isSelected ? .semibold : .regular))
             }
             .frame(maxWidth: .infinity)
             .foregroundColor(isSelected

@@ -86,7 +86,7 @@ struct ArgusGuideView: View {
                     
                     VStack(spacing: 8) {
                         Text(title)
-                            .font(.system(size: 48, weight: .black, design: .rounded))
+                            .font(DesignTokens.Fonts.custom(size: 48, weight: .black, design: .rounded))
                             .foregroundColor(mode.color)
                             .tracking(4)
                             .shadow(color: mode.color.opacity(0.5), radius: 10, x: 0, y: 0)

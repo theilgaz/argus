@@ -87,7 +87,7 @@ struct ModulePlaceholderBody: View {
                 ArgusDot(color: InstitutionalTheme.Colors.titan)
                     .padding(.top, 5)
                 Text(message)
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }

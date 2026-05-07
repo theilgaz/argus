@@ -67,7 +67,7 @@ struct BISTBilancoDetailView: View {
         HStack(spacing: 8) {
             Button(action: { dismiss() }) {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 18, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .frame(width: 36, height: 36)
                     .contentShape(Rectangle())
@@ -76,7 +76,7 @@ struct BISTBilancoDetailView: View {
             .accessibilityLabel("Geri")
 
             Text(sembol.replacingOccurrences(of: ".IS", with: ""))
-                .font(.system(size: 17, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 17, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .accessibilityAddTraits(.isHeader)
 
@@ -98,7 +98,7 @@ struct BISTBilancoDetailView: View {
         HStack(spacing: 10) {
             ProgressView().scaleEffect(0.8)
             Text("Bilanço yükleniyor…")
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -108,10 +108,10 @@ struct BISTBilancoDetailView: View {
     private func errorState(_ msg: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Bilanço alınamadı")
-                .font(.system(size: 14, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Text(msg)
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 .lineSpacing(2)
                 .fixedSize(horizontal: false, vertical: true)
@@ -127,22 +127,22 @@ struct BISTBilancoDetailView: View {
     private func companyMeta(_ s: BISTBilancoSonuc) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(s.profil.isim)
-                .font(.system(size: 18, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 18, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 0) {
                 Text(s.sembol.replacingOccurrences(of: ".IS", with: ""))
-                    .font(.system(size: 12, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 12, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 if let sektor = s.profil.sektor, !sektor.isEmpty {
                     Text(" · \(sektor)")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
                 Text(" · \(s.profil.formatliPiyasaDegeri)")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
         }
@@ -153,7 +153,7 @@ struct BISTBilancoDetailView: View {
 
     private func statusParagraph(_ s: BISTBilancoSonuc) -> some View {
         Text(s.ozet)
-            .font(.system(size: 14))
+            .font(DesignTokens.Fonts.custom(size: 14))
             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             .lineSpacing(3)
             .fixedSize(horizontal: false, vertical: true)
@@ -203,14 +203,14 @@ struct BISTBilancoDetailView: View {
     private func signalRow(title: String, count: Int, color: Color) -> some View {
         HStack(spacing: 10) {
             Text(title)
-                .font(.system(size: 15))
+                .font(DesignTokens.Fonts.custom(size: 15))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Spacer()
             Text("\(count)")
-                .font(.system(size: 14))
+                .font(DesignTokens.Fonts.custom(size: 14))
                 .foregroundColor(color)
             Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
         .padding(.horizontal, 14)
@@ -284,7 +284,7 @@ struct BISTBilancoDetailView: View {
     private func boyutGroup(title: String, rows: [BoyutRow]) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 .padding(.leading, 2)
 
@@ -313,19 +313,19 @@ struct BISTBilancoDetailView: View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(row.title)
-                    .font(.system(size: 15))
+                    .font(DesignTokens.Fonts.custom(size: 15))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text(row.sub)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             Spacer()
             Text("\(Int(row.score))")
-                .font(.system(size: 16, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 16, weight: .medium))
                 .foregroundColor(scoreColor(row.score))
                 .monospacedDigit()
             Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
         .padding(.horizontal, 14)
@@ -343,7 +343,7 @@ struct BISTBilancoDetailView: View {
 
     private var footerNote: some View {
         Text("Skor 7 boyutun ağırlıklı ortalamasıdır. Veriler son finansal raporlardan ve BorsaPy'den çekilir.")
-            .font(.system(size: 12))
+            .font(DesignTokens.Fonts.custom(size: 12))
             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             .lineSpacing(2)
             .fixedSize(horizontal: false, vertical: true)
@@ -409,14 +409,14 @@ struct BistBilancoBoyutView: View {
         HStack(spacing: 8) {
             Button(action: { dismiss() }) {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 18, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .frame(width: 36, height: 36)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             Text(title)
-                .font(.system(size: 17, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 17, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             Spacer()
         }
@@ -436,7 +436,7 @@ struct BistBilancoBoyutView: View {
 
     private func statusParagraph(_ m: BISTMetrik) -> some View {
         Text(m.aciklama)
-            .font(.system(size: 14))
+            .font(DesignTokens.Fonts.custom(size: 14))
             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             .lineSpacing(3)
             .fixedSize(horizontal: false, vertical: true)
@@ -446,7 +446,7 @@ struct BistBilancoBoyutView: View {
     private var metricsGroup: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Metrikler")
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 .padding(.leading, 2)
 
@@ -471,22 +471,22 @@ struct BistBilancoBoyutView: View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(m.isim)
-                    .font(.system(size: 14))
+                    .font(DesignTokens.Fonts.custom(size: 14))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 if let sektorAvg = m.sektorOrtalamasi {
                     Text("Sektör ortalaması \(BISTMetrik.formatla(sektorAvg))")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 } else if !m.aciklama.isEmpty {
                     Text(m.aciklama)
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         .lineLimit(1)
                 }
             }
             Spacer()
             Text(m.formatliDeger)
-                .font(.system(size: 14, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 14, design: .monospaced))
                 .foregroundColor(metricValueColor(m.durum))
                 .monospacedDigit()
         }
@@ -507,18 +507,18 @@ struct BistBilancoBoyutView: View {
     private var evaluationGroup: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Değerlendirme")
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 .padding(.leading, 2)
 
             VStack(spacing: 0) {
                 HStack {
                     Text("Özet skor")
-                        .font(.system(size: 14))
+                        .font(DesignTokens.Fonts.custom(size: 14))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     Spacer()
                     Text("\(Int(score)) / 100")
-                        .font(.system(size: 14))
+                        .font(DesignTokens.Fonts.custom(size: 14))
                         .foregroundColor(scoreColor(score))
                         .monospacedDigit()
                 }
@@ -530,7 +530,7 @@ struct BistBilancoBoyutView: View {
                     .frame(height: 0.5)
 
                 Text(summarySentence)
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .lineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)

@@ -32,7 +32,7 @@ import SwiftUI
 
 struct TradeDetailSheet: View {
     let trade: Trade
-    @ObservedObject var viewModel: TradingViewModel
+    @ObservedObject private var market = MarketViewModel.shared
     @Environment(\.dismiss) private var dismiss
 
     @State private var plan: PositionPlan?
@@ -42,7 +42,7 @@ struct TradeDetailSheet: View {
     // MARK: - Computed
 
     private var quote: Quote? {
-        viewModel.quotes[trade.symbol]
+        market.quotes[trade.symbol]
     }
 
     private var currentPrice: Double {
@@ -148,7 +148,7 @@ struct TradeDetailSheet: View {
         HStack {
             Button(action: { dismiss() }) {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 16, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .frame(width: 36, height: 36)
                     .contentShape(Rectangle())
@@ -158,14 +158,14 @@ struct TradeDetailSheet: View {
             Spacer()
 
             Text(cleanedSymbol)
-                .font(.system(size: 14, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
             Spacer()
 
             Button(action: { dismiss() }) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 14))
+                    .font(DesignTokens.Fonts.custom(size: 14))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .frame(width: 36, height: 36)
                     .contentShape(Rectangle())
@@ -188,22 +188,22 @@ struct TradeDetailSheet: View {
             CompanyLogoView(symbol: trade.symbol, size: 40)
             VStack(alignment: .leading, spacing: 2) {
                 Text(displayName)
-                    .font(.system(size: 17, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 17, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .lineLimit(1)
                 Text(subtitleText)
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             }
             Spacer(minLength: 8)
             VStack(alignment: .trailing, spacing: 2) {
                 Text(formatCurrency(currentPrice))
-                    .font(.system(size: 17, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 17, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .monospacedDigit()
                 if let q = quote {
                     Text(String(format: "%+.2f%% bugün", q.percentChange))
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(q.percentChange >= 0
                                          ? InstitutionalTheme.Colors.aurora
                                          : InstitutionalTheme.Colors.crimson)
@@ -221,16 +221,16 @@ struct TradeDetailSheet: View {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Net K/Z")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     Text((pnlValue >= 0 ? "+" : "") + formatCurrency(pnlValue))
-                        .font(.system(size: 28, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 28, weight: .medium))
                         .foregroundColor(pnlColor)
                         .monospacedDigit()
                 }
                 Spacer()
                 Text(String(format: "%@%.2f%%", pnlPercent >= 0 ? "+" : "", pnlPercent))
-                    .font(.system(size: 22, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 22, weight: .medium))
                     .foregroundColor(pnlColor)
                     .monospacedDigit()
             }
@@ -254,10 +254,10 @@ struct TradeDetailSheet: View {
     private func detailColumn(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(title)
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Text(value)
-                .font(.system(size: 14, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .monospacedDigit()
                 .lineLimit(1)
@@ -275,11 +275,11 @@ struct TradeDetailSheet: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Text("Plan")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     Spacer()
                     Text("\(plan.completedStepCount) / \(plan.totalStepCount) adım")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         .monospacedDigit()
                 }
@@ -300,10 +300,10 @@ struct TradeDetailSheet: View {
                 if let nextStep {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Sıradaki adım")
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Fonts.custom(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                         Text("\(nextStep.trigger.displayText) → \(nextStep.action.displayText)")
-                            .font(.system(size: 13))
+                            .font(DesignTokens.Fonts.custom(size: 13))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                             .fixedSize(horizontal: false, vertical: true)
                             .lineSpacing(2)
@@ -331,10 +331,10 @@ struct TradeDetailSheet: View {
     private func metricTile(title: String, value: String, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(title)
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Text(value)
-                .font(.system(size: 13, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                 .foregroundColor(color)
                 .monospacedDigit()
                 .lineLimit(1)
@@ -351,10 +351,10 @@ struct TradeDetailSheet: View {
     private func thesisCard(_ plan: PositionPlan) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Tez")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             Text(plan.thesis)
-                .font(.system(size: 13))
+                .font(DesignTokens.Fonts.custom(size: 13))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
                 .lineSpacing(2)
@@ -365,10 +365,10 @@ struct TradeDetailSheet: View {
                     .frame(height: 0.5)
                     .padding(.vertical, 4)
                 Text("Geçersizlik")
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 Text(plan.invalidation)
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
                     .lineSpacing(2)
@@ -388,11 +388,11 @@ struct TradeDetailSheet: View {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Text("Konsey kararı")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     Spacer()
                     Text("\(councilLabel(snap.councilAction)) · güven %\(Int(snap.councilConfidence * 100))")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                         .foregroundColor(councilColor(snap.councilAction))
                         .monospacedDigit()
                 }
@@ -420,7 +420,7 @@ struct TradeDetailSheet: View {
                         .frame(height: 0.5)
                         .padding(.top, 2)
                     Text(snap.councilReasoning)
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                         .lineSpacing(2)
@@ -439,7 +439,7 @@ struct TradeDetailSheet: View {
                 let color = scoreColorForRate(normalized)
                 HStack(spacing: 10) {
                     Text(name)
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .frame(width: 76, alignment: .leading)
                     GeometryReader { geo in
@@ -454,7 +454,7 @@ struct TradeDetailSheet: View {
                     }
                     .frame(height: 4)
                     Text("\(Int(s))")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                         .foregroundColor(color)
                         .monospacedDigit()
                         .frame(width: 32, alignment: .trailing)
@@ -468,12 +468,12 @@ struct TradeDetailSheet: View {
     private func macroRow(stance: MacroStance) -> some View {
         HStack(spacing: 10) {
             Text("Makro")
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .frame(width: 76, alignment: .leading)
             Spacer()
             Text(stanceLabel(stance))
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(stanceColor(stance))
         }
     }
@@ -483,14 +483,14 @@ struct TradeDetailSheet: View {
     private func scenarioCard(_ plan: PositionPlan) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Senaryolar")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
 
             HStack(spacing: 6) {
                 ForEach(plan.orderedScenarios) { scenario in
                     let isActive = scenario.isActive
                     Text("\(isActive ? "Aktif: " : "")\(scenarioLabel(scenario.type))")
-                        .font(.system(size: 11, weight: isActive ? .medium : .regular))
+                        .font(DesignTokens.Fonts.custom(size: 11, weight: isActive ? .medium : .regular))
                         .foregroundColor(isActive ? scenarioColor(scenario.type) : InstitutionalTheme.Colors.textTertiary)
                         .padding(.horizontal, isActive ? 8 : 4)
                         .padding(.vertical, 3)
@@ -506,7 +506,7 @@ struct TradeDetailSheet: View {
                 let total = active.steps.count
                 let done = active.steps.filter { plan.executedSteps.contains($0.id) }.count
                 Text("\(scenarioLabel(active.type)) senaryosunda \(total) adımdan \(done) tamamlandı.")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -537,17 +537,17 @@ struct TradeDetailSheet: View {
         return VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 8) {
                 Image(systemName: "exclamationmark.triangle")
-                    .font(.system(size: 13))
+                    .font(DesignTokens.Fonts.custom(size: 13))
                     .foregroundColor(InstitutionalTheme.Colors.titan)
                 Text("Risk uyarısı")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.titan)
                 Spacer()
             }
 
             ForEach(messages, id: \.self) { msg in
                 Text(msg)
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.titan)
                     .fixedSize(horizontal: false, vertical: true)
                     .lineSpacing(2)
@@ -569,7 +569,7 @@ struct TradeDetailSheet: View {
         HStack(spacing: 8) {
             Button(action: { showPlanEditor = true }) {
                 Text("Planı düzenle")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
@@ -586,7 +586,7 @@ struct TradeDetailSheet: View {
 
             Button(action: closePosition) {
                 Text("Pozisyonu kapat")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.crimson)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
@@ -726,8 +726,8 @@ struct TradeDetailSheet: View {
     }
 
     private func closePosition() {
-        if let price = viewModel.quotes[trade.symbol]?.currentPrice {
-            viewModel.sell(tradeId: trade.id, currentPrice: price)
+        if let price = market.quotes[trade.symbol]?.currentPrice {
+            PortfolioStore.shared.sell(tradeId: trade.id, currentPrice: price)
             dismiss()
         }
     }

@@ -87,15 +87,15 @@ struct TahtaView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Teknik analiz")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     Text(symbol.uppercased())
-                        .font(.system(size: 17, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 17, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 }
                 Spacer()
                 Text(r.signal.rawValue)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                     .foregroundColor(signalColor(r.signal))
             }
             Rectangle()
@@ -107,7 +107,7 @@ struct TahtaView: View {
                 // Sinyal Badge (Büyük)
                 VStack(spacing: 8) {
                     Image(systemName: r.signal.icon)
-                        .font(.system(size: 36))
+                        .font(DesignTokens.Fonts.custom(size: 36))
                         .foregroundColor(signalColor(r.signal))
 
                     Text(r.signal.rawValue)
@@ -123,25 +123,25 @@ struct TahtaView: View {
                     HStack {
                         Text("Güven:")
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                         Text("%\(Int(r.confidence))")
                             .font(.title3)
                             .bold()
-                            .foregroundColor(.white)
+                            .foregroundColor(DesignTokens.Colors.textPrimary)
                     }
 
                     // Destek Sayısı
                     HStack {
                         Text("Destek:")
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                         Text(r.supportRatio)
                             .font(.subheadline)
                             .bold()
                             .foregroundColor(supportCountColor(r.supportCount, total: r.totalIndicators))
                         Text("gösterge")
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                     }
 
                     // Skor Gauge
@@ -240,16 +240,16 @@ struct TahtaView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Rölatif güç")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     Text("Endekse göre · XU100")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
                 Spacer()
                 if let rs = r.rsResult {
                     Text(rs.statusText)
-                        .font(.system(size: 12, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                         .foregroundColor(rsStatusTone(rs.status).foreground)
                 }
             }
@@ -260,7 +260,7 @@ struct TahtaView: View {
                     VStack(spacing: 4) {
                         Text("RS")
                             .font(.caption2)
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                         Text(String(format: "%.2f", rs.relativeStrength))
                             .font(.headline)
                             .bold()
@@ -268,14 +268,14 @@ struct TahtaView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(10)
-                    .background(Color.white.opacity(0.05))
+                    .background(DesignTokens.Colors.Overlay.l05)
                     .cornerRadius(8)
 
                     // Beta
                     VStack(spacing: 4) {
                         Text("Beta")
                             .font(.caption2)
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                         Text(String(format: "%.2f", rs.beta))
                             .font(.headline)
                             .bold()
@@ -283,14 +283,14 @@ struct TahtaView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(10)
-                    .background(Color.white.opacity(0.05))
+                    .background(DesignTokens.Colors.Overlay.l05)
                     .cornerRadius(8)
 
                     // Momentum
                     VStack(spacing: 4) {
                         Text("Mom.")
                             .font(.caption2)
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                         Text(String(format: "%+.1f%%", rs.momentum))
                             .font(.headline)
                             .bold()
@@ -298,7 +298,7 @@ struct TahtaView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(10)
-                    .background(Color.white.opacity(0.05))
+                    .background(DesignTokens.Colors.Overlay.l05)
                     .cornerRadius(8)
                 }
             }
@@ -323,13 +323,13 @@ struct TahtaView: View {
                     Text("Formüller & Eğitim")
                         .font(.subheadline)
                         .bold()
-                        .foregroundColor(.white)
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
 
                     Spacer()
 
                     Image(systemName: showEducation ? "chevron.up" : "chevron.down")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 }
             }
             .buttonStyle(PlainButtonStyle())
@@ -469,11 +469,11 @@ struct QuickIndicatorCell: View {
                 .foregroundColor(color)
 
             Text(title)
-                .font(.system(size: 9))
-                .foregroundColor(.gray)
+                .font(DesignTokens.Fonts.custom(size: 9))
+                .foregroundColor(DesignTokens.Colors.textTertiary)
 
             Text(value)
-                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .bold, design: .monospaced))
                 .foregroundColor(color)
         }
         .frame(maxWidth: .infinity)
@@ -500,18 +500,18 @@ struct TahtaMetricRow: View {
 
                     Text(metric.name)
                         .font(.subheadline)
-                        .foregroundColor(.white)
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
 
                     Spacer()
 
                     Text(metric.value)
-                        .font(.system(size: 14, weight: .bold, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 14, weight: .bold, design: .monospaced))
                         .foregroundColor(metricColor)
 
                     Image(systemName: "chevron.right")
                         .font(.caption2)
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 }
                 .padding(.vertical, 10)
                 .contentShape(Rectangle())
@@ -527,7 +527,7 @@ struct TahtaMetricRow: View {
 
                     Text(metric.education)
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                         .lineLimit(nil)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -537,7 +537,7 @@ struct TahtaMetricRow: View {
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
 
-            Divider().background(Color.white.opacity(0.1))
+            Divider().background(DesignTokens.Colors.Overlay.l10)
         }
     }
 

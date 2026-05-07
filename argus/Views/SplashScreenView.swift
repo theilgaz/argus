@@ -208,10 +208,10 @@ struct SplashScreenView: View {
                     // Alt başlık
                     VStack(spacing: 4) {
                         Text("Yatırım kararları için kurumsal motor")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Fonts.custom(size: 12))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         Text("100 göz · 8 motor · 1 karar")
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Fonts.custom(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     }
                     .opacity(subtitleOpacity)
@@ -454,7 +454,7 @@ private struct ArgusLetterReveal: View {
 
     var body: some View {
         Text(displayChar)
-            .font(.system(size: 40, weight: .black, design: .monospaced))
+            .font(DesignTokens.Fonts.custom(size: 40, weight: .black, design: .monospaced))
             .tracking(4)
             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
             .shadow(

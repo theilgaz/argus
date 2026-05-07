@@ -27,10 +27,10 @@ struct RejimView: View {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Rejim")
-                        .font(.system(size: 17, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 17, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     Text("Piyasa, makro, sektör")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
                 Spacer()
@@ -49,7 +49,7 @@ struct RejimView: View {
                 VStack(spacing: 10) {
                     ProgressView()
                     Text("Rejim verileri yükleniyor")
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
                 .padding(40)
@@ -88,15 +88,15 @@ struct RejimView: View {
         Group {
             if isLoading {
                 Text("Yükleniyor")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             } else {
                 HStack(spacing: 6) {
                     Text(rejimLabel)
-                        .font(.system(size: 13, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                         .foregroundColor(stanceColor)
                     Text("\(Int(rejimScore))")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         .monospacedDigit()
                 }
@@ -118,10 +118,10 @@ struct RejimView: View {
     private var disclaimerFooter: some View {
         HStack(spacing: 6) {
             Image(systemName: "info.circle")
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Text("Eğitim amaçlıdır, yatırım tavsiyesi değildir.")
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
         .padding(.vertical, 8)
@@ -132,7 +132,7 @@ struct RejimView: View {
     private var macroLensSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Makro mercek")
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .padding(.horizontal, 16)
 

@@ -57,17 +57,18 @@ private struct ReportSnapshot {
 
 // MARK: - Reports View (Minimal Two-Button Layout)
 struct PortfolioReportsView: View {
-    @ObservedObject var viewModel: TradingViewModel
+    @ObservedObject private var analysis = AnalysisViewModel.shared
+    @ObservedObject private var portfolioStore = PortfolioStore.shared
     var mode: TradeMarket = .global
 
     @State private var showDailyReport = false
     @State private var showWeeklyReport = false
 
     private var dailyText: String? {
-        mode == .global ? viewModel.dailyReport : viewModel.bistDailyReport
+        mode == .global ? analysis.dailyReport : analysis.bistDailyReport
     }
     private var weeklyText: String? {
-        mode == .global ? viewModel.weeklyReport : viewModel.bistWeeklyReport
+        mode == .global ? analysis.weeklyReport : analysis.bistWeeklyReport
     }
 
     var body: some View {
@@ -93,16 +94,16 @@ struct PortfolioReportsView: View {
         .padding(.horizontal)
         .padding(.vertical, 4)
         .onAppear {
-            Task { await viewModel.refreshReports() }
+            Task { await analysis.refreshReports() }
         }
         .refreshable {
-            await viewModel.refreshReports()
+            await analysis.refreshReports()
         }
-        .onChange(of: viewModel.transactionHistory.count) {
-            Task { await viewModel.refreshReports() }
+        .onChange(of: portfolioStore.transactions.count) {
+            Task { await analysis.refreshReports() }
         }
-        .onChange(of: viewModel.bistBalance) {
-            Task { await viewModel.refreshReports() }
+        .onChange(of: portfolioStore.bistBalance) {
+            Task { await analysis.refreshReports() }
         }
         .sheet(isPresented: $showDailyReport) {
             ReportDetailSheetV2(
@@ -170,17 +171,17 @@ private struct ReportButton: View {
             HStack(alignment: .top, spacing: 8) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(period.title)
-                        .font(.system(size: 13, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     Text("\(subtitle) · \(statusText)")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                         .lineLimit(1)
                 }
                 Spacer(minLength: 6)
                 if isReady {
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Fonts.custom(size: 11))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 } else {
                     ProgressView()
@@ -235,10 +236,10 @@ private struct ReportDetailSheetV2: View {
                         if parsedSections.isEmpty {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Ham metin")
-                                    .font(.system(size: 14, weight: .medium))
+                                    .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                 Text(text)
-                                    .font(.system(size: 13))
+                                    .font(DesignTokens.Fonts.custom(size: 13))
                                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                     .textSelection(.enabled)
                                     .lineSpacing(3)
@@ -255,7 +256,7 @@ private struct ReportDetailSheetV2: View {
 
                         // Yasal uyarı
                         Text("Bu rapor yatırım tavsiyesi değildir. Argus, Alkindus öğrenme sistemi üstünden geçmiş verileri özetler.")
-                            .font(.system(size: 10))
+                            .font(DesignTokens.Fonts.custom(size: 10))
                             .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                             .multilineTextAlignment(.center)
                             .frame(maxWidth: .infinity)
@@ -294,10 +295,10 @@ private struct ReportHeroHeader: View {
         VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 17, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 17, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text(subtitle)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
             }
 
@@ -325,10 +326,10 @@ private struct ReportHeroHeader: View {
             }
             VStack(alignment: .leading, spacing: 1) {
                 Text(metric.label)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 Text(metric.value)
-                    .font(.system(size: 16, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 16, weight: .medium))
                     .foregroundColor(metric.color)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
@@ -372,7 +373,7 @@ private struct SectionCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(section.title)
-                .font(.system(size: 14, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
 
             VStack(alignment: .leading, spacing: 10) {
@@ -385,7 +386,7 @@ private struct SectionCard: View {
                                 .frame(width: 6, height: 6)
                                 .padding(.top, 6)
                             Text(value)
-                                .font(.system(size: 14, weight: .medium))
+                                .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
                                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         }
                         .fixedSize(horizontal: false, vertical: true)
@@ -393,10 +394,10 @@ private struct SectionCard: View {
                     case .bullet(let value):
                         HStack(alignment: .top, spacing: 10) {
                             Text("•")
-                                .font(.system(size: 13))
+                                .font(DesignTokens.Fonts.custom(size: 13))
                                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                             Text(value)
-                                .font(.system(size: 13))
+                                .font(DesignTokens.Fonts.custom(size: 13))
                                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -404,11 +405,11 @@ private struct SectionCard: View {
                     case .metric(let label, let value):
                         HStack {
                             Text(label)
-                                .font(.system(size: 13))
+                                .font(DesignTokens.Fonts.custom(size: 13))
                                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                             Spacer()
                             Text(value)
-                                .font(.system(size: 13, weight: .medium))
+                                .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                                 .monospacedDigit()
                         }
@@ -422,7 +423,7 @@ private struct SectionCard: View {
 
                     case .paragraph(let value):
                         Text(value)
-                            .font(.system(size: 13))
+                            .font(DesignTokens.Fonts.custom(size: 13))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                             .lineSpacing(3)
                             .fixedSize(horizontal: false, vertical: true)
@@ -804,6 +805,6 @@ private enum ReportParser {
 }
 
 #Preview {
-    PortfolioReportsView(viewModel: TradingViewModel())
+    PortfolioReportsView()
         .background(InstitutionalTheme.Colors.background)
 }

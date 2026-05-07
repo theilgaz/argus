@@ -5,7 +5,6 @@ import SwiftUI
 /// Daha küçük toplar halinde yerleştirilmiş - Tab Bar ile çakışmayı önler.
 struct PantheonDeckView: View {
     let symbol: String
-    @ObservedObject var viewModel: TradingViewModel
     let isBist: Bool
     @Binding var selectedModule: SanctumModuleType?
     @Binding var selectedBistModule: SanctumBistModuleType?
@@ -124,7 +123,7 @@ struct MiniPantheonOrb: View {
             }
 
             Text(name)
-                .font(.system(size: fontSize, weight: .medium))
+                .font(DesignTokens.Fonts.custom(size: fontSize, weight: .medium))
                 .foregroundColor(color.opacity(0.9))
         }
     }
@@ -153,17 +152,17 @@ struct PantheonFlankView: View {
                     .frame(width: 44, height: 44)
                 
                 Image(systemName: icon)
-                    .font(.system(size: 16))
+                    .font(DesignTokens.Fonts.custom(size: 16))
                     .foregroundColor(color)
             }
             
             VStack(spacing: 1) {
                 Text(name)
-                    .font(.system(size: 9, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 9, weight: .medium))
                     .foregroundColor(color.opacity(0.9))
 
                 Text(score)
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 12, weight: .medium, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .monospacedDigit()
             }

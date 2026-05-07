@@ -43,7 +43,7 @@ struct PulsingFABView: View {
                         Circle()
                             .stroke(
                                 LinearGradient(
-                                    colors: [.clear, Color.white.opacity(0.1)],
+                                    colors: [.clear, DesignTokens.Colors.Overlay.l10],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 ),

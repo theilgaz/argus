@@ -31,7 +31,7 @@ struct SanctumTradePanel: View {
     private func tradeButton(label: String, tint: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(label)
-                .font(.system(size: 15, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 15, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)

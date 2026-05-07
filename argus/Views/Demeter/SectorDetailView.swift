@@ -25,9 +25,9 @@ struct SectorDetailView: View {
                         VStack(spacing: 8) {
                             Text(score.sector.name)
                                 .font(.title3)
-                                .foregroundStyle(.gray)
+                                .foregroundStyle(DesignTokens.Colors.textTertiary)
                             Text(score.sector.rawValue)
-                                .font(.system(size: 40, weight: .bold))
+                                .font(DesignTokens.Fonts.custom(size: 40, weight: .bold))
 
                             HStack {
                                 Text("Skor:")
@@ -36,7 +36,7 @@ struct SectorDetailView: View {
                                     .foregroundStyle(Color(score.colorName))
                                 Text("(\(score.grade))")
                                     .font(.title3)
-                                    .foregroundStyle(.gray)
+                                    .foregroundStyle(DesignTokens.Colors.textTertiary)
                             }
                         }
                         .padding(.top)
@@ -72,7 +72,7 @@ struct SectorDetailView: View {
                         } else {
                             Text("Şok etkisi nötr.")
                                 .font(.caption)
-                                .foregroundStyle(.gray)
+                                .foregroundStyle(DesignTokens.Colors.textTertiary)
                         }
                         
                         // 4. Advice / Analysis
@@ -80,7 +80,7 @@ struct SectorDetailView: View {
                             HStack {
                                 Label("Demeter Analizi", systemImage: "text.quote")
                                     .font(.caption.bold())
-                                    .foregroundStyle(.gray)
+                                    .foregroundStyle(DesignTokens.Colors.textTertiary)
                                 Spacer()
                                 if isLoadingLLM {
                                     ProgressView()

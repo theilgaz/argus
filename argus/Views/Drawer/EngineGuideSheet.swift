@@ -98,7 +98,7 @@ struct EngineGuideSheet: View {
     private func cautionSection(_ engine: EngineType) -> some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 13, weight: .semibold))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .semibold))
                 .foregroundColor(InstitutionalTheme.Colors.warning)
                 .padding(.top, 2)
 
@@ -122,7 +122,7 @@ struct EngineGuideSheet: View {
     /// 2026-05-05 H-67: caps mono tracking 1.2 → sentence sade.
     private func sectionTitle(_ text: String) -> some View {
         Text(text.capitalized)
-            .font(.system(size: 13, weight: .medium))
+            .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
     }
 
@@ -143,7 +143,7 @@ struct EngineGuideSheet: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
                 Text(String(index))
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .bold, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.primary)
                     .frame(width: 14, alignment: .leading)
                 Text(text)

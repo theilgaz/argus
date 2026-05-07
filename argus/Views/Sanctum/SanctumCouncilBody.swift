@@ -61,15 +61,15 @@ struct SanctumCouncilBody: View {
     private var decisionHeadline: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Konsey")
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             HStack(alignment: .firstTextBaseline, spacing: 12) {
                 Text(decisionWord)
-                    .font(.system(size: 36, weight: .semibold))
+                    .font(DesignTokens.Fonts.custom(size: 36, weight: .semibold))
                     .foregroundColor(decisionTone)
                 if let d = decision {
                     Text("güven %\(Int(d.finalScoreCore.rounded()))")
-                        .font(.system(size: 14))
+                        .font(DesignTokens.Fonts.custom(size: 14))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
             }
@@ -132,7 +132,7 @@ struct SanctumCouncilBody: View {
                         ForEach(segments, id: \.motor) { seg in
                             let w = max(2, geo.size.width * CGFloat(seg.ratio))
                             Text(w >= 36 ? seg.label : "·")
-                                .font(.system(size: 10, design: .monospaced))
+                                .font(DesignTokens.Fonts.custom(size: 10, design: .monospaced))
                                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                                 .frame(width: w, alignment: .leading)
                                 .lineLimit(1)
@@ -177,7 +177,7 @@ struct SanctumCouncilBody: View {
                 }
             } else {
                 Text("Motor oyları henüz toplanmadı.")
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Fonts.custom(size: 12))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     .padding(.vertical, 8)
             }
@@ -198,23 +198,23 @@ struct SanctumCouncilBody: View {
         return Button(action: { onSelectMotor(r.motor) }) {
             HStack(spacing: 8) {
                 Text(r.motor.displayName)
-                    .font(.system(size: 14))
+                    .font(DesignTokens.Fonts.custom(size: 14))
                     .foregroundColor(isPending
                         ? InstitutionalTheme.Colors.textSecondary
                         : InstitutionalTheme.Colors.textPrimary)
                 Spacer()
                 if let value = r.valueText {
                     Text(value)
-                        .font(.system(size: 13))
+                        .font(DesignTokens.Fonts.custom(size: 13))
                         .foregroundColor(stanceColor(r.stance))
                         .lineLimit(1)
                 } else if isPending {
                     Text("—")
-                        .font(.system(size: 14, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 14, design: .monospaced))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 } else {
                     Text("\(r.stance.arrowGlyph) \(Int(r.score))")
-                        .font(.system(size: 14, design: .monospaced))
+                        .font(DesignTokens.Fonts.custom(size: 14, design: .monospaced))
                         .foregroundColor(stanceColor(r.stance))
                         .monospacedDigit()
                 }
@@ -228,11 +228,11 @@ struct SanctumCouncilBody: View {
     private var placeholderRow: some View {
         HStack {
             Text("…")
-                .font(.system(size: 14))
+                .font(DesignTokens.Fonts.custom(size: 14))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             Spacer()
             Text("toplanıyor")
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
         }
         .padding(.vertical, 9)
@@ -251,7 +251,7 @@ struct SanctumCouncilBody: View {
             HStack {
                 Spacer()
                 Text("Detaylı yorum →")
-                    .font(.system(size: 13))
+                    .font(DesignTokens.Fonts.custom(size: 13))
                     .foregroundColor(InstitutionalTheme.Colors.holo)
                 Spacer()
             }

@@ -19,7 +19,7 @@ struct SanctumSignalCapsule: View {
                 
                 // Quality Score is Int (0-100)
                 Text("Kalite %\(dataHealth?.qualityScore ?? 0)")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .medium))
                     .foregroundColor(healthColor)
                     .monospacedDigit()
             }

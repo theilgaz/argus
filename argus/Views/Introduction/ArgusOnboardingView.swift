@@ -76,12 +76,12 @@ struct ArgusOnboardingView: View {
     private var header: some View {
         HStack {
             Text("ARGUS")
-                .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .semibold, design: .monospaced))
                 .foregroundColor(.white.opacity(0.7))
                 .tracking(6)
             Spacer()
             Text("\(index + 1)/\(pages.count)")
-                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 12, weight: .semibold, design: .monospaced))
                 .foregroundColor(.white.opacity(0.5))
         }
         .padding(.horizontal, 24)
@@ -93,7 +93,7 @@ struct ArgusOnboardingView: View {
         HStack(spacing: 8) {
             ForEach(0..<pages.count, id: \.self) { i in
                 Capsule()
-                    .fill(i == index ? Color.cyan : Color.white.opacity(0.2))
+                    .fill(i == index ? Color.cyan : DesignTokens.Colors.Overlay.l20)
                     .frame(width: i == index ? 24 : 8, height: 6)
             }
         }
@@ -108,7 +108,7 @@ struct ArgusOnboardingView: View {
                 }
             } label: {
                 Text("Geri")
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .bold, design: .rounded))
                     .foregroundColor(index == 0 ? .white.opacity(0.3) : .white)
                     .frame(width: 90, height: 40)
                     .background(Color.white.opacity(index == 0 ? 0.05 : 0.12))
@@ -128,7 +128,7 @@ struct ArgusOnboardingView: View {
                 }
             } label: {
                 Text(index == pages.count - 1 ? "Başla" : "İleri")
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .bold, design: .rounded))
                     .foregroundColor(.black)
                     .frame(width: 120, height: 40)
                     .background(Color.cyan)
@@ -151,19 +151,19 @@ private struct OnboardingPageView: View {
     var body: some View {
         VStack(spacing: 22) {
             Text(page.title)
-                .font(.system(size: 30, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
+                .font(DesignTokens.Fonts.custom(size: 30, weight: .bold, design: .rounded))
+                .foregroundColor(DesignTokens.Colors.textPrimary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text(page.body)
-                .font(.system(size: 17, weight: .medium, design: .rounded))
+                .font(DesignTokens.Fonts.custom(size: 17, weight: .medium, design: .rounded))
                 .foregroundColor(.white.opacity(0.9))
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text(page.footer)
-                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .font(DesignTokens.Fonts.custom(size: 14, weight: .regular, design: .rounded))
                 .foregroundColor(.cyan.opacity(0.9))
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)

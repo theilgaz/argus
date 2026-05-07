@@ -101,7 +101,7 @@ struct PriceAlertSettingsView: View {
                             ProgressView()
                                 .padding(.trailing, 8)
                             Text("Piyasa Taranıyor...")
-                                .foregroundColor(.secondary)
+                                .foregroundColor(DesignTokens.Colors.textSecondary)
                         }
                     } else {
                         Button(action: {
@@ -125,7 +125,7 @@ struct PriceAlertSettingsView: View {
                 Section(header: Text("Son Sinyaller")) {
                     if scanner.alerts.isEmpty {
                         Text("Henüz sinyal yok.")
-                            .foregroundColor(.secondary)
+                            .foregroundColor(DesignTokens.Colors.textSecondary)
                             .italic()
                     } else {
                         ForEach(scanner.alerts) { alert in
@@ -146,7 +146,7 @@ struct PriceAlertSettingsView: View {
 
                                     Text("%\(Int(alert.score)) Güven")
                                         .font(.caption2)
-                                        .foregroundColor(.secondary)
+                                        .foregroundColor(DesignTokens.Colors.textSecondary)
                                 }
                             }
                         }

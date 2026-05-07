@@ -1,7 +1,7 @@
 import SwiftUI
 struct BistHoloPanelView: View {
     let module: ArgusSanctumView.BistModuleType
-    @ObservedObject var viewModel: TradingViewModel
+    @ObservedObject private var market = MarketViewModel.shared
     let symbol: String
     let onClose: () -> Void
     
@@ -123,7 +123,7 @@ struct BistHoloPanelView: View {
         
         // 1. Dataları al
         guard let candles = await MainActor.run(body: {
-            viewModel.candles[symbol]
+            market.candles[symbol]
         }), !candles.isEmpty else { return }
         
         // Ensure minimal candles
@@ -165,8 +165,8 @@ struct BistHoloPanelView: View {
         let candleList = Array(candles) // Convert slice to array
         
         // 2. Sirkiye Input
-        let usdTry = await MainActor.run { viewModel.quotes["USD/TRY"]?.currentPrice ?? 35.0 }
-        let usdTryPrev = await MainActor.run { viewModel.quotes["USD/TRY"]?.previousClose ?? 35.0 }
+        let usdTry = await MainActor.run { market.quotes["USD/TRY"]?.currentPrice ?? 35.0 }
+        let usdTryPrev = await MainActor.run { market.quotes["USD/TRY"]?.previousClose ?? 35.0 }
         
         // TCMB'den gerçek makro veriler
         let tcmbSnapshot = await TCMBDataService.shared.getMacroSnapshot()
@@ -269,10 +269,10 @@ struct BistHoloPanelView: View {
                 HStack(spacing: 10) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Kulis")
-                            .font(.system(size: 13, weight: .medium))
+                            .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                         Text("Haber, analist ve duygu analizi")
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Fonts.custom(size: 11))
                             .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     }
                     Spacer()
@@ -294,10 +294,10 @@ struct BistHoloPanelView: View {
                 // Disclaimer
                 HStack(spacing: 6) {
                     Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 10))
+                        .font(DesignTokens.Fonts.custom(size: 10))
                         .foregroundColor(InstitutionalTheme.Colors.warning)
                     Text("Eğitim amaçlıdır, yatırım tavsiyesi değildir.")
-                        .font(.system(size: 10))
+                        .font(DesignTokens.Fonts.custom(size: 10))
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 }
                 .padding(.vertical, 8)

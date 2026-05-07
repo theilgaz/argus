@@ -43,17 +43,17 @@ struct HermesEventTeachingCard: View {
                 // sade tek satır meta.
                 HStack(spacing: 8) {
                     Text("Etki \(Int(event.finalScore))")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 12, weight: .medium))
                         .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     Text("·")
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     Text(event.horizonHint.rawValue.lowercased())
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                     Text("·")
                         .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                     Text(String(format: "Güven %%%.0f", event.confidence * 100))
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Fonts.custom(size: 12))
                         .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 }
 
@@ -111,7 +111,7 @@ struct HermesEventTeachingCard: View {
         // 2026-05-05 H-67: MotorLogo + caps "KULİS · DERS NOTU / HERMES ·
         // DERS NOTU" → sade sentence başlık.
         Text(scope == .bist ? "Kulis ders notu" : "Haber ders notu")
-            .font(.system(size: 14, weight: .medium))
+            .font(DesignTokens.Fonts.custom(size: 14, weight: .medium))
             .foregroundColor(InstitutionalTheme.Colors.textPrimary)
     }
 
@@ -120,12 +120,12 @@ struct HermesEventTeachingCard: View {
         // sade dilde, padding daha açık.
         HStack(alignment: .top, spacing: 10) {
             Text(label)
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(InstitutionalTheme.Colors.textTertiary)
                 .frame(width: 78, alignment: .leading)
                 .padding(.top, 1)
             Text(value)
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .italic(italicize)
                 .foregroundColor(InstitutionalTheme.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)

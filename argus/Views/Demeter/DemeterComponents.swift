@@ -96,13 +96,13 @@ struct DemeterPanel: View {
                    HStack(spacing: 6) {
                        Image(systemName: "clock") // SF Symbol: Time
                            .font(.caption2)
-                           .foregroundColor(.gray)
+                           .foregroundColor(DesignTokens.Colors.textTertiary)
                        Text("Etki penceresi: 1–4 hafta")
                            .font(.caption)
-                           .foregroundColor(.gray)
+                           .foregroundColor(DesignTokens.Colors.textTertiary)
                        
                        Text("•")
-                           .foregroundColor(.gray)
+                           .foregroundColor(DesignTokens.Colors.textTertiary)
                        
                        Image(systemName: "arrow.down.right") // SF Symbol: Threshold
                             .font(.caption2)
@@ -115,10 +115,10 @@ struct DemeterPanel: View {
                     HStack(spacing: 6) {
                         Image(systemName: "checkmark.shield")
                             .font(.caption2)
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                         Text("Majör bir şok tespit edilmedi.")
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundColor(DesignTokens.Colors.textTertiary)
                     }
                 }
             }
@@ -162,7 +162,7 @@ struct MetricCard: View {
         VStack(spacing: 8) {
             Text(title)
                 .font(.caption)
-                .foregroundStyle(.gray)
+                .foregroundStyle(DesignTokens.Colors.textTertiary)
             Text(value)
                 .font(.title2.bold())
                 .foregroundStyle(color)

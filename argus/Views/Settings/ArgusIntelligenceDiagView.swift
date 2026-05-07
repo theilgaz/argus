@@ -26,7 +26,7 @@ struct ArgusIntelligenceDiagView: View {
                 if isLoading {
                     ProgressView("Analiz ediliyor...")
                         .padding(60)
-                        .foregroundColor(.gray)
+                        .foregroundColor(DesignTokens.Colors.textTertiary)
                 } else if let s = snapshot {
                     // Overall health banner
                     overallBanner(s)
@@ -90,17 +90,17 @@ struct ArgusIntelligenceDiagView: View {
             AlkindusAvatarView(size: 36, isThinking: isLoading, hasIdea: !isLoading)
             VStack(alignment: .leading, spacing: 2) {
                 Text("Öğrenme Sistemi Tanısı")
-                    .font(.system(size: 14, weight: .bold, design: .monospaced))
-                    .foregroundColor(.white)
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .bold, design: .monospaced))
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                 Text("Son güncelleme: \(lastRefresh.formatted(date: .omitted, time: .shortened))")
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundColor(.gray)
+                    .font(DesignTokens.Fonts.custom(size: 11, design: .monospaced))
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
             }
             Spacer()
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(Color.white.opacity(0.04))
+        .background(DesignTokens.Colors.Overlay.l04)
     }
 
     // MARK: - Overall Banner
@@ -114,11 +114,11 @@ struct ArgusIntelligenceDiagView: View {
                 .foregroundColor(health.color)
             VStack(alignment: .leading, spacing: 3) {
                 Text(health.title)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.white)
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .bold))
+                    .foregroundColor(DesignTokens.Colors.textPrimary)
                 Text(health.subtitle)
-                    .font(.system(size: 12))
-                    .foregroundColor(.gray)
+                    .font(DesignTokens.Fonts.custom(size: 12))
+                    .foregroundColor(DesignTokens.Colors.textTertiary)
             }
             Spacer()
         }
@@ -139,9 +139,9 @@ struct ArgusIntelligenceDiagView: View {
         } else {
             HStack(spacing: 0) {
                 bigStat(value: "\(t.total)", label: "Toplam Trade")
-                Divider().frame(height: 40).background(Color.white.opacity(0.1))
+                Divider().frame(height: 40).background(DesignTokens.Colors.Overlay.l10)
                 bigStat(value: t.winRateText, label: "Kazanma Oranı", color: t.winRate >= 0.5 ? .green : .red)
-                Divider().frame(height: 40).background(Color.white.opacity(0.1))
+                Divider().frame(height: 40).background(DesignTokens.Colors.Overlay.l10)
                 bigStat(value: "\(t.winCount)W / \(t.lossCount)L", label: "Kazanan / Kaybeden")
             }
             .padding(.vertical, 8)
@@ -161,13 +161,13 @@ struct ArgusIntelligenceDiagView: View {
     private func chironSection(_ c: ChironStats) -> some View {
         HStack(spacing: 0) {
             bigStat(value: "\(c.experienceCount)", label: "Deneyim")
-            Divider().frame(height: 40).background(Color.white.opacity(0.1))
+            Divider().frame(height: 40).background(DesignTokens.Colors.Overlay.l10)
             bigStat(
                 value: String(format: "%.0f", c.healthScore),
                 label: "Sağlık Skoru",
                 color: c.healthScore >= 70 ? .green : c.healthScore >= 40 ? .orange : .red
             )
-            Divider().frame(height: 40).background(Color.white.opacity(0.1))
+            Divider().frame(height: 40).background(DesignTokens.Colors.Overlay.l10)
             bigStat(value: c.regime, label: "Rejim")
         }
         .padding(.vertical, 8)
@@ -186,9 +186,9 @@ struct ArgusIntelligenceDiagView: View {
     private func alkindusSection(_ a: AlkindusStats2) -> some View {
         HStack(spacing: 0) {
             bigStat(value: "\(a.pendingCount)", label: "Bekleyen Gözlem")
-            Divider().frame(height: 40).background(Color.white.opacity(0.1))
+            Divider().frame(height: 40).background(DesignTokens.Colors.Overlay.l10)
             bigStat(value: "\(a.verdictCount)", label: "Tamamlanan Analiz")
-            Divider().frame(height: 40).background(Color.white.opacity(0.1))
+            Divider().frame(height: 40).background(DesignTokens.Colors.Overlay.l10)
             bigStat(
                 value: a.verdictCount > 0 ? String(format: "%.0f%%", a.correctRate * 100) : "—",
                 label: "Doğruluk",
@@ -239,7 +239,7 @@ struct ArgusIntelligenceDiagView: View {
                         Image(systemName: "arrow.clockwise.icloud")
                     }
                     Text(isFlushingRAG ? "Gönderiliyor..." : "Şimdi Pinecone'a Gönder (\(r.pendingCount) adet)")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(DesignTokens.Fonts.custom(size: 13, weight: .medium))
                 }
                 .foregroundColor(.black)
                 .frame(maxWidth: .infinity)
@@ -262,10 +262,10 @@ struct ArgusIntelligenceDiagView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 6) {
                 Image(systemName: icon)
-                    .font(.system(size: 11, weight: .bold))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .bold))
                     .foregroundColor(color)
                 Text(title)
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 11, weight: .bold, design: .monospaced))
                     .foregroundColor(color)
                     .tracking(1)
             }
@@ -276,7 +276,7 @@ struct ArgusIntelligenceDiagView: View {
             VStack(spacing: 0) {
                 content()
             }
-            .background(Color.white.opacity(0.03))
+            .background(DesignTokens.Colors.Overlay.l03)
             .cornerRadius(12)
             .padding(.horizontal, 16)
         }
@@ -286,11 +286,11 @@ struct ArgusIntelligenceDiagView: View {
     private func bigStat(value: String, label: String, color: Color = .white) -> some View {
         VStack(spacing: 4) {
             Text(value)
-                .font(.system(size: 22, weight: .bold, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 22, weight: .bold, design: .monospaced))
                 .foregroundColor(color)
             Text(label)
-                .font(.system(size: 10))
-                .foregroundColor(.gray)
+                .font(DesignTokens.Fonts.custom(size: 10))
+                .foregroundColor(DesignTokens.Colors.textTertiary)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -301,26 +301,26 @@ struct ArgusIntelligenceDiagView: View {
     private func diagRow(label: String, value: String, valueColor: Color = Color(white: 0.75)) -> some View {
         HStack {
             Text(label)
-                .font(.system(size: 13))
-                .foregroundColor(.gray)
+                .font(DesignTokens.Fonts.custom(size: 13))
+                .foregroundColor(DesignTokens.Colors.textTertiary)
             Spacer()
             Text(value)
-                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                .font(DesignTokens.Fonts.custom(size: 13, weight: .medium, design: .monospaced))
                 .foregroundColor(valueColor)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 9)
-        Divider().background(Color.white.opacity(0.05)).padding(.horizontal, 16)
+        Divider().background(DesignTokens.Colors.Overlay.l05).padding(.horizontal, 16)
     }
 
     @ViewBuilder
     private func warningBadge(_ text: String) -> some View {
         HStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 11))
+                .font(DesignTokens.Fonts.custom(size: 11))
                 .foregroundColor(.orange)
             Text(text)
-                .font(.system(size: 12))
+                .font(DesignTokens.Fonts.custom(size: 12))
                 .foregroundColor(.orange)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -331,8 +331,8 @@ struct ArgusIntelligenceDiagView: View {
     @ViewBuilder
     private func emptyState(_ text: String) -> some View {
         Text(text)
-            .font(.system(size: 13))
-            .foregroundColor(.gray)
+            .font(DesignTokens.Fonts.custom(size: 13))
+            .foregroundColor(DesignTokens.Colors.textTertiary)
             .italic()
             .padding(16)
     }
@@ -459,7 +459,7 @@ struct ArgusIntelligenceDiagView: View {
                     label: "Mevcut Aether",
                     color: v.currentScore >= 55 ? .green : v.currentScore >= 35 ? .orange : .red
                 )
-                Divider().frame(height: 40).background(Color.white.opacity(0.1))
+                Divider().frame(height: 40).background(DesignTokens.Colors.Overlay.l10)
                 bigStat(
                     value: String(format: "%+.1f/gün", v.velocity),
                     label: "Hız",
@@ -488,13 +488,13 @@ struct ArgusIntelligenceDiagView: View {
                     label: "Kazanma Oranı",
                     color: k.winRate >= 0.55 ? .green : k.winRate >= 0.45 ? .orange : .red
                 )
-                Divider().frame(height: 40).background(Color.white.opacity(0.1))
+                Divider().frame(height: 40).background(DesignTokens.Colors.Overlay.l10)
                 bigStat(
                     value: String(format: "%.2f", k.kellyFraction),
                     label: "Kelly f*",
                     color: .white
                 )
-                Divider().frame(height: 40).background(Color.white.opacity(0.1))
+                Divider().frame(height: 40).background(DesignTokens.Colors.Overlay.l10)
                 bigStat(
                     value: String(format: "%.2fx", k.positionMultiplier),
                     label: "Pozisyon Çarpanı",
@@ -523,7 +523,7 @@ struct ArgusIntelligenceDiagView: View {
                     value: "\(cr.rawPositionCount)",
                     label: "Ham Pozisyon"
                 )
-                Divider().frame(height: 40).background(Color.white.opacity(0.1))
+                Divider().frame(height: 40).background(DesignTokens.Colors.Overlay.l10)
                 bigStat(
                     value: String(format: "%.1f", cr.effectivePositionCount),
                     label: "Bağımsız Risk",
@@ -566,11 +566,11 @@ struct ArgusIntelligenceDiagView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text(opp.symbol)
-                            .font(.system(size: 13, weight: .bold, design: .monospaced))
-                            .foregroundColor(.white)
+                            .font(DesignTokens.Fonts.custom(size: 13, weight: .bold, design: .monospaced))
+                            .foregroundColor(DesignTokens.Colors.textPrimary)
                         Spacer()
                         Text(opp.opportunityType.rawValue)
-                            .font(.system(size: 11, weight: .medium))
+                            .font(DesignTokens.Fonts.custom(size: 11, weight: .medium))
                             .foregroundColor(.red)
                             .padding(.horizontal, 8).padding(.vertical, 3)
                             .background(Color.red.opacity(0.15))
@@ -578,17 +578,17 @@ struct ArgusIntelligenceDiagView: View {
                     }
                     HStack {
                         Text(String(format: "Güven: %.0f%%", opp.confidence * 100))
-                            .font(.system(size: 11, design: .monospaced))
+                            .font(DesignTokens.Fonts.custom(size: 11, design: .monospaced))
                             .foregroundColor(.orange)
                         Spacer()
                         Text(String(format: "Boyut: %.0f%%", opp.positionSizeMultiplier * 100))
-                            .font(.system(size: 11, design: .monospaced))
+                            .font(DesignTokens.Fonts.custom(size: 11, design: .monospaced))
                             .foregroundColor(.yellow)
                     }
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)
-                Divider().background(Color.white.opacity(0.05)).padding(.horizontal, 16)
+                Divider().background(DesignTokens.Colors.Overlay.l05).padding(.horizontal, 16)
             }
         }
     }
@@ -601,13 +601,13 @@ struct ArgusIntelligenceDiagView: View {
             } else {
                 HStack(spacing: 0) {
                     bigStat(value: "\(oc.totalMissed)", label: "Toplam Atlama")
-                    Divider().frame(height: 40).background(Color.white.opacity(0.1))
+                    Divider().frame(height: 40).background(DesignTokens.Colors.Overlay.l10)
                     bigStat(
                         value: "\(oc.goodSkips)",
                         label: "Haklı Atlama",
                         color: .green
                     )
-                    Divider().frame(height: 40).background(Color.white.opacity(0.1))
+                    Divider().frame(height: 40).background(DesignTokens.Colors.Overlay.l10)
                     bigStat(
                         value: "\(oc.missedGains)",
                         label: "Kaçırılan Fırsat",

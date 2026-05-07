@@ -101,7 +101,7 @@ struct ArgusVoiceView: View {
                                             // 2026-05-05 H-67: MotorLogo argus → SF Symbol sade.
                                             Image(systemName: "waveform")
                                                 .font(DesignTokens.Fonts.custom(size: 38, weight: .medium))
-                                                .foregroundColor(.white)
+                                                .foregroundColor(DesignTokens.Colors.textPrimary)
                                         }
 
                                         Text("Merhaba, ben Argus.")
@@ -195,7 +195,7 @@ struct ArgusVoiceView: View {
                         } label: {
                             Image(systemName: viewModel.inputMessage.isEmpty ? "waveform" : "arrow.up")
                                 .font(DesignTokens.Fonts.custom(size: 14, weight: .bold))
-                                .foregroundColor(.white)
+                                .foregroundColor(DesignTokens.Colors.textPrimary)
                                 .frame(width: 36, height: 36)
                                 .background(InstitutionalTheme.Colors.holo)
                                 .clipShape(Circle())
@@ -249,11 +249,11 @@ struct SpeechButton: View {
 
                     Image(systemName: "waveform")
                         .font(.title2)
-                        .foregroundColor(.white)
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                 } else {
                     Image(systemName: "mic.fill")
                         .font(.title2)
-                        .foregroundColor(.white)
+                        .foregroundColor(DesignTokens.Colors.textPrimary)
                 }
             }
             .frame(width: 48, height: 48)
@@ -376,7 +376,7 @@ struct ChatMessageBubble: View {
                     topTrailingRadius: 20
                 )
             )
-            .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+            .shadow(color: DesignTokens.Colors.Scrim.s05, radius: 2, x: 0, y: 1)
             .frame(maxWidth: 280, alignment: isUser ? .trailing : .leading)
             
             if isUser {

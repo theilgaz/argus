@@ -5,15 +5,12 @@ import SwiftUI
 /// Theme ve modul tipleri SanctumTypes.swift'te tanimli.
 struct ArgusSanctumView: View {
     let symbol: String
-    // LEAVING LEGACY VM BUT REMOVING OBSERVATION TO STOP RE-RENDERS
-    let viewModel: TradingViewModel
     @StateObject private var vm: SanctumViewModel
     @StateObject private var deepLinkManager = DeepLinkManager.shared
     @EnvironmentObject var router: NavigationRouter
 
-    init(symbol: String, viewModel: TradingViewModel) {
+    init(symbol: String) {
         self.symbol = symbol
-        self.viewModel = viewModel
         self._vm = StateObject(wrappedValue: SanctumViewModel(symbol: symbol))
     }
 
@@ -45,7 +42,7 @@ struct ArgusSanctumView: View {
     }
     
     private var activeDecision: ArgusGrandDecision? {
-        vm.grandDecision ?? viewModel.grandDecisions[symbol]
+        vm.grandDecision ?? SignalStateViewModel.shared.grandDecisions[symbol]
     }
 
     @State private var showTradeSheet = false
@@ -103,7 +100,7 @@ struct ArgusSanctumView: View {
                                 SanctumCouncilBody(
                                     symbol: symbol,
                                     decision: activeDecision,
-                                    prometheusForecast: viewModel.prometheusForecastBySymbol[symbol],
+                                    prometheusForecast: SignalViewModel.shared.prometheusForecastBySymbol[symbol],
                                     onOpenArgusAnalysis: {
                                         showArgusAnalysis = true
                                     },
@@ -129,7 +126,6 @@ struct ArgusSanctumView: View {
             if let module = selectedModule {
                 HoloPanelView(
                     module: module,
-                    viewModel: viewModel,
                     vm: vm,
                     symbol: symbol,
                     router: router,
@@ -138,26 +134,23 @@ struct ArgusSanctumView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .zIndex(100)
             }
-            
+
             // 5. BIST HoloPanel
             if let bistMod = selectedBistModule {
-                // Legacy oracle entry is normalized to Rejim/Aether flow.
                 let normalizedBistMod: BistModuleType = (bistMod == .oracle) ? .rejim : bistMod
 
-                // Map BIST module to Global equivalent for HoloPanel
                 let mappedModule: ModuleType = {
                     switch normalizedBistMod {
                     case .tahta: return .orion
                     case .kasa: return .atlas
                     case .kulis: return .hermes
                     case .rejim: return .aether
-                    default: return .orion // Fallback for legacy types
+                    default: return .orion
                     }
                 }()
-                
+
                 HoloPanelView(
                     module: mappedModule,
-                    viewModel: viewModel,
                     vm: vm,
                     symbol: symbol,
                     router: router,
@@ -206,7 +199,6 @@ struct ArgusSanctumView: View {
         .sheet(isPresented: $showTradeSheet) {
             SanctumTradeSheet(
                 symbol: symbol,
-                viewModel: viewModel,
                 action: tradeAction
             )
             .preferredColorScheme(.dark)
@@ -386,7 +378,7 @@ struct ArgusSanctumView: View {
         HStack(spacing: 8) {
             Button(action: handleBackAction) {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 18, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .frame(width: 36, height: 36)
                     .contentShape(Rectangle())
@@ -396,10 +388,10 @@ struct ArgusSanctumView: View {
 
             VStack(alignment: .leading, spacing: 0) {
                 Text(symbol)
-                    .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                    .font(DesignTokens.Fonts.custom(size: 14, weight: .semibold, design: .monospaced))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                 Text(exchangeMeta)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Fonts.custom(size: 11))
                     .foregroundColor(InstitutionalTheme.Colors.textTertiary)
             }
             .padding(.leading, 2)
@@ -425,7 +417,7 @@ struct ArgusSanctumView: View {
                 }
             }) {
                 Image(systemName: "line.3.horizontal")
-                    .font(.system(size: 18, weight: .medium))
+                    .font(DesignTokens.Fonts.custom(size: 18, weight: .medium))
                     .foregroundColor(InstitutionalTheme.Colors.textPrimary)
                     .frame(width: 36, height: 36)
                     .contentShape(Rectangle())
@@ -459,7 +451,6 @@ struct ArgusSanctumView: View {
     private var footerHelper: some View {
          PantheonDeckView(
             symbol: symbol,
-            viewModel: viewModel,
             isBist: symbol.uppercased().hasSuffix(".IS"),
             selectedModule: $selectedModule,
             selectedBistModule: $selectedBistModule
