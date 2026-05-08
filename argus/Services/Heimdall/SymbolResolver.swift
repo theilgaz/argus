@@ -135,4 +135,9 @@ struct SymbolResolver {
         if upper.hasSuffix(".IS") { return true }
         return bistSymbols.contains(upper)
     }
+
+    /// Strips `.IS` so the bare ticker can be sent to BorsaPy.
+    static func bareBistSymbol(_ symbol: String) -> String {
+        symbol.uppercased().replacingOccurrences(of: ".IS", with: "")
+    }
 }

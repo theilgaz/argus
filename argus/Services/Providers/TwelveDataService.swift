@@ -19,6 +19,7 @@ final class TwelveDataService: NSObject, HeimdallProvider, @unchecked Sendable {
     private var isConnected = false
     private var subscriptions: Set<String> = []
     private var reconnectBlockedUntil: Date?
+    private lazy var wsSession: URLSession = URLSession(configuration: .default, delegate: self, delegateQueue: OperationQueue())
     
     // Publishers
     let priceUpdate = PassthroughSubject<Quote, Never>()
@@ -207,12 +208,9 @@ final class TwelveDataService: NSObject, HeimdallProvider, @unchecked Sendable {
             print("⏳ TwelveData: Reconnect blocked (\(remaining)s) due to prior rate limit.")
             return
         }
-        print("🔌 TwelveData: Connecting...")
-        
-        let session = URLSession(configuration: .default, delegate: self, delegateQueue: OperationQueue())
-        webSocketTask = session.webSocketTask(with: socketURL)
+        print("TwelveData: Connecting...")
+        webSocketTask = wsSession.webSocketTask(with: socketURL)
         webSocketTask?.resume()
-        
         listen()
     }
     

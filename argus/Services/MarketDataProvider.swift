@@ -59,7 +59,8 @@ class MarketDataProvider: ObservableObject {
     }
 
     private func handleIncomingStream(_ quote: Quote, source: String) {
-        // K4 fail-closed: discard ticks older than 15s.
+        // Discard ticks older than 15s so a brief disconnect cannot
+        // replay stale prices into the SSoT.
         guard let ts = quote.timestamp, Date().timeIntervalSince(ts) <= 15 else {
             return
         }

@@ -73,9 +73,19 @@ final class MarketDataStore: ObservableObject {
     /// Injection for Streaming Engine (MarketDataProvider)
     func injectLiveQuote(_ quote: Quote, source: String) {
         guard let sym = quote.symbol else { return }
-        
+
+        // Drop duplicate ticks to avoid invalidating SwiftUI on every
+        // identical frame. WS sources can emit several ticks per second
+        // for liquid names; without this guard each one publishes an
+        // unchanged Quote downstream.
+        if let existing = quotes[sym]?.value,
+           existing.c == quote.c,
+           existing.timestamp == quote.timestamp {
+            return
+        }
+
         var finalQuote = quote
-        
+
         // MERGE LOGIC: Preserve rich data (Previous Close, Name, etc.) from existing Cache
         if let existing = quotes[sym]?.value {
             if finalQuote.previousClose == nil {
@@ -504,31 +514,19 @@ final class MarketDataStore: ObservableObject {
         }
         guard !needsFetch.isEmpty else { return }
 
-        do {
-            let map = try await HeimdallOrchestrator.shared.requestQuotesBatch(symbols: needsFetch)
-            for symbol in needsFetch {
-                if let quote = map[symbol] {
-                    _ = processQuoteSuccess(symbol: symbol, quote: quote, source: "Batch")
-                } else if quotes[symbol] == nil {
-                    quotes[symbol] = .missing(reason: "Batch returned no value")
-                }
-            }
-        } catch {
-            ArgusLogger.warn("Batch quote fetch failed: \(error.localizedDescription)", category: "DataPipeline")
-            // Fall back to per-symbol fetch for resilience; SWR cache helps users still see data.
-            await withTaskGroup(of: Void.self) { group in
-                for sym in needsFetch {
-                    group.addTask { [weak self] in
-                        _ = await self?.ensureQuote(symbol: sym)
-                    }
-                }
+        let map = await HeimdallOrchestrator.shared.requestQuotesBatch(symbols: needsFetch)
+        for symbol in needsFetch {
+            if let quote = map[symbol] {
+                _ = processQuoteSuccess(symbol: symbol, quote: quote, source: "Batch")
+            } else if quotes[symbol] == nil {
+                quotes[symbol] = .missing(reason: "Batch returned no value")
             }
         }
     }
 
     /// Public API for view models that just need a quote refresh on
     /// many symbols. Routes through the batch path.
-    func refreshQuotes(symbols: [String]) async throws {
+    func refreshQuotes(symbols: [String]) async {
         await ensureQuotes(symbols: symbols)
     }
 

@@ -25,12 +25,12 @@ actor FinnhubProvider {
 
     func fetchQuote(symbol: String) async throws -> Quote {
         guard hasKey else {
-            throw ProviderError.noKey("Finnhub key missing")
+            throw HeimdallCoreError(category: .authInvalid, code: 401, message: "Finnhub key missing", bodyPrefix: "")
         }
         let mapped = Self.toFinnhubSymbol(symbol)
         let response: QuoteResponse = try await get(path: "quote", params: ["symbol": mapped])
         guard response.c > 0 else {
-            throw ProviderError.empty("Finnhub returned zero price for \(symbol)")
+            throw HeimdallCoreError(category: .emptyPayload, code: 204, message: "Finnhub returned zero price for \(symbol)", bodyPrefix: "")
         }
         var quote = Quote(
             c: response.c,
@@ -48,7 +48,9 @@ actor FinnhubProvider {
     // MARK: - Candles
 
     func fetchCandles(symbol: String, timeframe: String, limit: Int) async throws -> [Candle] {
-        guard hasKey else { throw ProviderError.noKey("Finnhub key missing") }
+        guard hasKey else {
+            throw HeimdallCoreError(category: .authInvalid, code: 401, message: "Finnhub key missing", bodyPrefix: "")
+        }
         let mapped = Self.toFinnhubSymbol(symbol)
         let resolution = Self.resolution(for: timeframe)
         let now = Date()
@@ -96,7 +98,9 @@ actor FinnhubProvider {
     // MARK: - Fundamentals (basic financials)
 
     func fetchBasicFinancials(symbol: String) async throws -> BasicFinancials {
-        guard hasKey else { throw ProviderError.noKey("Finnhub key missing") }
+        guard hasKey else {
+            throw HeimdallCoreError(category: .authInvalid, code: 401, message: "Finnhub key missing", bodyPrefix: "")
+        }
         let mapped = Self.toFinnhubSymbol(symbol)
         let response: BasicFinancialsResponse = try await get(path: "stock/metric", params: [
             "symbol": mapped,
@@ -127,12 +131,14 @@ actor FinnhubProvider {
             do {
                 return try JSONDecoder().decode(T.self, from: data)
             } catch {
-                throw ProviderError.decode("Finnhub decode failed for \(path): \(error.localizedDescription)")
+                throw HeimdallCoreError(category: .decodeError, code: http.statusCode, message: "Finnhub decode failed for \(path): \(error.localizedDescription)", bodyPrefix: "")
             }
         case 401, 403:
-            throw ProviderError.auth("Finnhub auth/entitlement \(http.statusCode)")
+            throw HeimdallCoreError(category: .authInvalid, code: http.statusCode, message: "Finnhub auth/entitlement \(http.statusCode)", bodyPrefix: "")
         case 429:
-            throw ProviderError.rateLimited("Finnhub 429")
+            throw HeimdallCoreError(category: .rateLimited, code: 429, message: "Finnhub 429", bodyPrefix: "")
+        case 500..<600:
+            throw HeimdallCoreError(category: .serverError, code: http.statusCode, message: "Finnhub HTTP \(http.statusCode)", bodyPrefix: "")
         default:
             throw URLError(.badServerResponse, userInfo: [NSLocalizedDescriptionKey: "Finnhub HTTP \(http.statusCode)"])
         }
@@ -249,18 +255,4 @@ actor FinnhubProvider {
         let metric: BasicFinancials
     }
 
-    enum ProviderError: Error, LocalizedError {
-        case noKey(String)
-        case auth(String)
-        case rateLimited(String)
-        case empty(String)
-        case decode(String)
-
-        var errorDescription: String? {
-            switch self {
-            case .noKey(let m), .auth(let m), .rateLimited(let m), .empty(let m), .decode(let m):
-                return m
-            }
-        }
-    }
 }

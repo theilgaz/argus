@@ -139,7 +139,7 @@ final class HeimdallOrchestrator {
     }
 
     private func quoteChain(destination: MarketDestination, resolved: String, original: String) -> [ChainStep<Quote>] {
-        let bareBist = resolved.uppercased().replacingOccurrences(of: ".IS", with: "")
+        let bareBist = SymbolResolver.bareBistSymbol(resolved)
 
         switch destination {
         case .bist:
@@ -207,10 +207,18 @@ final class HeimdallOrchestrator {
     /// available (Stooq snapshot for global, BorsaPy parallel for BIST,
     /// Finnhub parallel for crypto), and falls back to chunked
     /// per-symbol Yahoo for anything still missing.
-    func requestQuotesBatch(symbols: [String], context: UsageContext = .interactive) async throws -> [String: Quote] {
+    func requestQuotesBatch(symbols: [String], context: UsageContext = .interactive) async -> [String: Quote] {
         guard !symbols.isEmpty else { return [:] }
 
-        let buckets = Dictionary(grouping: symbols) { resolver.marketDestination(for: resolver.resolve($0)) }
+        // Resolve once per symbol so the buckets, fallback filter, and
+        // chain closures all work off the same canonical form. For
+        // 400-symbol watchlists this avoids ~1600 redundant trim+
+        // uppercase passes per refresh.
+        let routes: [Route] = symbols.map { sym in
+            let resolved = resolver.resolve(sym)
+            return Route(original: sym, resolved: resolved, destination: resolver.marketDestination(for: resolved))
+        }
+        let buckets = Dictionary(grouping: routes, by: \.destination)
 
         var combined: [String: Quote] = [:]
 
@@ -218,28 +226,27 @@ final class HeimdallOrchestrator {
             if let bist = buckets[.bist], !bist.isEmpty {
                 group.addTask { [weak self] in
                     guard let self = self else { return [:] }
-                    return await self.parallelFetch(symbols: bist) { sym in
-                        let bare = sym.uppercased().replacingOccurrences(of: ".IS", with: "")
+                    return await self.parallelFetch(routes: bist) { route in
+                        let bare = SymbolResolver.bareBistSymbol(route.resolved)
                         let q = try await self.borsaPy.getBistQuote(symbol: bare)
-                        return Self.convert(bist: q, canonical: sym)
+                        return Self.convert(bist: q, canonical: route.original)
                     }
                 }
             }
             if let crypto = buckets[.crypto], !crypto.isEmpty, finnhub.hasKey {
                 group.addTask { [weak self] in
                     guard let self = self else { return [:] }
-                    return await self.parallelFetch(symbols: crypto) { sym in
-                        let q = try await self.finnhub.fetchQuote(symbol: self.resolver.resolve(sym))
-                        return q.with(symbol: sym)
+                    return await self.parallelFetch(routes: crypto) { route in
+                        let q = try await self.finnhub.fetchQuote(symbol: route.resolved)
+                        return q.with(symbol: route.original)
                     }
                 }
             }
             for destination: MarketDestination in [.usEquity, .index, .forex, .commodity] {
                 if let bucket = buckets[destination], !bucket.isEmpty {
-                    let chunk = bucket
                     group.addTask { [weak self] in
                         guard let self = self else { return [:] }
-                        return await self.batchSnapshotBucket(chunk)
+                        return await self.batchSnapshotBucket(bucket)
                     }
                 }
             }
@@ -253,9 +260,9 @@ final class HeimdallOrchestrator {
         // Yahoo's single-symbol endpoint. BIST and crypto already
         // exhausted their per-symbol chains in their buckets, so we
         // only retry global market types here.
-        let snapshotMissing = symbols.filter { sym in
-            guard combined[sym] == nil else { return false }
-            switch resolver.marketDestination(for: resolver.resolve(sym)) {
+        let snapshotMissing = routes.filter { route in
+            guard combined[route.original] == nil else { return false }
+            switch route.destination {
             case .usEquity, .index, .forex, .commodity: return true
             default: return false
             }
@@ -268,17 +275,23 @@ final class HeimdallOrchestrator {
         return combined
     }
 
+    private struct Route {
+        let original: String
+        let resolved: String
+        let destination: MarketDestination
+    }
+
     /// Generic parallel per-symbol fetch with timeout-friendly TaskGroup
     /// semantics. Used by buckets that have no native batch endpoint.
-    private func parallelFetch(symbols: [String], fetch: @escaping (String) async throws -> Quote) async -> [String: Quote] {
+    private func parallelFetch(routes: [Route], fetch: @escaping (Route) async throws -> Quote) async -> [String: Quote] {
         var out: [String: Quote] = [:]
         await withTaskGroup(of: (String, Quote?).self) { group in
-            for symbol in symbols {
+            for route in routes {
                 group.addTask {
                     do {
-                        return (symbol, try await fetch(symbol))
+                        return (route.original, try await fetch(route))
                     } catch {
-                        return (symbol, nil)
+                        return (route.original, nil)
                     }
                 }
             }
@@ -289,20 +302,18 @@ final class HeimdallOrchestrator {
         return out
     }
 
-    private func batchSnapshotBucket(_ symbols: [String]) async -> [String: Quote] {
-        let resolvedPairs = symbols.map { ($0, resolver.resolve($0)) }
-        let resolvedList = resolvedPairs.map(\.1)
+    private func batchSnapshotBucket(_ routes: [Route]) async -> [String: Quote] {
         let circuit = circuitKey(provider: "stooq", endpoint: "quote")
         guard await HeimdallCircuitBreaker.shared.canRequest(provider: circuit) else {
             return [:]
         }
         do {
-            let map = try await stooq.fetchSnapshotBatch(symbols: resolvedList)
+            let map = try await stooq.fetchSnapshotBatch(symbols: routes.map(\.resolved))
             await HeimdallCircuitBreaker.shared.reportSuccess(provider: circuit)
             var out: [String: Quote] = [:]
-            for (original, resolved) in resolvedPairs {
-                if let quote = map[resolved] {
-                    out[original] = quote.with(symbol: original)
+            for route in routes {
+                if let quote = map[route.resolved] {
+                    out[route.original] = quote.with(symbol: route.original)
                 }
             }
             return out
@@ -319,20 +330,19 @@ final class HeimdallOrchestrator {
         }
     }
 
-    /// Yahoo single-symbol fetch fan-out for symbols Stooq dropped. The
-    /// 8 chunk x 800ms cadence matches the proven Phase 6 numbers and
-    /// stays within Yahoo's 5 r/s sliding window.
-    private func yahooChunkedFallback(_ symbols: [String]) async -> [String: Quote] {
+    /// Yahoo single-symbol fetch fan-out for symbols Stooq dropped.
+    /// 8 chunk x 800ms stays within Yahoo's 5 r/s sliding window.
+    private func yahooChunkedFallback(_ routes: [Route]) async -> [String: Quote] {
         var out: [String: Quote] = [:]
         let chunkSize = 8
         let chunkDelayNs: UInt64 = 800_000_000
 
-        let chunks = stride(from: 0, to: symbols.count, by: chunkSize).map {
-            Array(symbols[$0..<min($0 + chunkSize, symbols.count)])
+        let chunks = stride(from: 0, to: routes.count, by: chunkSize).map {
+            Array(routes[$0..<min($0 + chunkSize, routes.count)])
         }
         for (index, batch) in chunks.enumerated() {
-            let partial = await parallelFetch(symbols: batch) { [yahoo, resolver] sym in
-                try await yahoo.fetchQuote(symbol: resolver.resolve(sym))
+            let partial = await parallelFetch(routes: batch) { [yahoo] route in
+                try await yahoo.fetchQuote(symbol: route.resolved)
             }
             for (key, value) in partial { out[key] = value }
             if index < chunks.count - 1 {
@@ -375,7 +385,7 @@ final class HeimdallOrchestrator {
     }
 
     private func fundamentalsChain(destination: MarketDestination, resolved: String, original: String) -> [ChainStep<FinancialsData>] {
-        let bareBist = resolved.uppercased().replacingOccurrences(of: ".IS", with: "")
+        let bareBist = SymbolResolver.bareBistSymbol(resolved)
 
         switch destination {
         case .bist:
@@ -438,7 +448,7 @@ final class HeimdallOrchestrator {
 
     private func candleChain(destination: MarketDestination, resolved: String, original: String, timeframe: String, limit: Int) -> [ChainStep<[Candle]>] {
         let isDaily = Self.isDailyOrLonger(timeframe: timeframe)
-        let bareBist = resolved.uppercased().replacingOccurrences(of: ".IS", with: "")
+        let bareBist = SymbolResolver.bareBistSymbol(resolved)
 
         switch destination {
         case .bist:
@@ -777,7 +787,10 @@ private extension Quote {
     }
 }
 
-// MARK: - Usage Context (required for API compatibility)
+/// Hint for upstream callers about how a request should be prioritized
+/// (interactive vs background vs realtime). Not yet wired into rate
+/// limiter scheduling; kept on the public API so a future PR can use
+/// it without breaking signatures.
 enum UsageContext {
     case interactive
     case background
