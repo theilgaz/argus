@@ -100,20 +100,8 @@ extension TradingViewModel {
            await MainActor.run { self.isLoading = true }
         }
         
-        do {
-            print("📡 TradingViewModel: Delegating Batch Fetch of \(allSymbols.count) symbols to MarketDataStore...")
-            
-            // Delegate completely to Store
-            // Store handles coalescing, caching (TTL), and updating via $quotes publisher
-            try await MarketDataStore.shared.refreshQuotes(symbols: allSymbols)
-            
-            await MainActor.run {
-                self.isLoading = false
-            }
-        } catch {
-             print("Watchlist Refresh Failed: \(error)")
-             await MainActor.run { self.isLoading = false }
-        }
+        await MarketDataStore.shared.refreshQuotes(symbols: allSymbols)
+        await MainActor.run { self.isLoading = false }
     }
     
     // Helper for Single Fetch (UI View usage)

@@ -9,7 +9,7 @@ extension TradingViewModel {
         
         // 1. Fetch General News (Last 2 days)
         // Assuming we have a provider for "GENERAL"
-        let generalNews = (try? await YahooFinanceNewsProvider.shared.fetchNews(symbol: "GENERAL", limit: 20)) ?? []
+        let generalNews = (try? await GoogleNewsRSSProvider.shared.fetchNews(symbol: "GENERAL", limit: 20)) ?? []
         
         // 2. Hermes Scan
         let candidates = await GeminiNewsService.shared.scanGeneraNewsForOpportunities(articles: generalNews)

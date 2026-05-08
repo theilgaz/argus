@@ -19,6 +19,7 @@ final class TwelveDataService: NSObject, HeimdallProvider, @unchecked Sendable {
     private var isConnected = false
     private var subscriptions: Set<String> = []
     private var reconnectBlockedUntil: Date?
+    private lazy var wsSession: URLSession = URLSession(configuration: .default, delegate: self, delegateQueue: OperationQueue())
     
     // Publishers
     let priceUpdate = PassthroughSubject<Quote, Never>()
@@ -207,12 +208,9 @@ final class TwelveDataService: NSObject, HeimdallProvider, @unchecked Sendable {
             print("⏳ TwelveData: Reconnect blocked (\(remaining)s) due to prior rate limit.")
             return
         }
-        print("🔌 TwelveData: Connecting...")
-        
-        let session = URLSession(configuration: .default, delegate: self, delegateQueue: OperationQueue())
-        webSocketTask = session.webSocketTask(with: socketURL)
+        print("TwelveData: Connecting...")
+        webSocketTask = wsSession.webSocketTask(with: socketURL)
         webSocketTask?.resume()
-        
         listen()
     }
     
@@ -220,17 +218,48 @@ final class TwelveDataService: NSObject, HeimdallProvider, @unchecked Sendable {
         // Filter new
         let newSymbols = symbols.filter { !subscriptions.contains($0) }
         guard !newSymbols.isEmpty else { return }
-        
+
         for s in newSymbols { subscriptions.insert(s) }
-        
+
         if !isConnected {
             connect()
             return
         }
-        
+
         sendSubscription(newSymbols)
     }
-    
+
+    /// Diff-based subscription update. Adds new symbols, removes ones
+    /// no longer requested. Without this the subscription set grows
+    /// monotonically and hits the 8-symbol free-tier cap.
+    func setSubscriptions(_ symbols: [String]) {
+        let desired = Set(symbols)
+        let toAdd = desired.subtracting(subscriptions)
+        let toRemove = subscriptions.subtracting(desired)
+        subscriptions = desired
+
+        if !isConnected {
+            connect()
+            return
+        }
+        if !toRemove.isEmpty { sendUnsubscribe(Array(toRemove)) }
+        if !toAdd.isEmpty { sendSubscription(Array(toAdd)) }
+    }
+
+    private func sendUnsubscribe(_ symbols: [String]) {
+        guard !symbols.isEmpty else { return }
+        let joined = symbols.joined(separator: ",")
+        let msg = """
+        {
+            "action": "unsubscribe",
+            "params": {
+                "symbols": "\(joined)"
+            }
+        }
+        """
+        sendMessage(msg)
+    }
+
     private func sendSubscription(_ symbols: [String]) {
         guard !symbols.isEmpty else { return }
         

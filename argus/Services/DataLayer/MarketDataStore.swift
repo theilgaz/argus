@@ -73,9 +73,19 @@ final class MarketDataStore: ObservableObject {
     /// Injection for Streaming Engine (MarketDataProvider)
     func injectLiveQuote(_ quote: Quote, source: String) {
         guard let sym = quote.symbol else { return }
-        
+
+        // Drop duplicate ticks to avoid invalidating SwiftUI on every
+        // identical frame. WS sources can emit several ticks per second
+        // for liquid names; without this guard each one publishes an
+        // unchanged Quote downstream.
+        if let existing = quotes[sym]?.value,
+           existing.c == quote.c,
+           existing.timestamp == quote.timestamp {
+            return
+        }
+
         var finalQuote = quote
-        
+
         // MERGE LOGIC: Preserve rich data (Previous Close, Name, etc.) from existing Cache
         if let existing = quotes[sym]?.value {
             if finalQuote.previousClose == nil {
@@ -488,32 +498,14 @@ final class MarketDataStore: ObservableObject {
     
     // MARK: - Bulk Operations
 
-    /// Tek seferde ne kadar paralel ensureQuote çalıştırılacağı. Yahoo cap
-    /// ~5 req/s; chunk=10 + 600ms ara → bir önceki chunk'ın ilk 5'i pencerede,
-    /// sonraki 5 backoff'ta zaten beklerken yeni chunk geliyor. Eskiden 304
-    /// sembolün hepsi aynı anda paralel gönderiliyordu → acquireSlot kuyruğu
-    /// patlayıp 200+ istek 30s'de timeout oluyordu ("kimisi boş" semptomu).
-    // Phase 6 PR-A ROLLBACK (2026-04-29):
-    //
-    // Yahoo `v7/finance/quote?symbols=A,B,C` batch endpoint'ini engelledi
-    // (HTTP 401 "User is unable to access this feature" — bit.ly/yahoo-finance-api-feedback).
-    // Production loglarında onlarca 401 alındı. PR-A iyi niyetli ama fiilen
-    // ÇALIŞMAYAN bir yola gitti. `requestQuotesBatch` artık çağrılmıyor (deprecated).
-    //
-    // Yeni yaklaşım: Phase 5'in chunked yaklaşımına dön — N sembol için
-    // 8'lik chunk × inflight semaphore (Yahoo cap=4) ile akar şekilde dağılan
-    // single quote istekleri. Tek-sembol endpoint hâlâ çalışıyor.
-    //
-    // Phase 5'ten farklılıklar:
-    //  • Chunk 4 → 8 (PR-D SWR çoğu çağrıyı zaten kesiyor; daha büyük chunk OK)
-    //  • Delay 2sn → 800ms (inflight semaphore + SWR yastığı yeterli; uzun delay
-    //    artık gereksiz)
-    private static let chunkSize = 8
-    private static let chunkDelayNs: UInt64 = 800_000_000 // 800 ms
+    /// In-flight batch refreshes keyed by the sorted symbol set so two
+    /// view models calling `refreshQuotes` with the same watchlist do
+    /// not produce two parallel Stooq fan-outs.
+    private var batchTasks: [String: Task<Void, Never>] = [:]
 
-    /// Watchlist gibi N>1 senaryolarda sembolleri chunked paralel olarak çeker.
-    /// SWR ve in-flight coalescing `ensureQuote` içinde devrede; aynı sembol için
-    /// duplikate fetch yok. Cache fresh olanlar zaten orada filtreleniyor.
+    /// Stooq snapshot endpoint can return hundreds of symbols in a
+    /// single request and BorsaPy handles BIST in parallel internally.
+    /// Both converge in `HeimdallOrchestrator.requestQuotesBatch`.
     func ensureQuotes(symbols: [String]) async {
         let needsFetch = symbols.filter { sym in
             if let current = quotes[sym] {
@@ -524,35 +516,44 @@ final class MarketDataStore: ObservableObject {
         }
         guard !needsFetch.isEmpty else { return }
 
-        let chunks = stride(from: 0, to: needsFetch.count, by: MarketDataStore.chunkSize).map {
-            Array(needsFetch[$0..<min($0 + MarketDataStore.chunkSize, needsFetch.count)])
+        let key = needsFetch.sorted().joined(separator: ",")
+        if let existing = batchTasks[key] {
+            await existing.value
+            return
         }
-
-        for (index, batch) in chunks.enumerated() {
-            await withTaskGroup(of: Void.self) { group in
-                for sym in batch {
-                    group.addTask { [weak self] in
-                        _ = await self?.ensureQuote(symbol: sym)
-                    }
+        let task = Task<Void, Never> { [weak self] in
+            guard let self = self else { return }
+            let map = await HeimdallOrchestrator.shared.requestQuotesBatch(symbols: needsFetch)
+            for symbol in needsFetch {
+                if let quote = map[symbol] {
+                    _ = self.processQuoteSuccess(symbol: symbol, quote: quote, source: "Batch")
+                } else if self.quotes[symbol] == nil {
+                    self.quotes[symbol] = .missing(reason: "Batch returned no value")
                 }
             }
-            if index < chunks.count - 1 {
-                try? await Task.sleep(nanoseconds: MarketDataStore.chunkDelayNs)
-            }
         }
+        batchTasks[key] = task
+        await task.value
+        batchTasks[key] = nil
     }
 
-    /// Phase 6 öncesi `ensureQuotesParallel` (sınırsız paralel `ensureQuote`)
-    /// silindi — N sembollük tüm senaryolar artık `ensureQuotes` üzerinden
-    /// tek Yahoo batch isteğine indirgeniyor.
-    ///
-    /// Tek-sembol için `ensureQuote(symbol:)` korunuyor (detay sayfası gibi
-    /// tekil/anında senaryolar batch latency'sini bekleyemez).
-
-    /// Batch Refresh Logic - ViewModel'lerden çağrılan public API.
-    /// Yahoo `v7/finance/quote?symbols=...` üzerinden tek batch istekle akar.
-    func refreshQuotes(symbols: [String]) async throws {
+    /// Public API for view models that just need a quote refresh on
+    /// many symbols. Routes through the batch path.
+    func refreshQuotes(symbols: [String]) async {
         await ensureQuotes(symbols: symbols)
+    }
+
+    // MARK: - Hot tier (live tick subscriptions)
+
+    /// The set of symbols the streaming WebSocket should subscribe to.
+    /// Updated whenever the visible UI changes (open positions plus the
+    /// rendered chunk of the watchlist).
+    @Published var hotSymbols: Set<String> = []
+
+    func setHotSymbols(_ symbols: Set<String>) {
+        guard hotSymbols != symbols else { return }
+        hotSymbols = symbols
+        MarketDataProvider.shared.connectStream(symbols: Array(symbols))
     }
     // MARK: - Historical Data Access (Validator)
     

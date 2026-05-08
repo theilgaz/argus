@@ -265,11 +265,7 @@ final class MarketViewModel: ObservableObject {
 
         guard !allSymbols.isEmpty else { return }
 
-        do {
-            try await MarketDataStore.shared.refreshQuotes(symbols: allSymbols)
-        } catch {
-            print("Watchlist Refresh Failed: \(error)")
-        }
+        await MarketDataStore.shared.refreshQuotes(symbols: allSymbols)
     }
 
     // Single quote fetch for UI

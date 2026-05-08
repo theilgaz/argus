@@ -7,18 +7,16 @@ final class HeimdallResilienceVerifier {
     // MARK: - Symbol Resolver
     
     static func verifySymbolResolver() {
-        print("🧪 Verifying SymbolResolver...")
+        print("Verifying SymbolResolver...")
         let resolver = SymbolResolver.shared
-        
-        // Yahoo Mappings
-        assert(resolver.resolve("SILVER", for: .yahoo) == "SI=F", "SILVER should be SI=F")
-        assert(resolver.resolve("VIX", for: .yahoo) == "^VIX", "VIX should be ^VIX")
-        assert(resolver.resolve("EURUSD", for: .yahoo) == "EURUSD=X", "EURUSD should be EURUSD=X")
-        assert(resolver.resolve("AAPL", for: .yahoo) == "AAPL", "AAPL should pass through")
-        
-        // EODHD Mappings (Pass through usually)
-        assert(resolver.resolve("SILVER", for: .eodhd) == "SILVER", "SILVER (EODHD) should pass through") 
-        print("✅ SymbolResolver Verified.")
+
+        assert(resolver.resolve("SILVER") == "SI=F", "SILVER should be SI=F")
+        assert(resolver.resolve("VIX") == "^VIX", "VIX should be ^VIX")
+        assert(resolver.resolve("EURUSD") == "EURUSD=X", "EURUSD should be EURUSD=X")
+        assert(resolver.resolve("AAPL") == "AAPL", "AAPL should pass through")
+        assert(resolver.marketDestination(for: "THYAO.IS") == .bist, "THYAO.IS routes to BIST")
+        assert(resolver.marketDestination(for: "BTC-USD") == .crypto, "BTC-USD routes to crypto")
+        print("SymbolResolver verified.")
     }
     
     // MARK: - Quota Ledger
