@@ -64,13 +64,11 @@ class MarketDataProvider: ObservableObject {
         guard let ts = quote.timestamp, Date().timeIntervalSince(ts) <= 15 else {
             return
         }
-        DispatchQueue.main.async {
-            self.priceUpdate.send(quote)
-            self.dataHealth.activeProvider = source
-            self.dataHealth.dataFreshness = 0
-            Task { @MainActor in
-                MarketDataStore.shared.injectLiveQuote(quote, source: "\(source) (Stream)")
-            }
+        Task { @MainActor in
+            priceUpdate.send(quote)
+            dataHealth.activeProvider = source
+            dataHealth.dataFreshness = 0
+            MarketDataStore.shared.injectLiveQuote(quote, source: "\(source) (Stream)")
         }
     }
 

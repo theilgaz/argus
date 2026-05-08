@@ -498,12 +498,14 @@ final class MarketDataStore: ObservableObject {
     
     // MARK: - Bulk Operations
 
-    /// Stooq snapshot endpoint can return hundreds of symbols in a single
-    /// request, BorsaPy handles BIST in parallel internally. Both
-    /// streams converge in `HeimdallOrchestrator.requestQuotesBatch`,
-    /// which is what this method calls. SWR and in-flight coalescing
-    /// run in `ensureQuote` for individual reads; bulk refresh skips
-    /// them in favour of the one-shot batch.
+    /// In-flight batch refreshes keyed by the sorted symbol set so two
+    /// view models calling `refreshQuotes` with the same watchlist do
+    /// not produce two parallel Stooq fan-outs.
+    private var batchTasks: [String: Task<Void, Never>] = [:]
+
+    /// Stooq snapshot endpoint can return hundreds of symbols in a
+    /// single request and BorsaPy handles BIST in parallel internally.
+    /// Both converge in `HeimdallOrchestrator.requestQuotesBatch`.
     func ensureQuotes(symbols: [String]) async {
         let needsFetch = symbols.filter { sym in
             if let current = quotes[sym] {
@@ -514,14 +516,25 @@ final class MarketDataStore: ObservableObject {
         }
         guard !needsFetch.isEmpty else { return }
 
-        let map = await HeimdallOrchestrator.shared.requestQuotesBatch(symbols: needsFetch)
-        for symbol in needsFetch {
-            if let quote = map[symbol] {
-                _ = processQuoteSuccess(symbol: symbol, quote: quote, source: "Batch")
-            } else if quotes[symbol] == nil {
-                quotes[symbol] = .missing(reason: "Batch returned no value")
+        let key = needsFetch.sorted().joined(separator: ",")
+        if let existing = batchTasks[key] {
+            await existing.value
+            return
+        }
+        let task = Task<Void, Never> { [weak self] in
+            guard let self = self else { return }
+            let map = await HeimdallOrchestrator.shared.requestQuotesBatch(symbols: needsFetch)
+            for symbol in needsFetch {
+                if let quote = map[symbol] {
+                    _ = self.processQuoteSuccess(symbol: symbol, quote: quote, source: "Batch")
+                } else if self.quotes[symbol] == nil {
+                    self.quotes[symbol] = .missing(reason: "Batch returned no value")
+                }
             }
         }
+        batchTasks[key] = task
+        await task.value
+        batchTasks[key] = nil
     }
 
     /// Public API for view models that just need a quote refresh on

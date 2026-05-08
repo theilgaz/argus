@@ -18,6 +18,7 @@ final class FinnhubLiveStream: NSObject, @unchecked Sendable {
     private let queue = DispatchQueue(label: "argus.finnhub.live", qos: .userInitiated)
     private var task: URLSessionWebSocketTask?
     private var session: URLSession!
+    private let decoder = JSONDecoder()
     private var desired: Set<String> = []
     private var active: Set<String> = []
     private var connected = false
@@ -103,17 +104,17 @@ final class FinnhubLiveStream: NSObject, @unchecked Sendable {
     }
 
     private func handle(message: URLSessionWebSocketTask.Message) {
-        let text: String
+        let payload: Data
         switch message {
         case .string(let s):
-            text = s
+            guard let bytes = s.data(using: .utf8) else { return }
+            payload = bytes
         case .data(let d):
-            text = String(data: d, encoding: .utf8) ?? ""
+            payload = d
         @unknown default:
             return
         }
-        guard let data = text.data(using: .utf8) else { return }
-        guard let envelope = try? JSONDecoder().decode(TradeEnvelope.self, from: data) else { return }
+        guard let envelope = try? decoder.decode(TradeEnvelope.self, from: payload) else { return }
         guard envelope.type == "trade" else { return }
         for trade in envelope.data ?? [] {
             let quote = Quote(
@@ -139,7 +140,10 @@ final class FinnhubLiveStream: NSObject, @unchecked Sendable {
 
         guard !desired.isEmpty else { return }
         reconnectAttempt = min(reconnectAttempt + 1, 6)
-        let delay = pow(2.0, Double(reconnectAttempt))
+        // Backoff with jitter so a fleet of clients reconnecting after a
+        // Finnhub outage do not all hit the socket at the same instant.
+        let base = pow(2.0, Double(reconnectAttempt))
+        let delay = base * Double.random(in: 0.7...1.3)
         queue.asyncAfter(deadline: .now() + delay) { [weak self] in
             self?.openSocket()
         }

@@ -53,21 +53,13 @@ actor StooqProvider {
     private static let chunkSize = 80
 
     private static func fetchChunk(_ normalized: [SymbolMapping]) async throws -> [String: Quote] {
-        let joined = normalized.map(\.stooq).joined(separator: " ")
-        guard let encoded = joined.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              var components = URLComponents(string: "https://stooq.com/q/l/") else {
-            return [:]
-        }
-        components.queryItems = [
-            URLQueryItem(name: "s", value: nil),
-            URLQueryItem(name: "f", value: "sd2t2ohlcv"),
-            URLQueryItem(name: "h", value: nil),
-            URLQueryItem(name: "e", value: "csv")
-        ]
-        // Manual replacement: Stooq wants `s=A+B+C` and `h` as bare flag.
-        guard var rawURL = components.url?.absoluteString else { return [:] }
-        rawURL = rawURL.replacingOccurrences(of: "s=&", with: "s=\(encoded)&")
-        guard let finalURL = URL(string: rawURL) else { return [:] }
+        // Stooq's snapshot endpoint wants symbols joined with literal
+        // `+` (its decoder reads the URL raw, so `URLComponents`'s
+        // percent-encoding mangles the list). Build the query string
+        // by hand to keep the `+` separators intact.
+        let joined = normalized.map(\.stooq).joined(separator: "+")
+        let raw = "https://stooq.com/q/l/?s=\(joined)&f=sd2t2ohlcv&h&e=csv"
+        guard let finalURL = URL(string: raw) else { return [:] }
 
         let data = try await fetch(url: finalURL, timeout: 15)
         return parseSnapshotCSV(data: data, symbolMap: normalized)

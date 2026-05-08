@@ -210,10 +210,8 @@ final class HeimdallOrchestrator {
     func requestQuotesBatch(symbols: [String], context: UsageContext = .interactive) async -> [String: Quote] {
         guard !symbols.isEmpty else { return [:] }
 
-        // Resolve once per symbol so the buckets, fallback filter, and
-        // chain closures all work off the same canonical form. For
-        // 400-symbol watchlists this avoids ~1600 redundant trim+
-        // uppercase passes per refresh.
+        // Resolve once so buckets, fallback filter, and chain closures
+        // share the same canonical form.
         let routes: [Route] = symbols.map { sym in
             let resolved = resolver.resolve(sym)
             return Route(original: sym, resolved: resolved, destination: resolver.marketDestination(for: resolved))
@@ -255,20 +253,14 @@ final class HeimdallOrchestrator {
             }
         }
 
-        // Stooq's CSV occasionally drops US tickers (illiquid, recent
-        // listings, missing extensions). For those, fall through to
-        // Yahoo's single-symbol endpoint. BIST and crypto already
-        // exhausted their per-symbol chains in their buckets, so we
-        // only retry global market types here.
-        let snapshotMissing = routes.filter { route in
-            guard combined[route.original] == nil else { return false }
-            switch route.destination {
-            case .usEquity, .index, .forex, .commodity: return true
-            default: return false
-            }
-        }
-        if !snapshotMissing.isEmpty {
-            let recovered = await yahooChunkedFallback(snapshotMissing)
+        // Yahoo single-symbol backstop for anything the buckets did not
+        // satisfy: BIST symbols BorsaPy didn't answer, crypto when
+        // Finnhub had no key or no result, and US tickers Stooq dropped.
+        // Yahoo natively handles `.IS`, `-USD`, `=X`, `=F` and `^...`
+        // formats so a single endpoint covers all of them.
+        let missing = routes.filter { combined[$0.original] == nil }
+        if !missing.isEmpty {
+            let recovered = await yahooChunkedFallback(missing)
             for (key, value) in recovered { combined[key] = value }
         }
 
