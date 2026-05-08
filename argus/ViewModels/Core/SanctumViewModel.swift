@@ -297,7 +297,7 @@ final class SanctumViewModel: ObservableObject {
             if isBist {
                 articles = try await RSSNewsProvider().fetchNews(symbol: symbol, limit: 20)
             } else {
-                articles = try await YahooFinanceNewsProvider.shared.fetchNews(symbol: symbol, limit: 15)
+                articles = try await GoogleNewsRSSProvider.shared.fetchNews(symbol: symbol, limit: 15)
             }
 
             guard !articles.isEmpty else {
