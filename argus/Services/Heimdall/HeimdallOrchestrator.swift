@@ -350,21 +350,32 @@ final class HeimdallOrchestrator {
         }
     }
 
-    /// Yahoo single-symbol fetch fan-out for symbols Stooq dropped.
-    /// 8 chunk x 800ms stays within Yahoo's 5 r/s sliding window.
+    /// Yahoo batch fetch for symbols Stooq dropped. Uses Yahoo's
+    /// `v7/finance/quote` endpoint, which returns up to ~50 symbols per
+    /// HTTP call. Per-symbol fan-out collided with Yahoo's inflight
+    /// semaphore + per-minute cap and timed out silently for the bulk
+    /// of a 300-400 symbol watchlist.
     private func yahooChunkedFallback(_ routes: [Route]) async -> [String: Quote] {
         var out: [String: Quote] = [:]
-        let chunkSize = 8
+        let chunkSize = 50
         let chunkDelayNs: UInt64 = 800_000_000
 
         let chunks = stride(from: 0, to: routes.count, by: chunkSize).map {
             Array(routes[$0..<min($0 + chunkSize, routes.count)])
         }
         for (index, batch) in chunks.enumerated() {
-            let partial = await parallelFetch(routes: batch) { [yahoo] route in
-                try await yahoo.fetchQuote(symbol: route.resolved)
+            do {
+                let map = try await yahoo.fetchBatchQuotes(symbols: batch.map(\.original))
+                for (key, value) in map { out[key] = value }
+            } catch {
+                await HeimdallLogger.shared.warn(
+                    "yahoo_batch_fallback_failed",
+                    provider: "yahoo",
+                    errorClass: classifyError(error),
+                    errorMessage: error.localizedDescription,
+                    endpoint: "quote"
+                )
             }
-            for (key, value) in partial { out[key] = value }
             if index < chunks.count - 1 {
                 try? await Task.sleep(nanoseconds: chunkDelayNs)
             }
